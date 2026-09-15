@@ -131,7 +131,7 @@
               <div id="dynamicInstansiFields" class="dynamic-section hidden">
                 <div class="form-group">
                   <label for="agencyName" class="field-label">Nama Instansi / Kantor <span class="required">*</span></label>
-                  <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Cabang Dinas Pendidikan Wilayah Kediri">
+                  <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Dinas Pendidikan Wilayah Kediri">
                 </div>
                 <div class="form-group">
                   <label for="agencyAddress" class="field-label">Alamat Kantor <span class="required">*</span></label>
@@ -261,7 +261,7 @@
           <div class="tracker-header">
             <div class="pill-badge"><i class="fa-solid fa-magnifying-glass"></i> Cek Status Mandiri</div>
             <h2>Pelacakan Tiket Kunjungan</h2>
-            <p>Masukkan kode tiket untuk memeriksa status konfirmasi dan pesan dari Kepala Sekolah.</p>
+            <p>Masukkan kode tiket untuk memeriksa status konfirmasi dan catatan dari Kepala Sekolah.</p>
           </div>
 
           <div class="tracker-input-box">
@@ -333,7 +333,7 @@
           <div class="table-toolbar">
             <div class="table-title-area">
               <h3>Antrean Tamu Masuk</h3>
-              <p>Daftar permohonan audiensi yang tercatat pada sistem.</p>
+              <p>Daftar permohonan audiensi resmi beserta catatan tindak lanjut pimpinan.</p>
             </div>
             <div class="table-filters">
               <div class="filter-group">
@@ -353,17 +353,17 @@
           <table class="custom-table" id="adminAppointmentsTable">
             <thead>
               <tr>
-                <th style="width: 14%;">Kode Tiket</th>
-                <th style="width: 20%;">Pemohon & Kontak</th>
-                <th style="width: 16%;">Kategori Tamu</th>
-                <th style="width: 12%;">Tgl Diminta</th>
-                <th style="width: 18%;">Alokasi Ruang & Jam</th>
-                <th style="width: 10%;">Status</th>
+                <th style="width: 13%;">Kode Tiket</th>
+                <th style="width: 19%;">Pemohon & Kontak</th>
+                <th style="width: 15%;">Kategori Tamu</th>
+                <th style="width: 11%;">Tgl Diminta</th>
+                <th style="width: 16%;">Alokasi Ruang & Jam</th>
+                <th style="width: 16%;">Status & Catatan Kepsek</th>
                 <th style="width: 10%; text-align: right;">Aksi</th>
               </tr>
             </thead>
             <tbody id="adminTableBody">
-              <!-- Baris tabel di-generate via script.js -->
+              <!-- Render via script.js -->
             </tbody>
           </table>
         </div>
@@ -443,7 +443,7 @@
     </div>
   </div>
 
-  <!-- 3. ACTION & SCHEDULING MODAL (DENGAN INPUT PESAN KHUSUS KEPSEK) -->
+  <!-- 3. ACTION & SCHEDULING MODAL (DENGAN TEMPLATE CATATAN APPROVE & REJECT) -->
   <div id="scheduleActionModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card schedule-modal-box">
       <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -499,12 +499,12 @@
           </div>
         </div>
 
-        <!-- Kolom Pesan Personal dari Pimpinan (Default Template: "Baik, saya tunggu 😊") -->
+        <!-- Kolom Catatan Persetujuan -->
         <div class="form-group">
-          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Pesan / Catatan Pimpinan untuk Tamu</label>
-          <textarea id="schedApprovalNotes" class="form-control" rows="2" placeholder="Baik, saya tunggu 😊"></textarea>
+          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Catatan Kecil / Pesan Sambutan Kepsek</label>
+          <textarea id="schedApprovalNotes" class="form-control" rows="2">Baik, saya tunggu 😊</textarea>
           <small style="color:var(--text-dim); font-size:0.75rem; display:block; margin-top:0.3rem;">
-            Default terisi otomatis. Anda dapat menghapus atau mengubahnya dengan arahan khusus untuk tamu.
+            Template default terisi otomatis. Bisa diedit atau diganti sesuai kebutuhan.
           </small>
         </div>
 
@@ -526,12 +526,15 @@
       <!-- Tab: Tolak -->
       <div id="tabContentReject" class="action-tab-body hidden">
         <div class="form-group">
-          <label class="field-label">Alasan Penolakan <span class="required">*</span></label>
-          <textarea id="schedRejectionReason" class="form-control" rows="3" placeholder="Contoh: Agenda rapat dinas luar kota pada jam yang bersangkutan."></textarea>
+          <label class="field-label"><i class="fa-solid fa-circle-exclamation"></i> Catatan Kecil / Alasan Penolakan</label>
+          <textarea id="schedRejectionReason" class="form-control" rows="3">Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏</textarea>
+          <small style="color:var(--text-dim); font-size:0.75rem; display:block; margin-top:0.3rem;">
+            Template default penolakan otomatis terisi. Bebas diganti jika ada alasan spesifik lainnya.
+          </small>
         </div>
         <div class="modal-footer-actions">
           <button type="button" class="btn btn-danger btn-block" onclick="executeReject()">
-            <i class="fa-solid fa-times-circle"></i> Konfirmasi Tolak
+            <i class="fa-solid fa-times-circle"></i> Konfirmasi Tolak Permohonan
           </button>
         </div>
       </div>

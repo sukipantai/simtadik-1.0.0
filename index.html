@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buku Tamu Digital & Penjadwalan Janji Temu | SMAN 1 Kandangan</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons via CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ================= NAVBAR ================= -->
+  <header class="app-header">
+    <div class="nav-container">
+      <div class="brand-wrapper">
+        <div class="logo-box">
+          <img src="logo.png" alt="Logo SMAN 1 Kandangan" id="school-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg/500px-Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg.png'">
+        </div>
+        <div class="brand-text">
+          <span class="school-name">SMAN 1 KANDANGAN</span>
+          <h1 class="system-title">Buku Tamu & Jadwal Pimpinan</h1>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-actions">
+        <button class="nav-tab-btn active" id="tabGuestBtn" onclick="switchView('guest-portal')">
+          <i class="fa-solid fa-pen-to-square"></i> <span>Form Tamu</span>
+        </button>
+        <button class="nav-tab-btn" id="tabTrackBtn" onclick="switchView('tracking-portal')">
+          <i class="fa-solid fa-ticket"></i> <span>Lacak Status</span>
+        </button>
+        <button class="nav-tab-btn nav-admin-btn" id="tabAdminBtn" onclick="handleAdminNavClick()">
+          <i class="fa-solid fa-user-shield"></i> <span id="adminNavLabel">Host Portal</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT WRAPPER ================= -->
+  <main class="main-content">
+
+    <!-- ================= VIEW 1: PORTAL TAMU ================= -->
+    <section id="guest-portal-view" class="portal-view active-view">
+      <div class="hero-banner">
+        <div class="pill-badge">
+          <i class="fa-solid fa-shield-halved"></i> Sistem Registrasi Audiensi Resmi SMAN 1 Kandangan
+        </div>
+        <h2 class="hero-headline">Ajukan Pertemuan & Audiensi Formal</h2>
+        <p class="hero-subtext">
+          Layanan digital satu pintu untuk audiensi bersama Kepala Sekolah dan jajaran pimpinan. Dilengkapi pencatatan visual biometrik mandiri dan pelacakan jadwal real-time.
+        </p>
+      </div>
+
+      <div class="portal-grid">
+        <!-- Form Pendaftaran -->
+        <div class="glass-card form-container">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fa-solid fa-id-card-clip"></i> Formulir Pengajuan Kunjungan</h3>
+            <p class="card-desc">Lengkapi identitas dan maksud kunjungan secara transparan.</p>
+          </div>
+
+          <form id="guestAppointmentForm" onsubmit="handleFormSubmission(event)">
+            
+            <!-- Kategori Tamu -->
+            <div class="form-group">
+              <label for="guestCategory" class="field-label">Kategori Tamu <span class="required">*</span></label>
+              <div class="select-wrapper">
+                <select id="guestCategory" class="form-control" required onchange="handleCategoryChange()">
+                  <option value="" disabled selected>Pilih Kategori Identitas</option>
+                  <option value="Siswa">Siswa</option>
+                  <option value="Guru/Staf">Guru / Tenaga Pendidik Luar</option>
+                  <option value="Orang Tua Murid">Orang Tua / Wali Murid</option>
+                  <option value="Instansi / Kedinasan">Instansi Kedinasan / Pemerintah</option>
+                  <option value="Umum">Masyarakat Umum / Vendor</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+              </div>
+            </div>
+
+            <!-- Dynamic Fields: Siswa -->
+            <div id="dynamicStudentFields" class="dynamic-section hidden">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="studentNisn" class="field-label">NISN Siswa <span class="required">*</span></label>
+                  <input type="number" id="studentNisn" class="form-control" placeholder="10 digit NISN">
+                </div>
+                <div class="form-group">
+                  <label for="studentClass" class="field-label">Kelas / Rombel <span class="required">*</span></label>
+                  <input type="text" id="studentClass" class="form-control" placeholder="Contoh: X-5 / XII MIPA 1">
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Fields: Orang Tua -->
+            <div id="dynamicParentFields" class="dynamic-section hidden">
+              <div class="form-group">
+                <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili <span class="required">*</span></label>
+                <input type="text" id="parentChildName" class="form-control" placeholder="Nama lengkap putra/putri Anda">
+              </div>
+            </div>
+
+            <!-- Dynamic Fields: Instansi -->
+            <div id="dynamicInstansiFields" class="dynamic-section hidden">
+              <div class="form-group">
+                <label for="agencyName" class="field-label">Nama Instansi / Perusahaan <span class="required">*</span></label>
+                <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Dinas Pendidikan Wilayah Kediri">
+              </div>
+              <div class="form-group">
+                <label for="agencyAddress" class="field-label">Alamat Kantor / Instansi <span class="required">*</span></label>
+                <textarea id="agencyAddress" class="form-control" rows="2" placeholder="Alamat instansi pengirim"></textarea>
+              </div>
+            </div>
+
+            <!-- General Fields -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="fullName" class="field-label">Nama Lengkap Pemohon <span class="required">*</span></label>
+                <input type="text" id="fullName" class="form-control" placeholder="Nama sesuai KTP/Tanda Pengenal" required>
+              </div>
+              <div class="form-group">
+                <label for="whatsappNumber" class="field-label">Nomor WhatsApp Aktif <span class="required">*</span></label>
+                <input type="tel" id="whatsappNumber" class="form-control" placeholder="08xxxxxxxxxx" required>
+                <small class="field-hint">Notifikasi tiket resmi dikirimkan via WA.</small>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="visitDate" class="field-label">Rencana Tanggal Kunjungan <span class="required">*</span></label>
+                <input type="date" id="visitDate" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="urgencyLevel" class="field-label">Tingkat Urgensi <span class="required">*</span></label>
+                <div class="select-wrapper">
+                  <select id="urgencyLevel" class="form-control" required>
+                    <option value="Biasa" selected>Biasa (Pertemuan Reguler)</option>
+                    <option value="Penting">Penting (Perlu Koordinasi Khusus)</option>
+                    <option value="Mendesak">Mendesak (Prioritas Tinggi / Darurat)</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down select-icon"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="visitPurpose" class="field-label">Maksud & Keperluan Audiensi <span class="required">*</span></label>
+              <textarea id="visitPurpose" class="form-control" rows="3" placeholder="Uraikan agenda pokok pertemuan secara singkat dan jelas..." required></textarea>
+            </div>
+
+            <!-- Submit Button (Disabled until live photo is captured) -->
+            <button type="submit" id="submitFormBtn" class="btn btn-primary btn-block">
+              <i class="fa-solid fa-paper-plane"></i> Kirim Permohonan Audiensi
+            </button>
+          </form>
+        </div>
+
+        <!-- WebRTC Live Camera Capture Container -->
+        <div class="glass-card camera-card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fa-solid fa-camera"></i> Verifikasi Biometrik Wajah</h3>
+            <p class="card-desc">Sesuai UU PDP No. 27/2022, foto wajib diambil langsung via webcam (anti-galeri).</p>
+          </div>
+
+          <div class="camera-viewport-wrapper">
+            <!-- Live Camera Feed -->
+            <div id="cameraPreviewContainer" class="camera-preview">
+              <video id="webcamVideo" autoplay playsinline muted></video>
+              <!-- Oval Guideline for Face Placement -->
+              <div class="oval-guideline">
+                <div class="oval-inner-line"></div>
+                <span class="guide-text">Posisikan Wajah di Dalam Oval</span>
+              </div>
+              <div id="cameraPlaceholder" class="camera-placeholder hidden">
+                <i class="fa-solid fa-video-slash"></i>
+                <p>Kamera belum diaktifkan.</p>
+                <button type="button" class="btn btn-outline btn-sm" onclick="startCamera()">Aktifkan Kamera</button>
+              </div>
+            </div>
+
+            <!-- Hidden snapshot canvas -->
+            <canvas id="photoCanvas" class="hidden"></canvas>
+
+            <!-- Snapshot Result Display -->
+            <div id="capturedResultContainer" class="captured-preview hidden">
+              <img id="capturedImage" alt="Snapshot Live Tamu">
+              <div class="capture-badge-success">
+                <i class="fa-solid fa-circle-check"></i> Foto Wajah Tervalidasi
+              </div>
+            </div>
+          </div>
+
+          <!-- Camera Controls -->
+          <div class="camera-actions">
+            <button type="button" id="snapPhotoBtn" class="btn btn-primary" onclick="takePhoto()">
+              <i class="fa-solid fa-shutter-release"></i> Ambil Foto Wajah
+            </button>
+            <button type="button" id="retakePhotoBtn" class="btn btn-outline hidden" onclick="retakePhoto()">
+              <i class="fa-solid fa-arrows-rotate"></i> Ulangi Foto
+            </button>
+          </div>
+          <div class="camera-security-note">
+            <i class="fa-solid fa-lock"></i> Foto dienkripsi dan diproteksi otomatis selama 90 hari sesuai protokol keamanan.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 2: LACAK TIKET MANDIRI ================= -->
+    <section id="tracking-portal-view" class="portal-view hidden">
+      <div class="tracker-container">
+        <div class="glass-card tracker-card">
+          <div class="tracker-header">
+            <div class="pill-badge"><i class="fa-solid fa-magnifying-glass"></i> Cek Status Mandiri</div>
+            <h2>Pelacakan Tiket Kunjungan</h2>
+            <p>Masukkan kode tiket yang Anda terima setelah mengisi formulir pendaftaran.</p>
+          </div>
+
+          <div class="tracker-input-box">
+            <div class="input-with-icon">
+              <i class="fa-solid fa-ticket-simple"></i>
+              <input type="text" id="trackTicketCodeInput" class="form-control track-input" placeholder="Contoh: TKT-2026-X8K9M2" autocomplete="off">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="trackTicketStatus()">
+              <i class="fa-solid fa-search"></i> Lacak Tiket
+            </button>
+          </div>
+
+          <!-- Result Area -->
+          <div id="trackerResultBox" class="tracker-result hidden">
+            <!-- Dynamic Ticket Card Injected via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 3: HOST / ADMIN PORTAL ================= -->
+    <section id="admin-portal-view" class="portal-view hidden">
+      <div class="admin-dashboard-container">
+        <!-- Admin Dashboard Header -->
+        <div class="admin-topbar">
+          <div class="admin-welcome">
+            <span class="admin-role-badge"><i class="fa-solid fa-user-tie"></i> Kepala Sekolah / Host Officer</span>
+            <h2 id="adminDashboardTitle">Panel Disposisi & Pengaturan Jadwal</h2>
+          </div>
+          <div class="admin-controls">
+            <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()">
+              <i class="fa-solid fa-file-excel"></i> Ekspor CSV
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="logoutAdmin()">
+              <i class="fa-solid fa-right-from-bracket"></i> Keluar
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="metrics-grid">
+          <div class="metric-card glass-card">
+            <div class="metric-icon metric-blue"><i class="fa-solid fa-inbox"></i></div>
+            <div class="metric-data">
+              <span class="metric-number" id="metricTotal">0</span>
+              <span class="metric-label">Total Permohonan</span>
+            </div>
+          </div>
+          <div class="metric-card glass-card">
+            <div class="metric-icon metric-amber"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div class="metric-data">
+              <span class="metric-number" id="metricPending">0</span>
+              <span class="metric-label">Menunggu Evaluasi</span>
+            </div>
+          </div>
+          <div class="metric-card glass-card">
+            <div class="metric-icon metric-emerald"><i class="fa-solid fa-calendar-check"></i></div>
+            <div class="metric-data">
+              <span class="metric-number" id="metricApproved">0</span>
+              <span class="metric-label">Jadwal Disetujui</span>
+            </div>
+          </div>
+          <div class="metric-card glass-card">
+            <div class="metric-icon metric-purple"><i class="fa-solid fa-user-check"></i></div>
+            <div class="metric-data">
+              <span class="metric-number" id="metricToday">0</span>
+              <span class="metric-label">Kunjungan Hari Ini</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Management Section -->
+        <div class="glass-card table-section">
+          <div class="table-toolbar">
+            <div class="table-title-area">
+              <h3>Antrean Tamu & Registrasi Masuk</h3>
+              <p>Kelola disposisi pertemuan, ruangan audiensi, dan verifikasi presensi lobi.</p>
+            </div>
+            <div class="table-filters">
+              <div class="filter-group">
+                <label><i class="fa-solid fa-filter"></i> Filter Status:</label>
+                <select id="tableFilterStatus" class="form-control form-control-sm" onchange="renderAdminQueueTable()">
+                  <option value="ALL">Semua Status</option>
+                  <option value="Menunggu Konfirmasi">Menunggu Konfirmasi</option>
+                  <option value="Disetujui">Disetujui</option>
+                  <option value="Checked-In">Checked-In / Hadir</option>
+                  <option value="Selesai">Selesai</option>
+                  <option value="Ditolak">Ditolak</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="custom-table" id="adminAppointmentsTable">
+              <thead>
+                <tr>
+                  <th>Foto Live</th>
+                  <th>Kode Tiket</th>
+                  <th>Pemohon & Kontak</th>
+                  <th>Kategori</th>
+                  <th>Tgl Diminta</th>
+                  <th>Urgensi</th>
+                  <th>Alokasi Ruang & Jam</th>
+                  <th>Status</th>
+                  <th class="text-right">Aksi Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="adminTableBody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- 1. TICKET CREATED SUCCESS MODAL -->
+  <div id="ticketSuccessModal" class="modal-overlay hidden">
+    <div class="modal-dialog glass-card">
+      <div class="modal-header-icon success">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <h3 class="modal-title">Permohonan Kunjungan Diterima</h3>
+      <p class="modal-subtitle">Simpan Kode Tiket Anda untuk melakukan pelacakan status konfirmasi Kepala Sekolah.</p>
+
+      <div class="ticket-badge-box">
+        <span class="ticket-sub">KODE TIKET RESMI:</span>
+        <h2 id="modalTicketCode" class="ticket-code-text">TKT-2026-XXXXXX</h2>
+        <button class="btn-copy-code" onclick="copyModalTicketCode()">
+          <i class="fa-regular fa-copy"></i> Salin Kode
+        </button>
+      </div>
+
+      <div class="ticket-summary-box">
+        <div class="summary-item">
+          <span>Pemohon:</span> <strong id="modalSummaryName">-</strong>
+        </div>
+        <div class="summary-item">
+          <span>Tanggal Kunjungan:</span> <strong id="modalSummaryDate">-</strong>
+        </div>
+        <div class="summary-item">
+          <span>WhatsApp Terdaftar:</span> <strong id="modalSummaryPhone">-</strong>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary btn-block" onclick="closeTicketModal()">
+          Saya Mengerti & Selesai
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ADMIN LOGIN MODAL -->
+  <div id="adminLoginModal" class="modal-overlay hidden">
+    <div class="modal-dialog glass-card login-modal-box">
+      <button class="modal-close-btn" onclick="closeAdminLoginModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-header-icon admin-icon">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h3 class="modal-title">Autentikasi Host Portal</h3>
+      <p class="modal-subtitle">Akses tertutup Kepala Sekolah & Tim Tata Usaha SMAN 1 Kandangan.</p>
+
+      <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+        <div class="form-group">
+          <label class="field-label">Nama Pengguna (Username)</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="adminUsername" class="form-control" placeholder="admin1234" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="field-label">Kata Sandi (Password)</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-key"></i>
+            <input type="password" id="adminPassword" class="form-control" placeholder="••••••••" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <i class="fa-solid fa-right-to-bracket"></i> Masuk ke Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. ACTION & SCHEDULING MODAL (APPROVAL / REJECTION / ANTI-COLLISION) -->
+  <div id="scheduleActionModal" class="modal-overlay hidden">
+    <div class="modal-dialog glass-card schedule-modal-box">
+      <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
+      
+      <div class="modal-badge-title">
+        <span id="scheduleModalTicketPill" class="pill-badge">Tiket: #</span>
+        <h3>Tindakan Permohonan Audiensi</h3>
+      </div>
+
+      <!-- Applicant Quick View -->
+      <div class="applicant-compact-card">
+        <img id="schedModalPhoto" src="" alt="Thumbnail Tamu" class="compact-avatar">
+        <div class="compact-info">
+          <h4 id="schedModalName">-</h4>
+          <p id="schedModalCategoryMeta">-</p>
+          <p class="compact-purpose" id="schedModalPurpose">-</p>
+        </div>
+      </div>
+
+      <!-- Action Choice Tabs -->
+      <div class="action-tab-group">
+        <button type="button" class="tab-pill-action active" id="btnTabApprove" onclick="switchActionTab('approve')">
+          <i class="fa-solid fa-calendar-plus"></i> Setujui & Jadwalkan
+        </button>
+        <button type="button" class="tab-pill-action" id="btnTabReject" onclick="switchActionTab('reject')">
+          <i class="fa-solid fa-ban"></i> Tolak Audiensi
+        </button>
+      </div>
+
+      <!-- Content Tab: Approve / Reschedule -->
+      <div id="tabContentApprove" class="action-tab-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="field-label">Ruangan Pertemuan <span class="required">*</span></label>
+            <select id="schedRoom" class="form-control" onchange="runLiveCollisionCheck()">
+              <option value="Ruang Kepala Sekolah">Ruang Kepala Sekolah</option>
+              <option value="Ruang Rapat Pimpinan">Ruang Rapat Pimpinan</option>
+              <option value="Ruang Tamu Khusus">Ruang Tamu Khusus Lobi</option>
+              <option value="Ruang BK / Konseling">Ruang BK / Konseling</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="field-label">Tanggal Disetujui <span class="required">*</span></label>
+            <input type="date" id="schedDate" class="form-control" onchange="runLiveCollisionCheck()">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="field-label">Jam Mulai <span class="required">*</span></label>
+            <input type="time" id="schedStartTime" class="form-control" onchange="runLiveCollisionCheck()">
+          </div>
+          <div class="form-group">
+            <label class="field-label">Jam Selesai <span class="required">*</span></label>
+            <input type="time" id="schedEndTime" class="form-control" onchange="runLiveCollisionCheck()">
+          </div>
+        </div>
+
+        <!-- Real-time Conflict Alert Box -->
+        <div id="collisionAlertBox" class="collision-alert hidden">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div>
+            <strong>Benturan Jadwal Terdeteksi!</strong>
+            <p id="collisionAlertMsg">Ruangan tersebut telah dialokasikan pada jam yang sama.</p>
+          </div>
+        </div>
+
+        <div class="modal-footer-actions">
+          <button type="button" id="confirmApproveBtn" class="btn btn-emerald btn-block" onclick="executeApprove()">
+            <i class="fa-solid fa-check-double"></i> Kunci Jadwal & Setujui
+          </button>
+        </div>
+      </div>
+
+      <!-- Content Tab: Reject -->
+      <div id="tabContentReject" class="action-tab-body hidden">
+        <div class="form-group">
+          <label class="field-label">Alasan Penolakan / Delegasi <span class="required">*</span></label>
+          <textarea id="schedRejectionReason" class="form-control" rows="3" placeholder="Contoh: Kepala Sekolah sedang menghadiri Rakor Dinas Pendidikan di Kediri pada tanggal tersebut."></textarea>
+        </div>
+        <div class="modal-footer-actions">
+          <button type="button" class="btn btn-danger btn-block" onclick="executeReject()">
+            <i class="fa-solid fa-times-circle"></i> Konfirmasi Tolak Permohonan
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 4. FULL PHOTO PREVIEW MODAL -->
+  <div id="photoPreviewModal" class="modal-overlay hidden" onclick="closePhotoPreviewModal()">
+    <div class="modal-dialog glass-card photo-preview-box" onclick="event.stopPropagation()">
+      <button class="modal-close-btn" onclick="closePhotoPreviewModal()"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="modal-title" id="previewPhotoTitle">Foto Live Capture Pemohon</h3>
+      <div class="full-photo-wrapper">
+        <img id="fullPhotoElement" src="" alt="Full Preview Foto">
+      </div>
+      <p class="photo-timestamp" id="previewPhotoMeta"></p>
+    </div>
+  </div>
+
+  <!-- ================= NOTIFICATION TOAST CONTAINER ================= -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Custom Scripts -->
+  <script src="script.js"></script>
+</body>
+</html>

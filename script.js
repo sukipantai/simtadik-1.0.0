@@ -3,7 +3,7 @@
  * SMAN 1 KANDANGAN KEDIRI
  */
 
-const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V3';
+const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V4';
 const ADMIN_SESSION_KEY = 'SMAN1_ADMIN_AUTH_SESSION';
 
 const ADMIN_CREDENTIALS = {
@@ -36,7 +36,7 @@ const INITIAL_MOCK_DATA = [
     scheduledDate: '2026-09-18',
     scheduledStart: '09:00',
     scheduledEnd: '10:30',
-    approvalMessage: 'Silakan langsung menuju ruang Kepala Sekolah, kami siap menerima.',
+    approvalMessage: 'Baik, saya tunggu 😊',
     rejectionReason: '',
     checkInAt: null,
     createdAt: '2026-09-14T08:30:00.000Z'
@@ -73,7 +73,7 @@ const INITIAL_MOCK_DATA = [
     scheduledDate: '2026-09-15',
     scheduledStart: '08:00',
     scheduledEnd: '09:00',
-    approvalMessage: 'Baik, saya tunggu 😊',
+    approvalMessage: 'Silakan langsung ke ruang lobi timur.',
     rejectionReason: '',
     checkInAt: '2026-09-15T08:05:00.000Z',
     createdAt: '2026-09-13T10:00:00.000Z'
@@ -94,6 +94,17 @@ function loadDatabase() {
   } else {
     try {
       appData.appointments = JSON.parse(stored);
+      // Auto-migrasi data agar tidak ada catatan kosong
+      appData.appointments = appData.appointments.map(item => {
+        if ((item.status === 'Disetujui' || item.status === 'Checked-In') && !item.approvalMessage) {
+          item.approvalMessage = 'Baik, saya tunggu 😊';
+        }
+        if (item.status === 'Ditolak' && !item.rejectionReason) {
+          item.rejectionReason = 'Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏';
+        }
+        return item;
+      });
+      saveDatabase();
     } catch (e) {
       appData.appointments = INITIAL_MOCK_DATA;
     }
@@ -430,17 +441,29 @@ function trackTicketStatus() {
     return;
   }
 
-  // Tampilkan pesan sambutan dari Kepala Sekolah jika permohonan disetujui
-  let hostMessageHTML = '';
+  // Tampilkan Catatan Kecil / Pesan dari Kepala Sekolah
+  let hostNoteHTML = '';
   if (found.status === 'Disetujui' || found.status === 'Checked-In') {
     const msg = found.approvalMessage || 'Baik, saya tunggu 😊';
-    hostMessageHTML = `
-      <div style="margin-top:1rem; padding:0.9rem; background:rgba(56, 189, 248, 0.08); border-left:3px solid var(--cyan-glow); border-radius:8px;">
+    hostNoteHTML = `
+      <div style="margin-top:1.1rem; padding:0.9rem 1.1rem; background:rgba(56, 189, 248, 0.08); border-left:3px solid var(--cyan-glow); border-radius:8px;">
         <span style="font-size:0.75rem; color:var(--cyan-glow); font-weight:700; display:block; text-transform:uppercase; letter-spacing:0.04em;">
-          <i class="fa-solid fa-comment-check"></i> Pesan dari Kepala Sekolah:
+          <i class="fa-solid fa-comment-dots"></i> Catatan dari Kepala Sekolah:
         </span>
-        <p style="font-size:0.9rem; color:var(--text-main); font-style:italic; margin-top:0.35rem;">
+        <p style="font-size:0.92rem; color:var(--text-main); font-style:italic; margin-top:0.35rem;">
           "${escapeHtml(msg)}"
+        </p>
+      </div>
+    `;
+  } else if (found.status === 'Ditolak') {
+    const rejMsg = found.rejectionReason || 'Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏';
+    hostNoteHTML = `
+      <div style="margin-top:1.1rem; padding:0.9rem 1.1rem; background:rgba(239, 68, 68, 0.08); border-left:3px solid var(--rose-danger); border-radius:8px;">
+        <span style="font-size:0.75rem; color:#FCA5A5; font-weight:700; display:block; text-transform:uppercase; letter-spacing:0.04em;">
+          <i class="fa-solid fa-circle-exclamation"></i> Catatan Penolakan Kepala Sekolah:
+        </span>
+        <p style="font-size:0.92rem; color:#FCA5A5; font-style:italic; margin-top:0.35rem;">
+          "${escapeHtml(rejMsg)}"
         </p>
       </div>
     `;
@@ -454,9 +477,8 @@ function trackTicketStatus() {
       </div>
       <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem;">Nama Pemohon: <strong style="color:#fff;">${escapeHtml(found.fullName)}</strong></p>
       <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem;">Tanggal Pengajuan: <strong style="color:#fff;">${found.visitDate || found.requestedDate}</strong></p>
-      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin-top:0.5rem; font-weight:600;">Jadwal: ${found.scheduledRoom} (${found.scheduledStart} - ${found.scheduledEnd} WIB)</p>` : ''}
-      ${hostMessageHTML}
-      ${found.rejectionReason ? `<p style="font-size:0.85rem; color:var(--rose-danger); margin-top:0.6rem;"><strong>Alasan Penolakan:</strong> ${escapeHtml(found.rejectionReason)}</p>` : ''}
+      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin-top:0.5rem; font-weight:600;">Ruangan: ${found.scheduledRoom} (${found.scheduledStart} - ${found.scheduledEnd} WIB)</p>` : ''}
+      ${hostNoteHTML}
     </div>
   `;
   resultBox.classList.remove('hidden');
@@ -508,6 +530,16 @@ function renderAdminQueueTable() {
       scheduleDisplay = `<strong style="color:var(--text-main); font-size:0.82rem;">${item.scheduledRoom}</strong><br><small style="color:var(--cyan-glow);">${item.scheduledDate} (${item.scheduledStart}-${item.scheduledEnd})</small>`;
     }
 
+    // Catatan kecil langsung tampil di tabel antrean
+    let noteInTable = '';
+    if (item.status === 'Disetujui' || item.status === 'Checked-In') {
+      const msg = item.approvalMessage || 'Baik, saya tunggu 😊';
+      noteInTable = `<div class="table-note-pill"><i class="fa-regular fa-comment-dots"></i> "${escapeHtml(msg)}"</div>`;
+    } else if (item.status === 'Ditolak') {
+      const rej = item.rejectionReason || 'Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏';
+      noteInTable = `<div class="table-note-pill table-note-reject"><i class="fa-solid fa-circle-exclamation"></i> "${escapeHtml(rej)}"</div>`;
+    }
+
     let actionButtons = '';
     if (item.status === 'Menunggu Konfirmasi') {
       actionButtons = `
@@ -557,6 +589,7 @@ function renderAdminQueueTable() {
         <td>${scheduleDisplay}</td>
         <td>
           <span class="badge ${getBadgeClass(item.status)}">${item.status}</span>
+          ${noteInTable}
         </td>
         <td style="text-align: right;">
           ${actionButtons}
@@ -595,10 +628,10 @@ function openScheduleModal(ticketCode) {
   document.getElementById('schedDate').value = item.scheduledDate || item.visitDate || item.requestedDate;
   document.getElementById('schedStartTime').value = item.scheduledStart || '09:00';
   document.getElementById('schedEndTime').value = item.scheduledEnd || '10:00';
-  document.getElementById('schedRejectionReason').value = item.rejectionReason || '';
 
-  // Isi otomatis dengan pesan yang sudah ada, atau template default "Baik, saya tunggu 😊"
-  document.getElementById('schedApprovalNotes').value = item.approvalMessage ? item.approvalMessage : 'Baik, saya tunggu 😊';
+  // Isi teks template default
+  document.getElementById('schedApprovalNotes').value = item.approvalMessage || 'Baik, saya tunggu 😊';
+  document.getElementById('schedRejectionReason').value = item.rejectionReason || 'Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏';
 
   switchActionTab('approve');
   runLiveCollisionCheck();
@@ -662,7 +695,7 @@ function runLiveCollisionCheck() {
 
   if (conflict) {
     alertBox.classList.remove('hidden');
-    alertMsg.innerText = `Ruangan "${room}" telah dijadwalkan untuk [${conflict.fullName}] pada jam ${conflict.scheduledStart} - ${conflict.scheduledEnd} WIB!`;
+    alertMsg.innerText = `Ruangan "${room}" telah dipesan untuk [${conflict.fullName}] pada jam ${conflict.scheduledStart} - ${conflict.scheduledEnd} WIB!`;
     confirmBtn.disabled = true;
     confirmBtn.style.opacity = '0.5';
   } else {
@@ -676,9 +709,8 @@ function executeApprove() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
 
-  // Baca input pesan pimpinan. Jika dikosongkan oleh kepsek, gunakan default template
-  const customMessage = document.getElementById('schedApprovalNotes').value.trim();
-  item.approvalMessage = customMessage || 'Baik, saya tunggu 😊';
+  const note = document.getElementById('schedApprovalNotes').value.trim();
+  item.approvalMessage = note || 'Baik, saya tunggu 😊';
 
   item.status = 'Disetujui';
   item.scheduledRoom = document.getElementById('schedRoom').value;
@@ -690,26 +722,21 @@ function executeApprove() {
   saveDatabase();
   renderAdminDashboard();
   closeScheduleModal();
-  showToast(`Janji temu [${item.ticketCode}] berhasil disetujui!`, 'success');
+  showToast(`Janji temu [${item.ticketCode}] disetujui!`, 'success');
 }
 
 function executeReject() {
   const reason = document.getElementById('schedRejectionReason').value.trim();
-  if (!reason) {
-    showToast('Cantumkan alasan penolakan.', 'error');
-    return;
-  }
-
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
 
   item.status = 'Ditolak';
-  item.rejectionReason = reason;
+  item.rejectionReason = reason || 'Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏';
 
   saveDatabase();
   renderAdminDashboard();
   closeScheduleModal();
-  showToast(`Permohonan [${item.ticketCode}] ditolak.`, 'info');
+  showToast(`Permohonan [${item.ticketCode}] ditolak dengan catatan.`, 'info');
 }
 
 function executeCheckIn(ticketCode) {
@@ -784,7 +811,7 @@ function exportDataToCSV() {
     return;
   }
 
-  const headers = ['Kode Tiket', 'Kategori', 'Nama Lengkap', 'WhatsApp', 'Urgensi', 'Tgl Diminta', 'Status', 'Ruangan', 'Jam Mulai', 'Jam Selesai', 'Pesan Kepala Sekolah'];
+  const headers = ['Kode Tiket', 'Kategori', 'Nama Lengkap', 'WhatsApp', 'Urgensi', 'Tgl Diminta', 'Status', 'Ruangan', 'Jam Mulai', 'Jam Selesai', 'Catatan Kepsek'];
   const rows = appData.appointments.map(a => [
     `"${a.ticketCode}"`,
     `"${a.category}"`,
@@ -796,7 +823,7 @@ function exportDataToCSV() {
     `"${a.scheduledRoom || '-'}"`,
     `"${a.scheduledStart || '-'}"`,
     `"${a.scheduledEnd || '-'}"`,
-    `"${(a.approvalMessage || '-').replace(/"/g, '""')}"`
+    `"${(a.approvalMessage || a.rejectionReason || '-').replace(/"/g, '""')}"`
   ]);
 
   const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');

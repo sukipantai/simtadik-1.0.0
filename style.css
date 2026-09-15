@@ -619,7 +619,7 @@ body {
   color: var(--text-muted);
 }
 
-/* Clean Full Table (No Sideways Scroll) */
+/* Full Table Layout */
 .table-section-full {
   padding: 1.75rem 2rem;
   width: 100%;
@@ -655,7 +655,7 @@ body {
   border-collapse: collapse;
   text-align: left;
   font-size: 0.86rem;
-  table-layout: fixed; /* Memastikan lebar kolom proporsional dan tidak jebol */
+  table-layout: fixed;
 }
 
 .custom-table th {
@@ -713,6 +713,27 @@ body {
 .urgency-biasa { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); }
 .urgency-penting { background: rgba(245, 158, 11, 0.15); color: var(--amber-warning); }
 .urgency-mendesak { background: rgba(239, 68, 68, 0.15); color: var(--rose-danger); }
+
+/* Catatan Kecil di Tabel Antrean */
+.table-note-pill {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--cyan-glow);
+  background: rgba(56, 189, 248, 0.08);
+  border-left: 2px solid var(--cyan-glow);
+  padding: 0.3rem 0.55rem;
+  border-radius: 4px;
+  margin-top: 0.45rem;
+  font-style: italic;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.table-note-reject {
+  color: #FCA5A5;
+  background: rgba(239, 68, 68, 0.08);
+  border-left-color: var(--rose-danger);
+}
 
 /* ==========================================================================
    TRACKER & MODALS
@@ -773,7 +794,7 @@ body {
 
 .modal-dialog {
   width: 100%;
-  max-width: 520px;
+  max-width: 540px;
   padding: 2rem;
   position: relative;
 }

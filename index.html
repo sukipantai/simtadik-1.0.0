@@ -48,7 +48,7 @@
   <!-- ================= MAIN CONTENT WRAPPER ================= -->
   <main class="main-content">
 
-    <!-- ================= VIEW 1: PORTAL TAMU (MULTI-STEP) ================= -->
+    <!-- ================= VIEW 1: PORTAL TAMU (3 LANGKAH) ================= -->
     <section id="guest-portal-view" class="portal-view active-view">
       <div class="hero-banner">
         <div class="pill-badge">
@@ -60,7 +60,7 @@
         </p>
       </div>
 
-      <!-- Step Indicator Bar -->
+      <!-- Stepper Progress Bar -->
       <div class="stepper-progress-bar">
         <div class="step-indicator active" id="stepIndicator1">
           <div class="step-num">1</div>
@@ -105,7 +105,7 @@
                 </div>
               </div>
 
-              <!-- Dynamic: Siswa -->
+              <!-- Dynamic Fields: Siswa -->
               <div id="dynamicStudentFields" class="dynamic-section hidden">
                 <div class="form-row">
                   <div class="form-group">
@@ -119,7 +119,7 @@
                 </div>
               </div>
 
-              <!-- Dynamic: Orang Tua -->
+              <!-- Dynamic Fields: Orang Tua -->
               <div id="dynamicParentFields" class="dynamic-section hidden">
                 <div class="form-group">
                   <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili <span class="required">*</span></label>
@@ -127,11 +127,11 @@
                 </div>
               </div>
 
-              <!-- Dynamic: Instansi -->
+              <!-- Dynamic Fields: Instansi -->
               <div id="dynamicInstansiFields" class="dynamic-section hidden">
                 <div class="form-group">
                   <label for="agencyName" class="field-label">Nama Instansi / Kantor <span class="required">*</span></label>
-                  <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Dinas Pendidikan Wilayah Kediri">
+                  <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Cabang Dinas Pendidikan Wilayah Kediri">
                 </div>
                 <div class="form-group">
                   <label for="agencyAddress" class="field-label">Alamat Kantor <span class="required">*</span></label>
@@ -161,7 +161,7 @@
             <div id="wizardStep2" class="wizard-step hidden">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-calendar-day"></i> Langkah 2: Detail Agenda Audiensi</h3>
-                <p>Jelaskan waktu pertemuan yang diajukan serta pokok pembahasan.</p>
+                <p>Tentukan tanggal rencana kedatangan dan uraikan maksud kunjungan.</p>
               </div>
 
               <div class="form-row">
@@ -184,7 +184,7 @@
 
               <div class="form-group">
                 <label for="visitPurpose" class="field-label">Maksud & Keperluan Audiensi <span class="required">*</span></label>
-                <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan maksud pokok pertemuan secara ringkas dan spesifik..." required></textarea>
+                <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan agenda pokok pertemuan secara ringkas dan spesifik..." required></textarea>
               </div>
 
               <div class="wizard-nav-actions between">
@@ -201,12 +201,11 @@
             <div id="wizardStep3" class="wizard-step hidden">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-camera"></i> Langkah 3: Verifikasi Foto Wajah Langsung</h3>
-                <p>Ambil foto wajah langsung menggunakan webcam laptop/HP untuk validasi kedatangan di lobi.</p>
+                <p>Ambil foto wajah menggunakan kamera perangkat untuk validasi keamanan presensi.</p>
               </div>
 
               <div class="camera-center-wrapper">
                 <div class="camera-viewport-wrapper">
-                  <!-- Live Video Stream -->
                   <div id="cameraPreviewContainer" class="camera-preview">
                     <video id="webcamVideo" autoplay playsinline muted></video>
                     <div class="oval-guideline">
@@ -220,14 +219,12 @@
                     </div>
                   </div>
 
-                  <!-- Canvas Snapshot -->
                   <canvas id="photoCanvas" class="hidden"></canvas>
 
-                  <!-- Snapshot Result -->
                   <div id="capturedResultContainer" class="captured-preview hidden">
                     <img id="capturedImage" alt="Snapshot Tamu">
                     <div class="capture-badge-success">
-                      <i class="fa-solid fa-circle-check"></i> Foto Wajah Siap Digunakan
+                      <i class="fa-solid fa-circle-check"></i> Foto Wajah Tervalidasi
                     </div>
                   </div>
                 </div>
@@ -264,7 +261,7 @@
           <div class="tracker-header">
             <div class="pill-badge"><i class="fa-solid fa-magnifying-glass"></i> Cek Status Mandiri</div>
             <h2>Pelacakan Tiket Kunjungan</h2>
-            <p>Masukkan kode tiket untuk memeriksa disposisi jadwal dari pihak sekolah.</p>
+            <p>Masukkan kode tiket untuk memeriksa status konfirmasi dan pesan dari Kepala Sekolah.</p>
           </div>
 
           <div class="tracker-input-box">
@@ -285,7 +282,6 @@
     <!-- ================= VIEW 3: HOST / ADMIN PORTAL (FULL WIDTH) ================= -->
     <section id="admin-portal-view" class="portal-view hidden">
       <div class="admin-dashboard-full">
-        <!-- Topbar -->
         <div class="admin-topbar">
           <div class="admin-welcome">
             <span class="admin-role-badge"><i class="fa-solid fa-user-tie"></i> Kepala Sekolah / Host Officer</span>
@@ -301,7 +297,6 @@
           </div>
         </div>
 
-        <!-- Metrics Grid -->
         <div class="metrics-grid">
           <div class="metric-card glass-card">
             <div class="metric-icon metric-blue"><i class="fa-solid fa-inbox"></i></div>
@@ -333,12 +328,12 @@
           </div>
         </div>
 
-        <!-- Antrean Tamu Table (Full Width - Tanpa Scroll Samping) -->
+        <!-- Tabel Antrean Tamu (Layar Penuh, Bebas Scroll Samping) -->
         <div class="glass-card table-section-full">
           <div class="table-toolbar">
             <div class="table-title-area">
               <h3>Antrean Tamu Masuk</h3>
-              <p>Daftar permohonan temu resmi. Seluruh informasi disajikan langsung tanpa geser ke samping.</p>
+              <p>Daftar permohonan audiensi yang tercatat pada sistem.</p>
             </div>
             <div class="table-filters">
               <div class="filter-group">
@@ -355,7 +350,6 @@
             </div>
           </div>
 
-          <!-- Clean Native Responsive Table -->
           <table class="custom-table" id="adminAppointmentsTable">
             <thead>
               <tr>
@@ -369,7 +363,7 @@
               </tr>
             </thead>
             <tbody id="adminTableBody">
-              <!-- Rendered via JavaScript -->
+              <!-- Baris tabel di-generate via script.js -->
             </tbody>
           </table>
         </div>
@@ -387,7 +381,7 @@
         <i class="fa-solid fa-circle-check"></i>
       </div>
       <h3 class="modal-title">Permohonan Kunjungan Diterima</h3>
-      <p class="modal-subtitle">Simpan Kode Tiket Anda untuk melakukan pelacakan status konfirmasi Kepala Sekolah.</p>
+      <p class="modal-subtitle">Simpan Kode Tiket Anda untuk melakukan pelacakan status konfirmasi.</p>
 
       <div class="ticket-badge-box">
         <span class="ticket-sub">KODE TIKET RESMI:</span>
@@ -425,7 +419,7 @@
         <i class="fa-solid fa-lock"></i>
       </div>
       <h3 class="modal-title">Autentikasi Host Portal</h3>
-      <p class="modal-subtitle">Akses pimpinan dan pengelola agenda SMAN 1 Kandangan.</p>
+      <p class="modal-subtitle">Akses Kepala Sekolah & Manajemen SMAN 1 Kandangan.</p>
 
       <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
         <div class="form-group">
@@ -449,7 +443,7 @@
     </div>
   </div>
 
-  <!-- 3. ACTION & SCHEDULING MODAL -->
+  <!-- 3. ACTION & SCHEDULING MODAL (DENGAN INPUT PESAN KHUSUS KEPSEK) -->
   <div id="scheduleActionModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card schedule-modal-box">
       <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -503,6 +497,15 @@
             <label class="field-label">Jam Selesai <span class="required">*</span></label>
             <input type="time" id="schedEndTime" class="form-control" onchange="runLiveCollisionCheck()">
           </div>
+        </div>
+
+        <!-- Kolom Pesan Personal dari Pimpinan (Default Template: "Baik, saya tunggu 😊") -->
+        <div class="form-group">
+          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Pesan / Catatan Pimpinan untuk Tamu</label>
+          <textarea id="schedApprovalNotes" class="form-control" rows="2" placeholder="Baik, saya tunggu 😊"></textarea>
+          <small style="color:var(--text-dim); font-size:0.75rem; display:block; margin-top:0.3rem;">
+            Default terisi otomatis. Anda dapat menghapus atau mengubahnya dengan arahan khusus untuk tamu.
+          </small>
         </div>
 
         <div id="collisionAlertBox" class="collision-alert hidden">

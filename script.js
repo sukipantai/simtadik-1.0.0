@@ -3,7 +3,7 @@
  * SMAN 1 KANDANGAN KEDIRI
  */
 
-const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V2';
+const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V3';
 const ADMIN_SESSION_KEY = 'SMAN1_ADMIN_AUTH_SESSION';
 
 const ADMIN_CREDENTIALS = {
@@ -19,7 +19,7 @@ let appData = {
   selectedTicketForAction: null
 };
 
-// Data mock awal yang bersih
+// Data mock awal
 const INITIAL_MOCK_DATA = [
   {
     ticketCode: 'TKT-2026-X8K9M2',
@@ -36,6 +36,7 @@ const INITIAL_MOCK_DATA = [
     scheduledDate: '2026-09-18',
     scheduledStart: '09:00',
     scheduledEnd: '10:30',
+    approvalMessage: 'Silakan langsung menuju ruang Kepala Sekolah, kami siap menerima.',
     rejectionReason: '',
     checkInAt: null,
     createdAt: '2026-09-14T08:30:00.000Z'
@@ -54,6 +55,7 @@ const INITIAL_MOCK_DATA = [
     scheduledDate: null,
     scheduledStart: null,
     scheduledEnd: null,
+    approvalMessage: '',
     rejectionReason: '',
     checkInAt: null,
     createdAt: '2026-09-15T07:15:00.000Z'
@@ -71,6 +73,7 @@ const INITIAL_MOCK_DATA = [
     scheduledDate: '2026-09-15',
     scheduledStart: '08:00',
     scheduledEnd: '09:00',
+    approvalMessage: 'Baik, saya tunggu 😊',
     rejectionReason: '',
     checkInAt: '2026-09-15T08:05:00.000Z',
     createdAt: '2026-09-13T10:00:00.000Z'
@@ -152,7 +155,6 @@ function handleAdminNavClick() {
 // MULTI-STEP WIZARD (3 LANGKAH FORMULIR)
 // ==========================================================================
 function goToStep(step) {
-  // Validasi Step 1
   if (step === 2 && appData.currentWizardStep === 1) {
     const category = document.getElementById('guestCategory').value;
     const name = document.getElementById('fullName').value.trim();
@@ -168,7 +170,6 @@ function goToStep(step) {
     }
   }
 
-  // Validasi Step 2
   if (step === 3 && appData.currentWizardStep === 2) {
     const visitDate = document.getElementById('visitDate').value;
     const purpose = document.getElementById('visitPurpose').value.trim();
@@ -179,17 +180,14 @@ function goToStep(step) {
     }
   }
 
-  // Sembunyikan semua step
   for (let i = 1; i <= 3; i++) {
     document.getElementById(`wizardStep${i}`).classList.add('hidden');
     document.getElementById(`stepIndicator${i}`).classList.remove('active');
   }
 
-  // Tampilkan step yang dituju
   document.getElementById(`wizardStep${step}`).classList.remove('hidden');
   document.getElementById(`stepIndicator${step}`).classList.add('active');
 
-  // Update garis progres
   if (step >= 2) {
     document.getElementById('stepIndicator1').classList.add('completed');
     document.getElementById('stepLine1').classList.add('filled');
@@ -201,7 +199,6 @@ function goToStep(step) {
   if (step === 3) {
     document.getElementById('stepIndicator2').classList.add('completed');
     document.getElementById('stepLine2').classList.add('filled');
-    // Mulai kamera hanya jika masuk ke Step 3
     if (!appData.capturedBase64) {
       startCamera();
     }
@@ -231,14 +228,13 @@ function handleCategoryChange() {
 }
 
 // ==========================================================================
-// WEBRTC CAMERA ENGINE
+// WEBRTC CAMERA
 // ==========================================================================
 async function startCamera() {
   const video = document.getElementById('webcamVideo');
   const placeholder = document.getElementById('cameraPlaceholder');
   const errMsg = document.getElementById('cameraErrMsg');
 
-  // Proteksi jika dijalankan pada file:/// atau browser tanpa akses WebRTC
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     if (placeholder) {
       placeholder.classList.remove('hidden');
@@ -260,7 +256,7 @@ async function startCamera() {
     console.warn('Camera inaccessible:', err);
     if (placeholder) {
       placeholder.classList.remove('hidden');
-      errMsg.innerText = 'Izin kamera ditolak atau perangkat tidak memiliki webcam.';
+      errMsg.innerText = 'Izin kamera belum diaktifkan.';
     }
   }
 }
@@ -281,7 +277,6 @@ function takePhoto() {
   const snapBtn = document.getElementById('snapPhotoBtn');
   const retakeBtn = document.getElementById('retakePhotoBtn');
 
-  // Fallback jika kamera tidak aktif
   if (!appData.activeStream || video.videoWidth === 0) {
     synthesizeFallbackPhoto();
     return;
@@ -380,6 +375,7 @@ function handleFormSubmission(e) {
     scheduledDate: null,
     scheduledStart: null,
     scheduledEnd: null,
+    approvalMessage: '',
     rejectionReason: '',
     checkInAt: null,
     createdAt: new Date().toISOString()
@@ -434,23 +430,40 @@ function trackTicketStatus() {
     return;
   }
 
+  // Tampilkan pesan sambutan dari Kepala Sekolah jika permohonan disetujui
+  let hostMessageHTML = '';
+  if (found.status === 'Disetujui' || found.status === 'Checked-In') {
+    const msg = found.approvalMessage || 'Baik, saya tunggu 😊';
+    hostMessageHTML = `
+      <div style="margin-top:1rem; padding:0.9rem; background:rgba(56, 189, 248, 0.08); border-left:3px solid var(--cyan-glow); border-radius:8px;">
+        <span style="font-size:0.75rem; color:var(--cyan-glow); font-weight:700; display:block; text-transform:uppercase; letter-spacing:0.04em;">
+          <i class="fa-solid fa-comment-check"></i> Pesan dari Kepala Sekolah:
+        </span>
+        <p style="font-size:0.9rem; color:var(--text-main); font-style:italic; margin-top:0.35rem;">
+          "${escapeHtml(msg)}"
+        </p>
+      </div>
+    `;
+  }
+
   resultBox.innerHTML = `
     <div class="glass-card" style="padding:1.5rem; margin-top:1rem;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <span style="font-weight:800; color:var(--cyan-glow); font-size:1.1rem;">${found.ticketCode}</span>
+        <span style="font-weight:800; color:var(--cyan-glow); font-size:1.15rem;">${found.ticketCode}</span>
         <span class="badge ${getBadgeClass(found.status)}">${found.status}</span>
       </div>
-      <p style="font-size:0.85rem; color:var(--text-muted);">Nama Pemohon: <strong style="color:#fff;">${escapeHtml(found.fullName)}</strong></p>
-      <p style="font-size:0.85rem; color:var(--text-muted);">Tanggal Diminta: <strong style="color:#fff;">${found.visitDate || found.requestedDate}</strong></p>
-      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin-top:0.5rem;">Jadwal: ${found.scheduledRoom} (${found.scheduledStart} - ${found.scheduledEnd} WIB)</p>` : ''}
-      ${found.rejectionReason ? `<p style="font-size:0.85rem; color:var(--rose-danger); margin-top:0.5rem;">Alasan Penolakan: ${escapeHtml(found.rejectionReason)}</p>` : ''}
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem;">Nama Pemohon: <strong style="color:#fff;">${escapeHtml(found.fullName)}</strong></p>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem;">Tanggal Pengajuan: <strong style="color:#fff;">${found.visitDate || found.requestedDate}</strong></p>
+      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin-top:0.5rem; font-weight:600;">Jadwal: ${found.scheduledRoom} (${found.scheduledStart} - ${found.scheduledEnd} WIB)</p>` : ''}
+      ${hostMessageHTML}
+      ${found.rejectionReason ? `<p style="font-size:0.85rem; color:var(--rose-danger); margin-top:0.6rem;"><strong>Alasan Penolakan:</strong> ${escapeHtml(found.rejectionReason)}</p>` : ''}
     </div>
   `;
   resultBox.classList.remove('hidden');
 }
 
 // ==========================================================================
-// ADMIN DASHBOARD (NO HORIZONTAL SCROLL & BUG-FREE TABLE)
+// ADMIN DASHBOARD
 // ==========================================================================
 function renderAdminDashboard() {
   renderMetrics();
@@ -584,6 +597,9 @@ function openScheduleModal(ticketCode) {
   document.getElementById('schedEndTime').value = item.scheduledEnd || '10:00';
   document.getElementById('schedRejectionReason').value = item.rejectionReason || '';
 
+  // Isi otomatis dengan pesan yang sudah ada, atau template default "Baik, saya tunggu 😊"
+  document.getElementById('schedApprovalNotes').value = item.approvalMessage ? item.approvalMessage : 'Baik, saya tunggu 😊';
+
   switchActionTab('approve');
   runLiveCollisionCheck();
 
@@ -659,6 +675,10 @@ function runLiveCollisionCheck() {
 function executeApprove() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
+
+  // Baca input pesan pimpinan. Jika dikosongkan oleh kepsek, gunakan default template
+  const customMessage = document.getElementById('schedApprovalNotes').value.trim();
+  item.approvalMessage = customMessage || 'Baik, saya tunggu 😊';
 
   item.status = 'Disetujui';
   item.scheduledRoom = document.getElementById('schedRoom').value;
@@ -764,7 +784,7 @@ function exportDataToCSV() {
     return;
   }
 
-  const headers = ['Kode Tiket', 'Kategori', 'Nama Lengkap', 'WhatsApp', 'Urgensi', 'Tgl Diminta', 'Status', 'Ruangan', 'Jam Mulai', 'Jam Selesai'];
+  const headers = ['Kode Tiket', 'Kategori', 'Nama Lengkap', 'WhatsApp', 'Urgensi', 'Tgl Diminta', 'Status', 'Ruangan', 'Jam Mulai', 'Jam Selesai', 'Pesan Kepala Sekolah'];
   const rows = appData.appointments.map(a => [
     `"${a.ticketCode}"`,
     `"${a.category}"`,
@@ -775,7 +795,8 @@ function exportDataToCSV() {
     `"${a.status}"`,
     `"${a.scheduledRoom || '-'}"`,
     `"${a.scheduledStart || '-'}"`,
-    `"${a.scheduledEnd || '-'}"`
+    `"${a.scheduledEnd || '-'}"`,
+    `"${(a.approvalMessage || '-').replace(/"/g, '""')}"`
   ]);
 
   const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');

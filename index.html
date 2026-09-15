@@ -5,15 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Buku Tamu Digital & Penjadwalan Janji Temu | SMAN 1 Kandangan</title>
   
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -105,7 +100,6 @@
                 </div>
               </div>
 
-              <!-- Dynamic Fields: Siswa -->
               <div id="dynamicStudentFields" class="dynamic-section hidden">
                 <div class="form-row">
                   <div class="form-group">
@@ -119,7 +113,6 @@
                 </div>
               </div>
 
-              <!-- Dynamic Fields: Orang Tua -->
               <div id="dynamicParentFields" class="dynamic-section hidden">
                 <div class="form-group">
                   <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili <span class="required">*</span></label>
@@ -127,11 +120,10 @@
                 </div>
               </div>
 
-              <!-- Dynamic Fields: Instansi -->
               <div id="dynamicInstansiFields" class="dynamic-section hidden">
                 <div class="form-group">
                   <label for="agencyName" class="field-label">Nama Instansi / Kantor <span class="required">*</span></label>
-                  <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Dinas Pendidikan Wilayah Kediri">
+                  <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Cabang Dinas Pendidikan Kediri">
                 </div>
                 <div class="form-group">
                   <label for="agencyAddress" class="field-label">Alamat Kantor <span class="required">*</span></label>
@@ -279,7 +271,7 @@
       </div>
     </section>
 
-    <!-- ================= VIEW 3: HOST / ADMIN PORTAL (FULL WIDTH) ================= -->
+    <!-- ================= VIEW 3: HOST / ADMIN PORTAL ================= -->
     <section id="admin-portal-view" class="portal-view hidden">
       <div class="admin-dashboard-full">
         <div class="admin-topbar">
@@ -288,6 +280,9 @@
             <h2>Panel Disposisi & Jadwal Audiensi</h2>
           </div>
           <div class="admin-controls">
+            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke setelan awal">
+              <i class="fa-solid fa-rotate-left"></i> Reset Demo Data
+            </button>
             <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()">
               <i class="fa-solid fa-file-excel"></i> Ekspor CSV
             </button>
@@ -328,7 +323,6 @@
           </div>
         </div>
 
-        <!-- Tabel Antrean Tamu (Layar Penuh, Bebas Scroll Samping) -->
         <div class="glass-card table-section-full">
           <div class="table-toolbar">
             <div class="table-title-area">
@@ -443,7 +437,7 @@
     </div>
   </div>
 
-  <!-- 3. ACTION & SCHEDULING MODAL (DENGAN TEMPLATE CATATAN APPROVE & REJECT) -->
+  <!-- 3. ACTION & SCHEDULING MODAL -->
   <div id="scheduleActionModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card schedule-modal-box">
       <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -499,12 +493,14 @@
           </div>
         </div>
 
-        <!-- Kolom Catatan Persetujuan -->
         <div class="form-group">
-          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Catatan Kecil / Pesan Sambutan Kepsek</label>
-          <textarea id="schedApprovalNotes" class="form-control" rows="2">Baik, saya tunggu 😊</textarea>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+            <label class="field-label" style="margin: 0;"><i class="fa-regular fa-comment-dots"></i> Catatan Kecil / Pesan Sambutan Kepsek</label>
+            <button type="button" class="btn-copy-code" onclick="applyDefaultApproveTemplate()">Pakai Template</button>
+          </div>
+          <textarea id="schedApprovalNotes" class="form-control" rows="2"></textarea>
           <small style="color:var(--text-dim); font-size:0.75rem; display:block; margin-top:0.3rem;">
-            Template default terisi otomatis. Bisa diedit atau diganti sesuai kebutuhan.
+            Otomatis terisi pesan sambutan ramah. Bisa diedit bebas.
           </small>
         </div>
 
@@ -526,10 +522,13 @@
       <!-- Tab: Tolak -->
       <div id="tabContentReject" class="action-tab-body hidden">
         <div class="form-group">
-          <label class="field-label"><i class="fa-solid fa-circle-exclamation"></i> Catatan Kecil / Alasan Penolakan</label>
-          <textarea id="schedRejectionReason" class="form-control" rows="3">Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏</textarea>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+            <label class="field-label" style="margin: 0;"><i class="fa-solid fa-circle-exclamation"></i> Catatan Kecil / Alasan Penolakan</label>
+            <button type="button" class="btn-copy-code" onclick="applyDefaultRejectTemplate()">Pakai Template</button>
+          </div>
+          <textarea id="schedRejectionReason" class="form-control" rows="3"></textarea>
           <small style="color:var(--text-dim); font-size:0.75rem; display:block; margin-top:0.3rem;">
-            Template default penolakan otomatis terisi. Bebas diganti jika ada alasan spesifik lainnya.
+            Otomatis terisi alasan penolakan santun kedinasan. Bisa diganti jika ada alasan lain.
           </small>
         </div>
         <div class="modal-footer-actions">
@@ -544,6 +543,7 @@
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <script src="script.js"></script>
+  <!-- Tag script dengan query versioning agar peramban tidak memakai file cache lama -->
+  <script src="script.js?v=5.0"></script>
 </body>
 </html>

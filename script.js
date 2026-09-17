@@ -1,9 +1,9 @@
 /**
  * SISTEM BUKU TAMU DIGITAL & PENJADWALAN JANJI TEMU SEKOLAH
- * SMAN 1 KANDANGAN KEDIRI
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 6.0
  */
 
-const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V4';
+const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V6';
 const ADMIN_SESSION_KEY = 'SMAN1_ADMIN_AUTH_SESSION';
 
 const ADMIN_CREDENTIALS = {
@@ -11,6 +11,11 @@ const ADMIN_CREDENTIALS = {
   password: '1234admin'
 };
 
+// Template Baku Respon Kepala Sekolah
+const DEFAULT_APPROVE_TEMPLATE = "Baik, saya tunggu 😊";
+const DEFAULT_REJECT_TEMPLATE = "Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏";
+
+// Global App State
 let appData = {
   appointments: [],
   activeStream: null,
@@ -19,7 +24,7 @@ let appData = {
   selectedTicketForAction: null
 };
 
-// Data mock awal
+// Data Mock Awal (Lengkap dengan Avatar Wajah Simulasi)
 const INITIAL_MOCK_DATA = [
   {
     ticketCode: 'TKT-2026-X8K9M2',
@@ -27,16 +32,17 @@ const INITIAL_MOCK_DATA = [
     fullName: 'Drs. H. Bambang Soetrisno, M.Pd',
     whatsapp: '081234567890',
     agencyName: 'Cabang Dinas Pendidikan Wilayah Kediri',
-    agencyAddress: 'Jl. Jaksa Agung Suprapto No. 2',
+    agencyAddress: 'Jl. Jaksa Agung Suprapto No. 2, Kediri',
     urgency: 'Penting',
     requestedDate: '2026-09-18',
-    purpose: 'Koordinasi teknis penjaminan mutu asesmen pembelajaran semester ganjil.',
+    purpose: 'Koordinasi teknis penjaminan mutu asesmen pembelajaran semester ganjil tahun ajaran berjalan.',
+    photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2338bdf8"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%232563eb"/></svg>',
     status: 'Disetujui',
     scheduledRoom: 'Ruang Kepala Sekolah',
     scheduledDate: '2026-09-18',
     scheduledStart: '09:00',
     scheduledEnd: '10:30',
-    approvalMessage: 'Baik, saya tunggu 😊',
+    approvalMessage: DEFAULT_APPROVE_TEMPLATE,
     rejectionReason: '',
     checkInAt: null,
     createdAt: '2026-09-14T08:30:00.000Z'
@@ -49,7 +55,8 @@ const INITIAL_MOCK_DATA = [
     parentChildName: 'Muhammad Farhan',
     urgency: 'Biasa',
     requestedDate: '2026-09-19',
-    purpose: 'Konsultasi program beasiswa bakat prestasi akademik putra kami.',
+    purpose: 'Konsultasi program beasiswa bakat prestasi akademik dan pembinaan olimpiade.',
+    photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2310b981"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%23059669"/></svg>',
     status: 'Menunggu Konfirmasi',
     scheduledRoom: null,
     scheduledDate: null,
@@ -67,19 +74,21 @@ const INITIAL_MOCK_DATA = [
     whatsapp: '081398765432',
     urgency: 'Mendesak',
     requestedDate: '2026-09-15',
-    purpose: 'Penyampaian proposal kemitraan beasiswa sains dan teknologi robotika.',
-    status: 'Checked-In',
-    scheduledRoom: 'Ruang Tamu Khusus',
-    scheduledDate: '2026-09-15',
-    scheduledStart: '08:00',
-    scheduledEnd: '09:00',
-    approvalMessage: 'Silakan langsung ke ruang lobi timur.',
-    rejectionReason: '',
-    checkInAt: '2026-09-15T08:05:00.000Z',
+    purpose: 'Penyampaian proposal kemitraan beasiswa sains dan teknologi robotika sekolah.',
+    photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%23f59e0b"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%23d97706"/></svg>',
+    status: 'Ditolak',
+    scheduledRoom: null,
+    scheduledDate: null,
+    scheduledStart: null,
+    scheduledEnd: null,
+    approvalMessage: '',
+    rejectionReason: DEFAULT_REJECT_TEMPLATE,
+    checkInAt: null,
     createdAt: '2026-09-13T10:00:00.000Z'
   }
 ];
 
+// Inisialisasi Saat Halaman Dimuat
 document.addEventListener('DOMContentLoaded', () => {
   loadDatabase();
   initializeVisitDateInput();
@@ -94,17 +103,6 @@ function loadDatabase() {
   } else {
     try {
       appData.appointments = JSON.parse(stored);
-      // Auto-migrasi data agar tidak ada catatan kosong
-      appData.appointments = appData.appointments.map(item => {
-        if ((item.status === 'Disetujui' || item.status === 'Checked-In') && !item.approvalMessage) {
-          item.approvalMessage = 'Baik, saya tunggu 😊';
-        }
-        if (item.status === 'Ditolak' && !item.rejectionReason) {
-          item.rejectionReason = 'Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏';
-        }
-        return item;
-      });
-      saveDatabase();
     } catch (e) {
       appData.appointments = INITIAL_MOCK_DATA;
     }
@@ -113,6 +111,16 @@ function loadDatabase() {
 
 function saveDatabase() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appData.appointments));
+}
+
+function resetAllData() {
+  if (confirm("Reset ulang seluruh database antrean ke setelan demo awal?")) {
+    localStorage.removeItem(STORAGE_KEY);
+    appData.appointments = INITIAL_MOCK_DATA;
+    saveDatabase();
+    renderAdminDashboard();
+    showToast("Data antrean berhasil direset!", "success");
+  }
 }
 
 function initializeVisitDateInput() {
@@ -163,7 +171,7 @@ function handleAdminNavClick() {
 }
 
 // ==========================================================================
-// MULTI-STEP WIZARD (3 LANGKAH FORMULIR)
+// MULTI-STEP WIZARD (3 LANGKAH)
 // ==========================================================================
 function goToStep(step) {
   if (step === 2 && appData.currentWizardStep === 1) {
@@ -186,7 +194,7 @@ function goToStep(step) {
     const purpose = document.getElementById('visitPurpose').value.trim();
 
     if (!visitDate || !purpose) {
-      showToast('Lengkapi tanggal kunjungan dan uraian keperluan temu.', 'error');
+      showToast('Lengkapi tanggal kunjungan dan pokok permohonan audiensi.', 'error');
       return;
     }
   }
@@ -239,7 +247,7 @@ function handleCategoryChange() {
 }
 
 // ==========================================================================
-// WEBRTC CAMERA
+// WEBRTC LIVE CAMERA ENGINE
 // ==========================================================================
 async function startCamera() {
   const video = document.getElementById('webcamVideo');
@@ -249,7 +257,7 @@ async function startCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     if (placeholder) {
       placeholder.classList.remove('hidden');
-      errMsg.innerText = 'Akses kamera peramban dibatasi.';
+      errMsg.innerText = 'Akses webcam tidak didukung oleh browser ini.';
     }
     return;
   }
@@ -264,10 +272,10 @@ async function startCamera() {
     video.classList.remove('hidden');
     if (placeholder) placeholder.classList.add('hidden');
   } catch (err) {
-    console.warn('Camera inaccessible:', err);
+    console.warn('Webcam permission not granted:', err);
     if (placeholder) {
       placeholder.classList.remove('hidden');
-      errMsg.innerText = 'Izin kamera belum diaktifkan.';
+      errMsg.innerText = 'Izin kamera belum diizinkan atau kamera tidak terdeteksi.';
     }
   }
 }
@@ -349,7 +357,7 @@ function synthesizeFallbackPhoto() {
   document.getElementById('capturedResultContainer').classList.remove('hidden');
   document.getElementById('snapPhotoBtn').classList.add('hidden');
   document.getElementById('retakePhotoBtn').classList.remove('hidden');
-  showToast('Foto verifikasi simulasi disiapkan.', 'info');
+  showToast('Simulasi biometrik wajah disiapkan.', 'info');
 }
 
 // ==========================================================================
@@ -381,6 +389,7 @@ function handleFormSubmission(e) {
     visitDate,
     urgency,
     purpose,
+    photoBase64: appData.capturedBase64,
     status: 'Menunggu Konfirmasi',
     scheduledRoom: null,
     scheduledDate: null,
@@ -413,7 +422,7 @@ function closeTicketModal() {
 function copyModalTicketCode() {
   const code = document.getElementById('modalTicketCode').innerText;
   navigator.clipboard.writeText(code).then(() => {
-    showToast('Kode tiket berhasil disalin!', 'success');
+    showToast('Kode tiket berhasil disalin ke clipboard!', 'success');
   });
 }
 
@@ -433,7 +442,7 @@ function trackTicketStatus() {
         <i class="fa-solid fa-circle-xmark"></i>
         <div>
           <strong>Tiket Tidak Ditemukan</strong>
-          <p>Periksa kembali kode tiket Anda.</p>
+          <p>Pastikan kode tiket yang Anda masukkan sudah sesuai.</p>
         </div>
       </div>
     `;
@@ -441,28 +450,27 @@ function trackTicketStatus() {
     return;
   }
 
-  // Tampilkan Catatan Kecil / Pesan dari Kepala Sekolah
   let hostNoteHTML = '';
   if (found.status === 'Disetujui' || found.status === 'Checked-In') {
-    const msg = found.approvalMessage || 'Baik, saya tunggu 😊';
+    const msg = (found.approvalMessage && found.approvalMessage.trim()) || DEFAULT_APPROVE_TEMPLATE;
     hostNoteHTML = `
       <div style="margin-top:1.1rem; padding:0.9rem 1.1rem; background:rgba(56, 189, 248, 0.08); border-left:3px solid var(--cyan-glow); border-radius:8px;">
         <span style="font-size:0.75rem; color:var(--cyan-glow); font-weight:700; display:block; text-transform:uppercase; letter-spacing:0.04em;">
           <i class="fa-solid fa-comment-dots"></i> Catatan dari Kepala Sekolah:
         </span>
-        <p style="font-size:0.92rem; color:var(--text-main); font-style:italic; margin-top:0.35rem;">
+        <p style="font-size:0.92rem; color:var(--text-main); font-style:italic; margin-top:0.35rem; overflow-wrap:anywhere; word-break:break-word;">
           "${escapeHtml(msg)}"
         </p>
       </div>
     `;
   } else if (found.status === 'Ditolak') {
-    const rejMsg = found.rejectionReason || 'Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏';
+    const rejMsg = (found.rejectionReason && found.rejectionReason.trim()) || DEFAULT_REJECT_TEMPLATE;
     hostNoteHTML = `
       <div style="margin-top:1.1rem; padding:0.9rem 1.1rem; background:rgba(239, 68, 68, 0.08); border-left:3px solid var(--rose-danger); border-radius:8px;">
         <span style="font-size:0.75rem; color:#FCA5A5; font-weight:700; display:block; text-transform:uppercase; letter-spacing:0.04em;">
           <i class="fa-solid fa-circle-exclamation"></i> Catatan Penolakan Kepala Sekolah:
         </span>
-        <p style="font-size:0.92rem; color:#FCA5A5; font-style:italic; margin-top:0.35rem;">
+        <p style="font-size:0.92rem; color:#FCA5A5; font-style:italic; margin-top:0.35rem; overflow-wrap:anywhere; word-break:break-word;">
           "${escapeHtml(rejMsg)}"
         </p>
       </div>
@@ -475,8 +483,13 @@ function trackTicketStatus() {
         <span style="font-weight:800; color:var(--cyan-glow); font-size:1.15rem;">${found.ticketCode}</span>
         <span class="badge ${getBadgeClass(found.status)}">${found.status}</span>
       </div>
-      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem;">Nama Pemohon: <strong style="color:#fff;">${escapeHtml(found.fullName)}</strong></p>
-      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem;">Tanggal Pengajuan: <strong style="color:#fff;">${found.visitDate || found.requestedDate}</strong></p>
+      <div style="display:flex; gap:1rem; align-items:center; margin-bottom:0.75rem;">
+        <img src="${found.photoBase64 || ''}" alt="Foto Tamu" style="width:52px; height:52px; border-radius:8px; object-fit:cover; border:1px solid var(--border-subtle); flex-shrink:0; background:#050811;">
+        <div style="min-width:0; overflow-wrap:anywhere; word-break:break-word;">
+          <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Nama Pemohon: <strong style="color:#fff;">${escapeHtml(found.fullName)}</strong></p>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Tanggal Pengajuan: <strong style="color:#fff;">${found.visitDate || found.requestedDate}</strong></p>
+        </div>
+      </div>
       ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin-top:0.5rem; font-weight:600;">Ruangan: ${found.scheduledRoom} (${found.scheduledStart} - ${found.scheduledEnd} WIB)</p>` : ''}
       ${hostNoteHTML}
     </div>
@@ -530,13 +543,12 @@ function renderAdminQueueTable() {
       scheduleDisplay = `<strong style="color:var(--text-main); font-size:0.82rem;">${item.scheduledRoom}</strong><br><small style="color:var(--cyan-glow);">${item.scheduledDate} (${item.scheduledStart}-${item.scheduledEnd})</small>`;
     }
 
-    // Catatan kecil langsung tampil di tabel antrean
     let noteInTable = '';
     if (item.status === 'Disetujui' || item.status === 'Checked-In') {
-      const msg = item.approvalMessage || 'Baik, saya tunggu 😊';
+      const msg = (item.approvalMessage && item.approvalMessage.trim()) || DEFAULT_APPROVE_TEMPLATE;
       noteInTable = `<div class="table-note-pill"><i class="fa-regular fa-comment-dots"></i> "${escapeHtml(msg)}"</div>`;
     } else if (item.status === 'Ditolak') {
-      const rej = item.rejectionReason || 'Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏';
+      const rej = (item.rejectionReason && item.rejectionReason.trim()) || DEFAULT_REJECT_TEMPLATE;
       noteInTable = `<div class="table-note-pill table-note-reject"><i class="fa-solid fa-circle-exclamation"></i> "${escapeHtml(rej)}"</div>`;
     }
 
@@ -572,7 +584,7 @@ function renderAdminQueueTable() {
           <strong style="color:var(--cyan-glow); font-size:0.84rem;">${item.ticketCode}</strong>
         </td>
         <td>
-          <strong>${escapeHtml(item.fullName)}</strong>
+          <strong style="overflow-wrap:anywhere; word-break:break-word;">${escapeHtml(item.fullName)}</strong>
           <br>
           <a href="${waUrl}" target="_blank" class="wa-link">
             <i class="fa-brands fa-whatsapp"></i> ${item.whatsapp}
@@ -611,7 +623,7 @@ function getBadgeClass(status) {
 }
 
 // ==========================================================================
-// SCHEDULING ENGINE & ANTI-COLLISION
+// SCHEDULING ENGINE & ACTION MODAL
 // ==========================================================================
 function openScheduleModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
@@ -624,14 +636,22 @@ function openScheduleModal(ticketCode) {
   document.getElementById('schedModalCategoryMeta').innerText = `${item.category} • Urgensi: ${item.urgency}`;
   document.getElementById('schedModalPurpose').innerText = `"${item.purpose}"`;
 
+  // Render Foto Live Wajah Pemohon di Modal
+  const modalPhoto = document.getElementById('schedModalPhoto');
+  if (modalPhoto) {
+    modalPhoto.src = item.photoBase64 || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><rect width="60" height="60" fill="%230f172a"/><circle cx="30" cy="24" r="12" fill="%2338bdf8"/><path d="M12 52 C12 40, 48 40, 48 52" fill="%232563eb"/></svg>';
+  }
+
   document.getElementById('schedRoom').value = item.scheduledRoom || 'Ruang Kepala Sekolah';
   document.getElementById('schedDate').value = item.scheduledDate || item.visitDate || item.requestedDate;
   document.getElementById('schedStartTime').value = item.scheduledStart || '09:00';
   document.getElementById('schedEndTime').value = item.scheduledEnd || '10:00';
 
-  // Isi teks template default
-  document.getElementById('schedApprovalNotes').value = item.approvalMessage || 'Baik, saya tunggu 😊';
-  document.getElementById('schedRejectionReason').value = item.rejectionReason || 'Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏';
+  const existingApprove = item.approvalMessage && item.approvalMessage.trim();
+  document.getElementById('schedApprovalNotes').value = existingApprove ? existingApprove : DEFAULT_APPROVE_TEMPLATE;
+
+  const existingReject = item.rejectionReason && item.rejectionReason.trim();
+  document.getElementById('schedRejectionReason').value = existingReject ? existingReject : DEFAULT_REJECT_TEMPLATE;
 
   switchActionTab('approve');
   runLiveCollisionCheck();
@@ -655,13 +675,33 @@ function switchActionTab(tab) {
     btnReject.classList.remove('active');
     contentApprove.classList.remove('hidden');
     contentReject.classList.add('hidden');
+
+    const appInput = document.getElementById('schedApprovalNotes');
+    if (!appInput.value || !appInput.value.trim()) {
+      appInput.value = DEFAULT_APPROVE_TEMPLATE;
+    }
     runLiveCollisionCheck();
   } else {
     btnApprove.classList.remove('active');
     btnReject.classList.add('active');
     contentApprove.classList.add('hidden');
     contentReject.classList.remove('hidden');
+
+    const rejInput = document.getElementById('schedRejectionReason');
+    if (!rejInput.value || !rejInput.value.trim()) {
+      rejInput.value = DEFAULT_REJECT_TEMPLATE;
+    }
   }
+}
+
+function applyDefaultRejectTemplate() {
+  document.getElementById('schedRejectionReason').value = DEFAULT_REJECT_TEMPLATE;
+  showToast("Template penolakan dimuat!", "info");
+}
+
+function applyDefaultApproveTemplate() {
+  document.getElementById('schedApprovalNotes').value = DEFAULT_APPROVE_TEMPLATE;
+  showToast("Template sambutan dimuat!", "info");
 }
 
 function runLiveCollisionCheck() {
@@ -710,7 +750,7 @@ function executeApprove() {
   if (!item) return;
 
   const note = document.getElementById('schedApprovalNotes').value.trim();
-  item.approvalMessage = note || 'Baik, saya tunggu 😊';
+  item.approvalMessage = note || DEFAULT_APPROVE_TEMPLATE;
 
   item.status = 'Disetujui';
   item.scheduledRoom = document.getElementById('schedRoom').value;
@@ -731,7 +771,7 @@ function executeReject() {
   if (!item) return;
 
   item.status = 'Ditolak';
-  item.rejectionReason = reason || 'Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏';
+  item.rejectionReason = reason || DEFAULT_REJECT_TEMPLATE;
 
   saveDatabase();
   renderAdminDashboard();

@@ -445,7 +445,7 @@
     </div>
   </div>
 
-  <!-- 3. ACTION & SCHEDULING MODAL (DENGAN FOTO DI TENGAH & BISA DI-ZOOM) -->
+  <!-- 3. ACTION & SCHEDULING MODAL (FOTO DI ATAS TENGAH, BERSIH TANPA TOMBOL PERBESAR) -->
   <div id="scheduleActionModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card schedule-modal-box">
       <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -455,15 +455,9 @@
         <h3>Tindakan Permohonan Audiensi</h3>
       </div>
 
-      <!-- Kartu Pemohon: Foto Berada di Tengah & Bisa Di-klik Zoom -->
+      <!-- Kartu Pemohon: Foto Terkunci di Atas Tengah & Bisa Diklik Langsung untuk Full View -->
       <div class="applicant-card-centered">
-        <div class="photo-zoom-trigger" onclick="zoomSchedPhoto()" title="Klik untuk memperbesar foto wajah">
-          <img id="schedModalPhoto" src="" alt="Foto Tamu" class="applicant-photo-center">
-          <div class="zoom-overlay-hint">
-            <i class="fa-solid fa-magnifying-glass-plus"></i>
-            <span>Perbesar</span>
-          </div>
-        </div>
+        <img id="schedModalPhoto" src="" alt="Foto Tamu" class="applicant-photo-center" onclick="openFullPhotoModal()" title="Klik foto untuk melihat ukuran penuh">
         <div class="compact-info">
           <h4 id="schedModalName">-</h4>
           <p id="schedModalCategoryMeta">-</p>
@@ -557,24 +551,24 @@
     </div>
   </div>
 
-  <!-- 4. MODAL ZOOM FOTO PEMOHON (LIGHTBOX) -->
-  <div id="photoZoomModal" class="modal-overlay hidden" onclick="closePhotoZoomModal()">
-    <div class="modal-dialog glass-card zoom-modal-dialog" onclick="event.stopPropagation()">
-      <button type="button" class="modal-close-btn" onclick="closePhotoZoomModal()"><i class="fa-solid fa-xmark"></i></button>
-      <div class="zoom-header">
-        <span class="pill-badge"><i class="fa-solid fa-id-badge"></i> Verifikasi Foto Biometrik</span>
-        <h3 id="zoomModalApplicantName" class="zoom-applicant-title">-</h3>
+  <!-- 4. MODAL FULL FOTO PEMOHON -->
+  <div id="photoFullModal" class="modal-overlay hidden" onclick="closeFullPhotoModal()">
+    <div class="modal-dialog glass-card photo-full-dialog" onclick="event.stopPropagation()">
+      <button type="button" class="modal-close-btn" onclick="closeFullPhotoModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div class="photo-full-header">
+        <span class="pill-badge"><i class="fa-solid fa-camera"></i> Foto Verifikasi Live</span>
+        <h3 id="photoFullTitle" class="photo-full-name">-</h3>
       </div>
-      <div class="zoom-image-wrapper">
-        <img id="zoomedPhotoImg" src="" alt="Foto Pemohon Zoom">
+      <div class="photo-full-img-box">
+        <img id="photoFullElement" src="" alt="Foto Pemohon Ukuran Penuh">
       </div>
-      <p class="zoom-footer-hint">Klik tombol silang atau area luar untuk kembali.</p>
+      <p class="photo-full-hint">Klik tombol silang atau area luar untuk menutup tampilan.</p>
     </div>
   </div>
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Script Versi 7.0 -->
-  <script src="script.js?v=7.0"></script>
+  <!-- Skrip Utama -->
+  <script src="script.js?v=8.0"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@
   
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- FontAwesome Icons -->
@@ -60,7 +60,7 @@
         </p>
       </div>
 
-      <!-- Stepper Progress Bar (Responsif & Anti-Lonjong) -->
+      <!-- Stepper Progress Bar -->
       <div class="stepper-progress-bar">
         <div class="step-indicator active" id="stepIndicator1">
           <div class="step-num">1</div>
@@ -331,7 +331,6 @@
           </div>
         </div>
 
-        <!-- Tabel Antrean Tamu (Layar Penuh, Bersih Tanpa Scroll Samping di Laptop) -->
         <div class="glass-card table-section-full">
           <div class="table-toolbar">
             <div class="table-title-area">
@@ -446,7 +445,7 @@
     </div>
   </div>
 
-  <!-- 3. ACTION & SCHEDULING MODAL (LENGKAP DENGAN FOTO WEBCAM & TEMPLATE PESAN) -->
+  <!-- 3. ACTION & SCHEDULING MODAL (DENGAN FOTO DI TENGAH & BISA DI-ZOOM) -->
   <div id="scheduleActionModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card schedule-modal-box">
       <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -456,9 +455,15 @@
         <h3>Tindakan Permohonan Audiensi</h3>
       </div>
 
-      <!-- Kartu Pemohon: Menampilkan Foto Live Capture & Anti Teks Meluber -->
-      <div class="applicant-compact-card">
-        <img id="schedModalPhoto" src="" alt="Foto Tamu" class="compact-avatar" title="Foto live webcam pemohon">
+      <!-- Kartu Pemohon: Foto Berada di Tengah & Bisa Di-klik Zoom -->
+      <div class="applicant-card-centered">
+        <div class="photo-zoom-trigger" onclick="zoomSchedPhoto()" title="Klik untuk memperbesar foto wajah">
+          <img id="schedModalPhoto" src="" alt="Foto Tamu" class="applicant-photo-center">
+          <div class="zoom-overlay-hint">
+            <i class="fa-solid fa-magnifying-glass-plus"></i>
+            <span>Perbesar</span>
+          </div>
+        </div>
         <div class="compact-info">
           <h4 id="schedModalName">-</h4>
           <p id="schedModalCategoryMeta">-</p>
@@ -552,9 +557,24 @@
     </div>
   </div>
 
+  <!-- 4. MODAL ZOOM FOTO PEMOHON (LIGHTBOX) -->
+  <div id="photoZoomModal" class="modal-overlay hidden" onclick="closePhotoZoomModal()">
+    <div class="modal-dialog glass-card zoom-modal-dialog" onclick="event.stopPropagation()">
+      <button type="button" class="modal-close-btn" onclick="closePhotoZoomModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div class="zoom-header">
+        <span class="pill-badge"><i class="fa-solid fa-id-badge"></i> Verifikasi Foto Biometrik</span>
+        <h3 id="zoomModalApplicantName" class="zoom-applicant-title">-</h3>
+      </div>
+      <div class="zoom-image-wrapper">
+        <img id="zoomedPhotoImg" src="" alt="Foto Pemohon Zoom">
+      </div>
+      <p class="zoom-footer-hint">Klik tombol silang atau area luar untuk kembali.</p>
+    </div>
+  </div>
+
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Skrip Utama -->
-  <script src="script.js?v=6.0"></script>
+  <!-- Script Versi 7.0 -->
+  <script src="script.js?v=7.0"></script>
 </body>
 </html>

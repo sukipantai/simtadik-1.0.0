@@ -5,10 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Buku Tamu Digital & Penjadwalan Janji Temu | SMAN 1 Kandangan</title>
   
+  <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,7 +23,7 @@
     <div class="nav-container">
       <div class="brand-wrapper">
         <div class="logo-box">
-          <img src="logo.png" alt="Logo Sekolah" id="school-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg/500px-Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg.png'">
+          <img src="logo.png" alt="Logo SMAN 1 Kandangan" id="school-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg/500px-Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg.png'">
         </div>
         <div class="brand-text">
           <span class="school-name">SMAN 1 KANDANGAN</span>
@@ -55,7 +60,7 @@
         </p>
       </div>
 
-      <!-- Stepper Progress Bar -->
+      <!-- Stepper Progress Bar (Responsif & Anti-Lonjong) -->
       <div class="stepper-progress-bar">
         <div class="step-indicator active" id="stepIndicator1">
           <div class="step-num">1</div>
@@ -78,7 +83,7 @@
         <div class="glass-card form-wizard-card">
           <form id="guestAppointmentForm" onsubmit="handleFormSubmission(event)">
 
-            <!-- LANGKAH 1: IDENTITAS PEMOHON -->
+            <!-- LANGKAH 1: DATA DIRI & KATEGORI -->
             <div id="wizardStep1" class="wizard-step active-step">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-address-card"></i> Langkah 1: Data Diri & Kategori</h3>
@@ -100,6 +105,7 @@
                 </div>
               </div>
 
+              <!-- Input Dinamis: Siswa -->
               <div id="dynamicStudentFields" class="dynamic-section hidden">
                 <div class="form-row">
                   <div class="form-group">
@@ -113,6 +119,7 @@
                 </div>
               </div>
 
+              <!-- Input Dinamis: Orang Tua -->
               <div id="dynamicParentFields" class="dynamic-section hidden">
                 <div class="form-group">
                   <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili <span class="required">*</span></label>
@@ -120,10 +127,11 @@
                 </div>
               </div>
 
+              <!-- Input Dinamis: Instansi -->
               <div id="dynamicInstansiFields" class="dynamic-section hidden">
                 <div class="form-group">
                   <label for="agencyName" class="field-label">Nama Instansi / Kantor <span class="required">*</span></label>
-                  <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Cabang Dinas Pendidikan Kediri">
+                  <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Dinas Pendidikan Wilayah Kediri">
                 </div>
                 <div class="form-group">
                   <label for="agencyAddress" class="field-label">Alamat Kantor <span class="required">*</span></label>
@@ -153,7 +161,7 @@
             <div id="wizardStep2" class="wizard-step hidden">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-calendar-day"></i> Langkah 2: Detail Agenda Audiensi</h3>
-                <p>Tentukan tanggal rencana kedatangan dan uraikan maksud kunjungan.</p>
+                <p>Tentukan rencana tanggal kedatangan dan uraikan pokok pembicaraan.</p>
               </div>
 
               <div class="form-row">
@@ -176,7 +184,7 @@
 
               <div class="form-group">
                 <label for="visitPurpose" class="field-label">Maksud & Keperluan Audiensi <span class="required">*</span></label>
-                <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan agenda pokok pertemuan secara ringkas dan spesifik..." required></textarea>
+                <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan maksud pokok audiensi secara ringkas dan jelas..." required></textarea>
               </div>
 
               <div class="wizard-nav-actions between">
@@ -193,7 +201,7 @@
             <div id="wizardStep3" class="wizard-step hidden">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-camera"></i> Langkah 3: Verifikasi Foto Wajah Langsung</h3>
-                <p>Ambil foto wajah menggunakan kamera perangkat untuk validasi keamanan presensi.</p>
+                <p>Ambil foto wajah menggunakan kamera perangkat untuk validasi kehadiran di pos lobi.</p>
               </div>
 
               <div class="camera-center-wrapper">
@@ -253,7 +261,7 @@
           <div class="tracker-header">
             <div class="pill-badge"><i class="fa-solid fa-magnifying-glass"></i> Cek Status Mandiri</div>
             <h2>Pelacakan Tiket Kunjungan</h2>
-            <p>Masukkan kode tiket untuk memeriksa status konfirmasi dan catatan dari Kepala Sekolah.</p>
+            <p>Masukkan kode tiket untuk melihat jadwal yang ditetapkan dan catatan Kepala Sekolah.</p>
           </div>
 
           <div class="tracker-input-box">
@@ -280,8 +288,8 @@
             <h2>Panel Disposisi & Jadwal Audiensi</h2>
           </div>
           <div class="admin-controls">
-            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke setelan awal">
-              <i class="fa-solid fa-rotate-left"></i> Reset Demo Data
+            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke setelan awal bawaan">
+              <i class="fa-solid fa-rotate-left"></i> Reset Demo
             </button>
             <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()">
               <i class="fa-solid fa-file-excel"></i> Ekspor CSV
@@ -323,6 +331,7 @@
           </div>
         </div>
 
+        <!-- Tabel Antrean Tamu (Layar Penuh, Bersih Tanpa Scroll Samping di Laptop) -->
         <div class="glass-card table-section-full">
           <div class="table-toolbar">
             <div class="table-title-area">
@@ -437,7 +446,7 @@
     </div>
   </div>
 
-  <!-- 3. ACTION & SCHEDULING MODAL -->
+  <!-- 3. ACTION & SCHEDULING MODAL (LENGKAP DENGAN FOTO WEBCAM & TEMPLATE PESAN) -->
   <div id="scheduleActionModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card schedule-modal-box">
       <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -447,7 +456,9 @@
         <h3>Tindakan Permohonan Audiensi</h3>
       </div>
 
+      <!-- Kartu Pemohon: Menampilkan Foto Live Capture & Anti Teks Meluber -->
       <div class="applicant-compact-card">
+        <img id="schedModalPhoto" src="" alt="Foto Tamu" class="compact-avatar" title="Foto live webcam pemohon">
         <div class="compact-info">
           <h4 id="schedModalName">-</h4>
           <p id="schedModalCategoryMeta">-</p>
@@ -543,7 +554,7 @@
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Tag script dengan query versioning agar peramban tidak memakai file cache lama -->
-  <script src="script.js?v=5.0"></script>
+  <!-- Skrip Utama -->
+  <script src="script.js?v=6.0"></script>
 </body>
 </html>

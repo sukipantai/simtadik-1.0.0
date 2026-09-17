@@ -26,7 +26,7 @@
   --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Kunci utama pencegah scroll horizontal di semua HP */
+/* Kunci pencegah geser horizontal di seluruh perangkat */
 html, body {
   width: 100%;
   max-width: 100vw;
@@ -232,7 +232,6 @@ body {
   flex-shrink: 0;
 }
 
-/* Kunci anti-lonjong: min-width, min-height, aspect-ratio & flex-shrink: 0 */
 .step-num {
   width: 34px;
   height: 34px;
@@ -695,7 +694,7 @@ body {
   border-collapse: collapse;
   text-align: left;
   font-size: 0.84rem;
-  min-width: 680px; /* Menjaga keterbacaan tabel di layar kecil */
+  min-width: 680px;
 }
 
 .custom-table th {
@@ -769,7 +768,7 @@ body {
 }
 
 /* ==========================================================================
-   TRACKER & MODALS
+   TRACKER & MODALS (DENGAN PERBAIKAN TEKS MELUBER)
    ========================================================================== */
 .tracker-container {
   max-width: 600px;
@@ -915,11 +914,45 @@ body {
   margin-bottom: 0.35rem;
 }
 
+/* Perbaikan khusus teks panjang pemohon agar turun ke bawah */
 .applicant-compact-card {
   background: rgba(0, 0, 0, 0.3);
   padding: 0.85rem;
   border-radius: 10px;
   margin: 1rem 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.compact-info {
+  width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.compact-info h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.compact-info p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.compact-purpose {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .action-tab-group {
@@ -1026,7 +1059,6 @@ body {
     font-size: 0.82rem;
   }
 
-  /* Susunan Stepper di HP: Teks di Bawah Angka, Garis Pas di Tengah */
   .stepper-progress-bar {
     padding: 0;
     margin-bottom: 1.35rem;
@@ -1048,7 +1080,7 @@ body {
 
   .step-line {
     margin: 0 0.25rem;
-    margin-bottom: 1rem; /* Menjaga garis tetap lurus dengan bulatan nomor */
+    margin-bottom: 1rem;
   }
 
   .form-wizard-card {

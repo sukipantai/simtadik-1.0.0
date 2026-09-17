@@ -1,9 +1,9 @@
 /**
  * SISTEM BUKU TAMU DIGITAL & PENJADWALAN JANJI TEMU SEKOLAH
- * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 6.0
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 7.0
  */
 
-const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V6';
+const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V7';
 const ADMIN_SESSION_KEY = 'SMAN1_ADMIN_AUTH_SESSION';
 
 const ADMIN_CREDENTIALS = {
@@ -11,11 +11,11 @@ const ADMIN_CREDENTIALS = {
   password: '1234admin'
 };
 
-// Template Baku Respon Kepala Sekolah
+// Template Respon Kepala Sekolah
 const DEFAULT_APPROVE_TEMPLATE = "Baik, saya tunggu 😊";
 const DEFAULT_REJECT_TEMPLATE = "Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏";
 
-// Global App State
+// Global State
 let appData = {
   appointments: [],
   activeStream: null,
@@ -24,7 +24,7 @@ let appData = {
   selectedTicketForAction: null
 };
 
-// Data Mock Awal (Lengkap dengan Avatar Wajah Simulasi)
+// Mock Data Awal
 const INITIAL_MOCK_DATA = [
   {
     ticketCode: 'TKT-2026-X8K9M2',
@@ -55,7 +55,7 @@ const INITIAL_MOCK_DATA = [
     parentChildName: 'Muhammad Farhan',
     urgency: 'Biasa',
     requestedDate: '2026-09-19',
-    purpose: 'Konsultasi program beasiswa bakat prestasi akademik dan pembinaan olimpiade.',
+    purpose: 'Konsultasi program beasiswa bakat prestasi akademik dan pembinaan olimpiade sains.',
     photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2310b981"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%23059669"/></svg>',
     status: 'Menunggu Konfirmasi',
     scheduledRoom: null,
@@ -74,7 +74,7 @@ const INITIAL_MOCK_DATA = [
     whatsapp: '081398765432',
     urgency: 'Mendesak',
     requestedDate: '2026-09-15',
-    purpose: 'Penyampaian proposal kemitraan beasiswa sains dan teknologi robotika sekolah.',
+    purpose: 'Penyampaian proposal kemitraan beasiswa riset dan teknologi robotika sekolah.',
     photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%23f59e0b"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%23d97706"/></svg>',
     status: 'Ditolak',
     scheduledRoom: null,
@@ -88,7 +88,6 @@ const INITIAL_MOCK_DATA = [
   }
 ];
 
-// Inisialisasi Saat Halaman Dimuat
 document.addEventListener('DOMContentLoaded', () => {
   loadDatabase();
   initializeVisitDateInput();
@@ -114,7 +113,7 @@ function saveDatabase() {
 }
 
 function resetAllData() {
-  if (confirm("Reset ulang seluruh database antrean ke setelan demo awal?")) {
+  if (confirm("Reset ulang seluruh data antrean ke setelan demo awal?")) {
     localStorage.removeItem(STORAGE_KEY);
     appData.appointments = INITIAL_MOCK_DATA;
     saveDatabase();
@@ -133,7 +132,7 @@ function initializeVisitDateInput() {
 }
 
 // ==========================================================================
-// NAVIGATION & VIEW CONTROLLER
+// NAVIGATION & VIEW SWITCHER
 // ==========================================================================
 function switchView(viewId) {
   const views = ['guest-portal', 'tracking-portal', 'admin-portal'];
@@ -275,7 +274,7 @@ async function startCamera() {
     console.warn('Webcam permission not granted:', err);
     if (placeholder) {
       placeholder.classList.remove('hidden');
-      errMsg.innerText = 'Izin kamera belum diizinkan atau kamera tidak terdeteksi.';
+      errMsg.innerText = 'Izin kamera belum diaktifkan atau kamera tidak terdeteksi.';
     }
   }
 }
@@ -636,10 +635,10 @@ function openScheduleModal(ticketCode) {
   document.getElementById('schedModalCategoryMeta').innerText = `${item.category} • Urgensi: ${item.urgency}`;
   document.getElementById('schedModalPurpose').innerText = `"${item.purpose}"`;
 
-  // Render Foto Live Wajah Pemohon di Modal
+  // Render Foto Live Wajah Pemohon di Modal (Posisi Tengah)
   const modalPhoto = document.getElementById('schedModalPhoto');
   if (modalPhoto) {
-    modalPhoto.src = item.photoBase64 || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><rect width="60" height="60" fill="%230f172a"/><circle cx="30" cy="24" r="12" fill="%2338bdf8"/><path d="M12 52 C12 40, 48 40, 48 52" fill="%232563eb"/></svg>';
+    modalPhoto.src = item.photoBase64 || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2338bdf8"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%232563eb"/></svg>';
   }
 
   document.getElementById('schedRoom').value = item.scheduledRoom || 'Ruang Kepala Sekolah';
@@ -662,6 +661,28 @@ function openScheduleModal(ticketCode) {
 function closeScheduleModal() {
   document.getElementById('scheduleActionModal').classList.add('hidden');
   appData.selectedTicketForAction = null;
+}
+
+// Fitur Zoom Foto Pemohon
+function zoomSchedPhoto() {
+  const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
+  if (!item) return;
+
+  const zoomedImg = document.getElementById('zoomedPhotoImg');
+  const zoomTitle = document.getElementById('zoomModalApplicantName');
+  
+  if (zoomedImg) {
+    zoomedImg.src = item.photoBase64 || '';
+  }
+  if (zoomTitle) {
+    zoomTitle.innerText = item.fullName;
+  }
+
+  document.getElementById('photoZoomModal').classList.remove('hidden');
+}
+
+function closePhotoZoomModal() {
+  document.getElementById('photoZoomModal').classList.add('hidden');
 }
 
 function switchActionTab(tab) {

@@ -578,7 +578,7 @@ body {
 }
 
 /* ==========================================================================
-   ADMIN DASHBOARD & TABLE
+   ADMIN DASHBOARD & SUB-VIEW TABS
    ========================================================================== */
 .admin-dashboard-full {
   width: 100%;
@@ -656,6 +656,45 @@ body {
   color: var(--text-muted);
 }
 
+/* Sub-View Switcher Bar */
+.admin-subview-nav {
+  display: flex;
+  gap: 0.65rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.85rem;
+  overflow-x: auto;
+}
+
+.admin-subtab-btn {
+  background: rgba(14, 21, 38, 0.6);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  padding: 0.55rem 1.1rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  transition: var(--transition-smooth);
+}
+
+.admin-subtab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-subtab-btn.active {
+  background: var(--cyan-glow-dim);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: var(--cyan-glow);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+/* Table Subview Layout */
 .table-section-full {
   padding: 1.5rem;
   width: 100%;
@@ -770,7 +809,320 @@ body {
 }
 
 /* ==========================================================================
-   TRACKER & MODALS (DENGAN TAMPILAN FOTO DI TENGAH & ZOOM LIGHTBOX)
+   KALENDER VISUAL MINGGUAN (TIMELINE GRID)
+   ========================================================================== */
+.calendar-wrapper-card {
+  padding: 1.75rem;
+}
+
+.calendar-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.calendar-title-box h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.calendar-title-box p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.calendar-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.calendar-grid-container {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.85rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.calendar-day-col {
+  background: rgba(14, 21, 38, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  min-height: 380px;
+}
+
+.cal-col-header {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px 12px 0 0;
+}
+
+.cal-day-name {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--cyan-glow);
+  text-transform: uppercase;
+}
+
+.cal-day-date {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.calendar-day-col.is-today .cal-col-header {
+  background: var(--cyan-glow-dim);
+  border-bottom-color: rgba(56, 189, 248, 0.35);
+}
+
+.cal-events-list {
+  padding: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+}
+
+.cal-event-card {
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-left: 3px solid var(--cyan-glow);
+  border-radius: 8px;
+  padding: 0.65rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cal-event-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--cyan-glow);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+}
+
+.cal-event-card.urgent {
+  border-left-color: var(--rose-danger);
+}
+
+.cal-event-time {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--cyan-glow);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.cal-event-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0.25rem 0 0.15rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.cal-event-room {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.cal-empty-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-style: italic;
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+}
+
+/* ==========================================================================
+   BAGAN STATISTIK & HEATMAP JAM SIBUK
+   ========================================================================== */
+.analytics-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 1.25rem;
+}
+
+.analytics-card {
+  padding: 1.75rem;
+}
+
+.analytics-card-header {
+  margin-bottom: 1.25rem;
+}
+
+.analytics-card-header h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-main);
+}
+
+.analytics-card-header h3 i {
+  color: var(--cyan-glow);
+}
+
+.analytics-card-header p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Category Progress Bars */
+.category-bars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.cat-bar-item {
+  width: 100%;
+}
+
+.cat-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.cat-bar-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cat-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary-blue), var(--cyan-glow));
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.status-summary-pills {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.status-pill-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.status-pill-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  display: block;
+}
+
+.status-pill-lbl {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+/* Heatmap Grid */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.heatmap-scroll-area {
+  overflow-x: auto;
+  width: 100%;
+  padding-bottom: 0.5rem;
+}
+
+.heatmap-matrix-grid {
+  display: grid;
+  grid-template-columns: 85px repeat(5, 1fr);
+  gap: 6px;
+  min-width: 480px;
+}
+
+.heat-cell {
+  height: 38px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.76rem;
+  font-weight: 700;
+  transition: transform 0.15s ease;
+  cursor: default;
+}
+
+.heat-cell:hover {
+  transform: scale(1.08);
+}
+
+.heat-header-cell {
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.heat-hour-label {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  justify-content: flex-start;
+  padding-left: 0.25rem;
+}
+
+/* Heatmap Density Colors */
+.heat-0 { background: rgba(255, 255, 255, 0.03); color: var(--text-dim); border: 1px solid rgba(255, 255, 255, 0.04); }
+.heat-1 { background: rgba(56, 189, 248, 0.2); color: var(--cyan-glow); border: 1px solid rgba(56, 189, 248, 0.35); }
+.heat-2 { background: rgba(37, 99, 235, 0.55); color: #fff; border: 1px solid rgba(56, 189, 248, 0.6); box-shadow: 0 0 10px rgba(37, 99, 235, 0.4); }
+.heat-3 { background: linear-gradient(135deg, #2563EB, #38BDF8); color: #090D16; font-weight: 800; border: 1px solid #38BDF8; box-shadow: 0 0 14px rgba(56, 189, 248, 0.6); }
+
+/* ==========================================================================
+   TRACKER & MODALS (FOTO DI ATAS TENGAH & ANTI-MELUBER)
    ========================================================================== */
 .tracker-container {
   max-width: 600px;
@@ -921,68 +1273,41 @@ body {
   margin-bottom: 0.35rem;
 }
 
-/* ==========================================================================
-   KARTU PEMOHON DI MODAL: FOTO TENGAH & EFEK ZOOM INTERAKTIF
-   ========================================================================== */
+/* Kartu Pemohon: Foto Terkunci 96x96 di Atas Tengah */
 .applicant-card-centered {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   background: rgba(0, 0, 0, 0.35);
-  padding: 1.25rem 1rem;
+  padding: 1.15rem 1rem;
   border-radius: 14px;
   margin: 1rem 0 1.25rem;
   border: 1px solid var(--border-subtle);
   width: 100%;
 }
 
-.photo-zoom-trigger {
-  position: relative;
-  width: 110px;
-  height: 110px;
-  border-radius: 18px;
-  overflow: hidden;
+.applicant-photo-center {
+  width: 96px !important;
+  height: 96px !important;
+  max-width: 96px !important;
+  max-height: 96px !important;
+  border-radius: 14px;
+  object-fit: cover;
+  background: #050811;
+  border: 2px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 12px rgba(56, 189, 248, 0.2);
   cursor: pointer;
-  margin-bottom: 0.85rem;
-  border: 2px solid rgba(56, 189, 248, 0.4);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.2);
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 0.75rem;
+  display: block;
   flex-shrink: 0;
 }
 
-.photo-zoom-trigger:hover {
+.applicant-photo-center:hover {
   transform: scale(1.05);
   border-color: var(--cyan-glow);
-  box-shadow: 0 0 22px rgba(56, 189, 248, 0.45);
-}
-
-.applicant-photo-center {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  background: #050811;
-  display: block;
-}
-
-.zoom-overlay-hint {
-  position: absolute;
-  inset: 0;
-  background: rgba(9, 13, 22, 0.65);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--cyan-glow);
-  font-size: 0.74rem;
-  font-weight: 700;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  gap: 0.3rem;
-}
-
-.photo-zoom-trigger:hover .zoom-overlay-hint {
-  opacity: 1;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.45);
 }
 
 .compact-info {
@@ -1059,33 +1384,31 @@ body {
   margin-bottom: 1rem;
 }
 
-/* ==========================================================================
-   MODAL ZOOM LIGHTBOX (FOTO RESOLUSI PENUH)
-   ========================================================================== */
-.zoom-modal-dialog {
+/* Modal Full Foto */
+.photo-full-dialog {
   max-width: 440px;
   text-align: center;
   padding: 1.75rem 1.35rem;
-  animation: zoomInLightBox 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: photoFullAppear 0.22s ease-out;
 }
 
-@keyframes zoomInLightBox {
-  from { transform: scale(0.9); opacity: 0; }
+@keyframes photoFullAppear {
+  from { transform: scale(0.92); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
-.zoom-header {
+.photo-full-header {
   margin-bottom: 1rem;
 }
 
-.zoom-applicant-title {
+.photo-full-name {
   font-size: 1.15rem;
   font-weight: 800;
   color: #fff;
   margin-top: 0.35rem;
 }
 
-.zoom-image-wrapper {
+.photo-full-img-box {
   width: 100%;
   max-height: 55vh;
   border-radius: 14px;
@@ -1099,7 +1422,7 @@ body {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
 }
 
-.zoom-image-wrapper img {
+.photo-full-img-box img {
   width: 100%;
   height: auto;
   max-height: 52vh;
@@ -1107,7 +1430,7 @@ body {
   display: block;
 }
 
-.zoom-footer-hint {
+.photo-full-hint {
   font-size: 0.74rem;
   color: var(--text-dim);
 }
@@ -1141,8 +1464,18 @@ body {
 .toast-info i { color: var(--cyan-glow); }
 
 /* ==========================================================================
-   MEDIA QUERIES SMARTPHONE (LAYAR <= 640px)
+   PENYESUAIAN KHUSUS SMARTPHONE (LAYAR <= 768px)
    ========================================================================== */
+@media (max-width: 768px) {
+  .analytics-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .calendar-day-col {
+    min-width: 140px;
+  }
+}
+
 @media (max-width: 640px) {
   .nav-container {
     padding: 0.65rem 0.85rem;

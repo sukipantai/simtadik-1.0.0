@@ -1,9 +1,9 @@
 /**
  * SISTEM BUKU TAMU DIGITAL & PENJADWALAN JANJI TEMU SEKOLAH
- * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 7.0
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 9.0 (WITH TIMELINE CALENDAR & HEATMAP)
  */
 
-const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V7';
+const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V9';
 const ADMIN_SESSION_KEY = 'SMAN1_ADMIN_AUTH_SESSION';
 
 const ADMIN_CREDENTIALS = {
@@ -21,7 +21,9 @@ let appData = {
   activeStream: null,
   capturedBase64: null,
   currentWizardStep: 1,
-  selectedTicketForAction: null
+  selectedTicketForAction: null,
+  calendarOffsetWeeks: 0,
+  activeAdminSubView: 'table'
 };
 
 // Mock Data Awal
@@ -54,15 +56,15 @@ const INITIAL_MOCK_DATA = [
     whatsapp: '085712349988',
     parentChildName: 'Muhammad Farhan',
     urgency: 'Biasa',
-    requestedDate: '2026-09-19',
+    requestedDate: '2026-09-16',
     purpose: 'Konsultasi program beasiswa bakat prestasi akademik dan pembinaan olimpiade sains.',
     photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2310b981"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%23059669"/></svg>',
-    status: 'Menunggu Konfirmasi',
-    scheduledRoom: null,
-    scheduledDate: null,
-    scheduledStart: null,
-    scheduledEnd: null,
-    approvalMessage: '',
+    status: 'Disetujui',
+    scheduledRoom: 'Ruang Tamu Khusus',
+    scheduledDate: '2026-09-16',
+    scheduledStart: '10:00',
+    scheduledEnd: '11:00',
+    approvalMessage: DEFAULT_APPROVE_TEMPLATE,
     rejectionReason: '',
     checkInAt: null,
     createdAt: '2026-09-15T07:15:00.000Z'
@@ -85,6 +87,27 @@ const INITIAL_MOCK_DATA = [
     rejectionReason: DEFAULT_REJECT_TEMPLATE,
     checkInAt: null,
     createdAt: '2026-09-13T10:00:00.000Z'
+  },
+  {
+    ticketCode: 'TKT-2026-W3R8Z1',
+    category: 'Siswa',
+    fullName: 'Ahmad Raihan Pratama',
+    whatsapp: '085811223344',
+    studentNisn: '0089123456',
+    studentClass: 'XII MIPA 2',
+    urgency: 'Penting',
+    requestedDate: '2026-09-17',
+    purpose: 'Permohonan surat rekomendasi pimpinan untuk seleksi beasiswa kepemimpinan nasional.',
+    photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%23a855f7"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%237c3aed"/></svg>',
+    status: 'Disetujui',
+    scheduledRoom: 'Ruang Kepala Sekolah',
+    scheduledDate: '2026-09-17',
+    scheduledStart: '13:00',
+    scheduledEnd: '14:00',
+    approvalMessage: 'Bawa serta berkas portofolio prestasi ya.',
+    rejectionReason: '',
+    checkInAt: null,
+    createdAt: '2026-09-15T09:00:00.000Z'
   }
 ];
 
@@ -489,7 +512,7 @@ function trackTicketStatus() {
           <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Tanggal Pengajuan: <strong style="color:#fff;">${found.visitDate || found.requestedDate}</strong></p>
         </div>
       </div>
-      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin-top:0.5rem; font-weight:600;">Ruangan: ${found.scheduledRoom} (${found.scheduledStart} - ${found.scheduledEnd} WIB)</p>` : ''}
+      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin-top:0.5rem; font-weight:600;">Ruangan: ${found.scheduledRoom} (${found.scheduledStart} -${found.scheduledEnd} WIB)</p>` : ''}
       ${hostNoteHTML}
     </div>
   `;
@@ -497,11 +520,39 @@ function trackTicketStatus() {
 }
 
 // ==========================================================================
-// ADMIN DASHBOARD
+// ADMIN DASHBOARD & SUBVIEWS CONTROLLER
 // ==========================================================================
+function switchAdminSubView(subview) {
+  appData.activeAdminSubView = subview;
+
+  // Tombol tab
+  document.getElementById('subtabBtnTable').classList.remove('active');
+  document.getElementById('subtabBtnCalendar').classList.remove('active');
+  document.getElementById('subtabBtnAnalytics').classList.remove('active');
+
+  // Konten panel
+  document.getElementById('adminSubViewTable').classList.add('hidden');
+  document.getElementById('adminSubViewCalendar').classList.add('hidden');
+  document.getElementById('adminSubViewAnalytics').classList.add('hidden');
+
+  if (subview === 'table') {
+    document.getElementById('subtabBtnTable').classList.add('active');
+    document.getElementById('adminSubViewTable').classList.remove('hidden');
+    renderAdminQueueTable();
+  } else if (subview === 'calendar') {
+    document.getElementById('subtabBtnCalendar').classList.add('active');
+    document.getElementById('adminSubViewCalendar').classList.remove('hidden');
+    renderWeeklyCalendar();
+  } else if (subview === 'analytics') {
+    document.getElementById('subtabBtnAnalytics').classList.add('active');
+    document.getElementById('adminSubViewAnalytics').classList.remove('hidden');
+    renderAnalyticsAndHeatmap();
+  }
+}
+
 function renderAdminDashboard() {
   renderMetrics();
-  renderAdminQueueTable();
+  switchAdminSubView(appData.activeAdminSubView || 'table');
 }
 
 function renderMetrics() {
@@ -610,6 +661,213 @@ function renderAdminQueueTable() {
   }).join('');
 }
 
+// ==========================================================================
+// FITUR BARU 1: KALENDER VISUAL MINGGUAN (TIMELINE CALENDAR)
+// ==========================================================================
+function changeCalendarWeek(offset) {
+  appData.calendarOffsetWeeks += offset;
+  renderWeeklyCalendar();
+}
+
+function resetCalendarToCurrentWeek() {
+  appData.calendarOffsetWeeks = 0;
+  renderWeeklyCalendar();
+}
+
+function getStartOfWeek(date, offsetWeeks = 0) {
+  const d = new Date(date);
+  const day = d.getDay();
+  // Set ke hari Senin (1)
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff + (offsetWeeks * 7));
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function renderWeeklyCalendar() {
+  const baseDate = new Date(); // Hari ini
+  const monday = getStartOfWeek(baseDate, appData.calendarOffsetWeeks);
+  const dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const grid = document.getElementById('calendarGridWeek');
+  
+  // Format tanggal rentang minggu
+  const saturday = new Date(monday);
+  saturday.setDate(monday.getDate() + 5);
+  
+  const options = { day: 'numeric', month: 'short', year: 'numeric' };
+  document.getElementById('calWeekRangeLabel').innerText = 
+    `Minggu: ${monday.toLocaleDateString('id-ID', options)} - ${saturday.toLocaleDateString('id-ID', options)}`;
+
+  let html = '';
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  for (let i = 0; i < 6; i++) {
+    const currentDay = new Date(monday);
+    currentDay.setDate(monday.getDate() + i);
+    const dateISO = currentDay.toISOString().split('T')[0];
+    const isToday = (dateISO === todayStr);
+
+    // Ambil jadwal pertemuan yang disetujui pada tanggal ini
+    const dayAppointments = appData.appointments.filter(a => {
+      const matchDate = (a.scheduledDate === dateISO || a.requestedDate === dateISO);
+      return matchDate && (a.status === 'Disetujui' || a.status === 'Checked-In');
+    });
+
+    let eventsHTML = '';
+    if (dayAppointments.length === 0) {
+      eventsHTML = `<div class="cal-empty-day">Tidak ada agenda audiensi</div>`;
+    } else {
+      eventsHTML = dayAppointments.map(app => {
+        const timeDisplay = app.scheduledStart ? `${app.scheduledStart} - ${app.scheduledEnd}` : 'Jam Belum Ditentukan';
+        const isUrgent = (app.urgency === 'Mendesak');
+        return `
+          <div class="cal-event-card ${isUrgent ? 'urgent' : ''}" onclick="openScheduleModal('${app.ticketCode}')" title="Klik untuk meninjau/mengubah jadwal">
+            <span class="cal-event-time"><i class="fa-regular fa-clock"></i> ${timeDisplay}</span>
+            <div class="cal-event-title">${escapeHtml(app.fullName)}</div>
+            <div class="cal-event-room"><i class="fa-solid fa-door-open"></i> ${app.scheduledRoom || 'Ruang Pimpinan'}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    html += `
+      <div class="calendar-day-col ${isToday ? 'is-today' : ''}">
+        <div class="cal-col-header">
+          <span class="cal-day-name">${dayNames[i]}</span>
+          <span class="cal-day-date">${currentDay.getDate()}</span>
+        </div>
+        <div class="cal-events-list">
+          ${eventsHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  grid.innerHTML = html;
+}
+
+// ==========================================================================
+// FITUR BARU 2: ANALITIK KATEGORI & HEATMAP JAM SIBUK
+// ==========================================================================
+function renderAnalyticsAndHeatmap() {
+  renderCategoryBreakdown();
+  renderHeatmapMatrix();
+}
+
+function renderCategoryBreakdown() {
+  const total = appData.appointments.length;
+  const categories = ['Siswa', 'Guru/Staf', 'Orang Tua Murid', 'Instansi / Kedinasan', 'Umum'];
+  const counts = {};
+  categories.forEach(c => counts[c] = 0);
+
+  appData.appointments.forEach(a => {
+    if (counts[a.category] !== undefined) counts[a.category]++;
+    else counts['Umum']++;
+  });
+
+  const barsContainer = document.getElementById('categoryBarsContainer');
+  barsContainer.innerHTML = categories.map(cat => {
+    const count = counts[cat];
+    const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+    return `
+      <div class="cat-bar-item">
+        <div class="cat-bar-labels">
+          <span style="color:var(--text-main);">${cat}</span>
+          <span style="color:var(--cyan-glow);">${count} (${percent}%)</span>
+        </div>
+        <div class="cat-bar-track">
+          <div class="cat-bar-fill" style="width: ${percent}%;"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Status Summary Cards
+  const approved = appData.appointments.filter(a => a.status === 'Disetujui').length;
+  const pending = appData.appointments.filter(a => a.status === 'Menunggu Konfirmasi').length;
+  const checkedIn = appData.appointments.filter(a => a.status === 'Checked-In' || a.status === 'Selesai').length;
+  const rejected = appData.appointments.filter(a => a.status === 'Ditolak').length;
+
+  document.getElementById('statusSummaryPills').innerHTML = `
+    <div class="status-pill-card">
+      <span class="status-pill-val" style="color:var(--amber-warning);">${pending}</span>
+      <span class="status-pill-lbl">Menunggu Disposisi</span>
+    </div>
+    <div class="status-pill-card">
+      <span class="status-pill-val" style="color:var(--emerald-green);">${approved}</span>
+      <span class="status-pill-lbl">Disetujui Aktif</span>
+    </div>
+    <div class="status-pill-card">
+      <span class="status-pill-val" style="color:var(--cyan-glow);">${checkedIn}</span>
+      <span class="status-pill-lbl">Kehadiran Lobi</span>
+    </div>
+    <div class="status-pill-card">
+      <span class="status-pill-val" style="color:var(--rose-danger);">${rejected}</span>
+      <span class="status-pill-lbl">Ditolak</span>
+    </div>
+  `;
+}
+
+function renderHeatmapMatrix() {
+  const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+  const hours = [
+    { label: '08.00 - 09.00', start: 8 },
+    { label: '09.00 - 10.00', start: 9 },
+    { label: '10.00 - 11.00', start: 10 },
+    { label: '11.00 - 12.00', start: 11 },
+    { label: '13.00 - 14.00', start: 13 },
+    { label: '14.00 - 15.00', start: 14 }
+  ];
+
+  // Inisialisasi matriks penghitung
+  // density[hourIndex][dayIndex]
+  const density = Array(hours.length).fill(0).map(() => Array(days.length).fill(0));
+
+  // Hitung kepadatan dari janji temu yang disetujui / checked-in
+  appData.appointments.forEach(app => {
+    if ((app.status === 'Disetujui' || app.status === 'Checked-In') && app.scheduledDate && app.scheduledStart) {
+      const dateObj = new Date(app.scheduledDate);
+      let dayIndex = dateObj.getDay() - 1; // 0 = Senin, 4 = Jumat
+      if (dayIndex >= 0 && dayIndex < 5) {
+        const startHour = parseInt(app.scheduledStart.split(':')[0], 10);
+        hours.forEach((h, hIdx) => {
+          if (startHour === h.start) {
+            density[hIdx][dayIndex]++;
+          }
+        });
+      }
+    }
+  });
+
+  const matrixEl = document.getElementById('heatmapMatrix');
+  let html = '';
+
+  // Header Baris: Pojok kosong + Nama Hari
+  html += `<div class="heat-cell heat-header-cell">Waktu</div>`;
+  days.forEach(d => {
+    html += `<div class="heat-cell heat-header-cell">${d}</div>`;
+  });
+
+  // Isi Tiap Jam
+  hours.forEach((h, hIdx) => {
+    html += `<div class="heat-cell heat-hour-label">${h.label}</div>`;
+    days.forEach((d, dIdx) => {
+      const count = density[hIdx][dIdx];
+      let heatClass = 'heat-0';
+      if (count === 1) heatClass = 'heat-1';
+      else if (count === 2) heatClass = 'heat-2';
+      else if (count >= 3) heatClass = 'heat-3';
+
+      html += `<div class="heat-cell ${heatClass}" title="${days[dIdx]}, ${h.label}: ${count} sesi audiensi">${count > 0 ? count : '-'}</div>`;
+    });
+  });
+
+  matrixEl.innerHTML = html;
+}
+
+// ==========================================================================
+// SCHEDULING ENGINE & ACTION MODAL
+// ==========================================================================
 function getBadgeClass(status) {
   switch (status) {
     case 'Menunggu Konfirmasi': return 'badge-pending';
@@ -621,9 +879,6 @@ function getBadgeClass(status) {
   }
 }
 
-// ==========================================================================
-// SCHEDULING ENGINE & ACTION MODAL
-// ==========================================================================
 function openScheduleModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
   if (!item) return;
@@ -635,7 +890,7 @@ function openScheduleModal(ticketCode) {
   document.getElementById('schedModalCategoryMeta').innerText = `${item.category} • Urgensi: ${item.urgency}`;
   document.getElementById('schedModalPurpose').innerText = `"${item.purpose}"`;
 
-  // Render Foto Live Wajah Pemohon di Modal (Posisi Tengah)
+  // Render Foto Live Pemohon (Terkunci 96x96 px di atas tengah)
   const modalPhoto = document.getElementById('schedModalPhoto');
   if (modalPhoto) {
     modalPhoto.src = item.photoBase64 || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2338bdf8"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%232563eb"/></svg>';
@@ -663,26 +918,25 @@ function closeScheduleModal() {
   appData.selectedTicketForAction = null;
 }
 
-// Fitur Zoom Foto Pemohon
-function zoomSchedPhoto() {
+function openFullPhotoModal() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
 
-  const zoomedImg = document.getElementById('zoomedPhotoImg');
-  const zoomTitle = document.getElementById('zoomModalApplicantName');
+  const fullImg = document.getElementById('photoFullElement');
+  const fullTitle = document.getElementById('photoFullTitle');
   
-  if (zoomedImg) {
-    zoomedImg.src = item.photoBase64 || '';
+  if (fullImg) {
+    fullImg.src = item.photoBase64 || '';
   }
-  if (zoomTitle) {
-    zoomTitle.innerText = item.fullName;
+  if (fullTitle) {
+    fullTitle.innerText = item.fullName;
   }
 
-  document.getElementById('photoZoomModal').classList.remove('hidden');
+  document.getElementById('photoFullModal').classList.remove('hidden');
 }
 
-function closePhotoZoomModal() {
-  document.getElementById('photoZoomModal').classList.add('hidden');
+function closeFullPhotoModal() {
+  document.getElementById('photoFullModal').classList.add('hidden');
 }
 
 function switchActionTab(tab) {

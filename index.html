@@ -285,7 +285,7 @@
         <div class="admin-topbar">
           <div class="admin-welcome">
             <span class="admin-role-badge"><i class="fa-solid fa-user-tie"></i> Kepala Sekolah / Host Officer</span>
-            <h2>Panel Disposisi & Jadwal Audiensi</h2>
+            <h2>Panel Disposisi & Analitik Pimpinan</h2>
           </div>
           <div class="admin-controls">
             <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke setelan awal bawaan">
@@ -300,6 +300,7 @@
           </div>
         </div>
 
+        <!-- Metric Summary Cards -->
         <div class="metrics-grid">
           <div class="metric-card glass-card">
             <div class="metric-icon metric-blue"><i class="fa-solid fa-inbox"></i></div>
@@ -331,44 +332,126 @@
           </div>
         </div>
 
-        <div class="glass-card table-section-full">
-          <div class="table-toolbar">
-            <div class="table-title-area">
-              <h3>Antrean Tamu Masuk</h3>
-              <p>Daftar permohonan audiensi resmi beserta catatan tindak lanjut pimpinan.</p>
-            </div>
-            <div class="table-filters">
-              <div class="filter-group">
-                <label><i class="fa-solid fa-filter"></i> Filter Status:</label>
-                <select id="tableFilterStatus" class="form-control form-control-sm" onchange="renderAdminQueueTable()">
-                  <option value="ALL">Semua Status</option>
-                  <option value="Menunggu Konfirmasi">Menunggu Konfirmasi</option>
-                  <option value="Disetujui">Disetujui</option>
-                  <option value="Checked-In">Checked-In / Hadir</option>
-                  <option value="Selesai">Selesai</option>
-                  <option value="Ditolak">Ditolak</option>
-                </select>
+        <!-- Host Sub-Navigation Tabs -->
+        <div class="admin-subview-nav">
+          <button class="admin-subtab-btn active" id="subtabBtnTable" onclick="switchAdminSubView('table')">
+            <i class="fa-solid fa-table-list"></i> Tabel Antrean
+          </button>
+          <button class="admin-subtab-btn" id="subtabBtnCalendar" onclick="switchAdminSubView('calendar')">
+            <i class="fa-solid fa-calendar-week"></i> Kalender Mingguan
+          </button>
+          <button class="admin-subtab-btn" id="subtabBtnAnalytics" onclick="switchAdminSubView('analytics')">
+            <i class="fa-solid fa-chart-pie"></i> Statistik & Heatmap
+          </button>
+        </div>
+
+        <!-- SUBVIEW A: TABEL ANTREAN (DEFAULT) -->
+        <div id="adminSubViewTable" class="admin-subview-panel">
+          <div class="glass-card table-section-full">
+            <div class="table-toolbar">
+              <div class="table-title-area">
+                <h3>Antrean Tamu Masuk</h3>
+                <p>Daftar permohonan audiensi resmi beserta catatan tindak lanjut pimpinan.</p>
+              </div>
+              <div class="table-filters">
+                <div class="filter-group">
+                  <label><i class="fa-solid fa-filter"></i> Filter Status:</label>
+                  <select id="tableFilterStatus" class="form-control form-control-sm" onchange="renderAdminQueueTable()">
+                    <option value="ALL">Semua Status</option>
+                    <option value="Menunggu Konfirmasi">Menunggu Konfirmasi</option>
+                    <option value="Disetujui">Disetujui</option>
+                    <option value="Checked-In">Checked-In / Hadir</option>
+                    <option value="Selesai">Selesai</option>
+                    <option value="Ditolak">Ditolak</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
 
-          <table class="custom-table" id="adminAppointmentsTable">
-            <thead>
-              <tr>
-                <th style="width: 13%;">Kode Tiket</th>
-                <th style="width: 19%;">Pemohon & Kontak</th>
-                <th style="width: 15%;">Kategori Tamu</th>
-                <th style="width: 11%;">Tgl Diminta</th>
-                <th style="width: 16%;">Alokasi Ruang & Jam</th>
-                <th style="width: 16%;">Status & Catatan Kepsek</th>
-                <th style="width: 10%; text-align: right;">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="adminTableBody">
-              <!-- Render via script.js -->
-            </tbody>
-          </table>
+            <table class="custom-table" id="adminAppointmentsTable">
+              <thead>
+                <tr>
+                  <th style="width: 13%;">Kode Tiket</th>
+                  <th style="width: 19%;">Pemohon & Kontak</th>
+                  <th style="width: 15%;">Kategori Tamu</th>
+                  <th style="width: 11%;">Tgl Diminta</th>
+                  <th style="width: 16%;">Alokasi Ruang & Jam</th>
+                  <th style="width: 16%;">Status & Catatan Kepsek</th>
+                  <th style="width: 10%; text-align: right;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="adminTableBody">
+                <!-- Render via script.js -->
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        <!-- SUBVIEW B: KALENDER VISUAL MINGGUAN (TIMELINE VIEW) -->
+        <div id="adminSubViewCalendar" class="admin-subview-panel hidden">
+          <div class="glass-card calendar-wrapper-card">
+            <div class="calendar-topbar">
+              <div class="calendar-title-box">
+                <h3 id="calWeekRangeLabel">Minggu: Memuat...</h3>
+                <p>Jadwal audiensi terjadwal pada Ruang Kepala Sekolah & Ruang Pimpinan.</p>
+              </div>
+              <div class="calendar-nav-buttons">
+                <button class="btn btn-outline btn-sm" onclick="changeCalendarWeek(-1)"><i class="fa-solid fa-chevron-left"></i> Minggu Lalu</button>
+                <button class="btn btn-primary btn-sm" onclick="resetCalendarToCurrentWeek()">Minggu Ini</button>
+                <button class="btn btn-outline btn-sm" onclick="changeCalendarWeek(1)">Minggu Depan <i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+            </div>
+
+            <!-- Grid 6 Hari: Senin s/d Sabtu -->
+            <div class="calendar-grid-container" id="calendarGridWeek">
+              <!-- Render via script.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBVIEW C: BAGAN STATISTIK & HEATMAP JAM SIBUK -->
+        <div id="adminSubViewAnalytics" class="admin-subview-panel hidden">
+          <div class="analytics-layout-grid">
+            
+            <!-- Bagan Distribusi Kategori & Status -->
+            <div class="glass-card analytics-card">
+              <div class="analytics-card-header">
+                <h3><i class="fa-solid fa-chart-simple"></i> Komposisi Kategori Pemohon</h3>
+                <p>Proporsi latar belakang tamu yang mengajukan audiensi resmi.</p>
+              </div>
+              <div id="categoryBarsContainer" class="category-bars-list">
+                <!-- Injected via script.js -->
+              </div>
+
+              <div class="status-summary-pills" id="statusSummaryPills">
+                <!-- Injected via script.js -->
+              </div>
+            </div>
+
+            <!-- Heatmap Kepadatan Jam Sibuk -->
+            <div class="glass-card analytics-card">
+              <div class="analytics-card-header">
+                <h3><i class="fa-solid fa-fire-flame-curved"></i> Heatmap Jam Sibuk Audiensi</h3>
+                <p>Konsentrasi kepadatan jadwal pertemuan berdasarkan hari dan rentang jam.</p>
+              </div>
+              
+              <div class="heatmap-legend">
+                <span class="legend-item"><span class="legend-box heat-0"></span> Kosong (0)</span>
+                <span class="legend-item"><span class="legend-box heat-1"></span> Tenang (1)</span>
+                <span class="legend-item"><span class="legend-box heat-2"></span> Ramai (2)</span>
+                <span class="legend-item"><span class="legend-box heat-3"></span> Padat (3+)</span>
+              </div>
+
+              <div class="heatmap-scroll-area">
+                <div class="heatmap-matrix-grid" id="heatmapMatrix">
+                  <!-- Injected via script.js -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -445,7 +528,7 @@
     </div>
   </div>
 
-  <!-- 3. ACTION & SCHEDULING MODAL (FOTO DI ATAS TENGAH, BERSIH TANPA TOMBOL PERBESAR) -->
+  <!-- 3. ACTION & SCHEDULING MODAL -->
   <div id="scheduleActionModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card schedule-modal-box">
       <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -455,7 +538,7 @@
         <h3>Tindakan Permohonan Audiensi</h3>
       </div>
 
-      <!-- Kartu Pemohon: Foto Terkunci di Atas Tengah & Bisa Diklik Langsung untuk Full View -->
+      <!-- Kartu Pemohon Terpusat -->
       <div class="applicant-card-centered">
         <img id="schedModalPhoto" src="" alt="Foto Tamu" class="applicant-photo-center" onclick="openFullPhotoModal()" title="Klik foto untuk melihat ukuran penuh">
         <div class="compact-info">
@@ -568,7 +651,7 @@
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Skrip Utama -->
-  <script src="script.js?v=8.0"></script>
+  <!-- Skrip Utama Versi 9.0 -->
+  <script src="script.js?v=9.0"></script>
 </body>
 </html>

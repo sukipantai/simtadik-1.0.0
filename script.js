@@ -1,9 +1,9 @@
 /**
- * SISTEM BUKU TAMU DIGITAL & PENJADWALAN JANJI TEMU SEKOLAH
- * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 10.1 (STABLE CLIENT-SIDE)
+ * SISTEM BUKU TAMU DIGITAL & E-DISPENSASI TERPADU
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.2 (FULL INTEGRATED)
  */
 
-const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V10';
+const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V11';
 const ADMIN_SESSION_KEY = 'SMAN1_ADMIN_AUTH_SESSION';
 
 const ADMIN_CREDENTIALS = {
@@ -11,11 +11,28 @@ const ADMIN_CREDENTIALS = {
   password: '1234admin'
 };
 
-// Template Baku Respon Pimpinan
-const DEFAULT_APPROVE_TEMPLATE = "Baik, saya tunggu 😊";
-const DEFAULT_REJECT_TEMPLATE = "Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏";
+// Template Resmi Bahasa Dinas SMANSAKA
+const DEFAULT_APPROVE_TEMPLATE = "Permohonan audiensi disetujui. Harap hadir tepat waktu di lokasi yang telah ditentukan dengan membawa tanda pengenal.";
+const DEFAULT_REJECT_TEMPLATE = "Mohon maaf, permohonan audiensi belum dapat dipenuhi sehubungan dengan adanya agenda kedinasan pimpinan pada waktu bersamaan.";
 
-// Global State Aplikasi
+// Master Roster Jam Pelajaran SMAN 1 Kandangan (Format 24 Jam WIB)
+const ROSTER_SEKOLAH = [
+  { no: 1,  nama: 'Jam ke-1',  mulai: '07:00', selesai: '07:40', tipe: 'belajar' },
+  { no: 2,  nama: 'Jam ke-2',  mulai: '07:40', selesai: '08:20', tipe: 'belajar' },
+  { no: 3,  nama: 'Jam ke-3',  mulai: '08:20', selesai: '09:00', tipe: 'belajar' },
+  { no: 4,  nama: 'Jam ke-4',  mulai: '09:00', selesai: '09:40', tipe: 'belajar' },
+  { no: 0,  nama: 'Istirahat 1', mulai: '09:40', selesai: '09:55', tipe: 'istirahat' },
+  { no: 5,  nama: 'Jam ke-5',  mulai: '09:55', selesai: '10:35', tipe: 'belajar' },
+  { no: 6,  nama: 'Jam ke-6',  mulai: '10:35', selesai: '11:15', tipe: 'belajar' },
+  { no: 7,  nama: 'Jam ke-7',  mulai: '11:15', selesai: '11:55', tipe: 'belajar' },
+  { no: 0,  nama: 'Istirahat 2 (Ishoma)', mulai: '11:55', selesai: '12:40', tipe: 'istirahat' },
+  { no: 8,  nama: 'Jam ke-8',  mulai: '12:40', selesai: '13:20', tipe: 'belajar' },
+  { no: 9,  nama: 'Jam ke-9',  mulai: '13:20', selesai: '14:00', tipe: 'belajar' },
+  { no: 10, nama: 'Jam ke-10', mulai: '14:00', selesai: '14:40', tipe: 'belajar' },
+  { no: 11, nama: 'Jam ke-11', mulai: '14:40', selesai: '15:20', tipe: 'belajar' },
+];
+
+// Global State
 let appData = {
   appointments: [],
   activeStream: null,
@@ -24,20 +41,37 @@ let appData = {
   selectedTicketForAction: null,
   activeLetterTicketCode: null,
   calendarOffsetWeeks: 0,
-  activeAdminSubView: 'table'
+  activeAdminSubView: 'table',
+  liveClockTimer: null
 };
 
-// Generator Nomor Surat Baku Dinas Pendidikan Jawa Timur
-function generateOfficialLetterNumber(index) {
-  const paddedNo = String(index || Math.floor(Math.random() * 800) + 100).padStart(3, '0');
-  return `421.3 / ${paddedNo} / 101.6.14 / 2026`;
+// Generator Kode Tiket Dinamis (Format: SMANSAKA-XXXX-XXXXX)
+function generateTicketCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let part1 = '';
+  for (let i = 0; i < 4; i++) {
+    part1 += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  let part2 = '';
+  for (let i = 0; i < 5; i++) {
+    part2 += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `SMANSAKA-${part1}-${part2}`;
 }
 
-// Mock Data Awal (Untuk Simulasi Demo)
+// Generator Nomor Surat Dinas Resmi
+function generateOfficialLetterNumber(index) {
+  const paddedNo = String(index || Math.floor(Math.random() * 800) + 100).padStart(3, '0');
+  const currentYear = new Date().getFullYear();
+  return `421.3 / ${paddedNo} / 101.6.14 / ${currentYear}`;
+}
+
+// Mock Data Awal Simulasi Demo
 const INITIAL_MOCK_DATA = [
   {
-    ticketCode: 'TKT-2026-X8K9M2',
+    ticketCode: 'SMANSAKA-8K9M-2P4Q1',
     category: 'Instansi / Kedinasan',
+    targetOfficial: 'Kepala SMAN 1 Kandangan',
     fullName: 'Drs. H. Bambang Soetrisno, M.Pd',
     whatsapp: '081234567890',
     agencyName: 'Cabang Dinas Pendidikan Wilayah Kediri',
@@ -46,91 +80,91 @@ const INITIAL_MOCK_DATA = [
     studentClass: null,
     parentChildName: null,
     urgency: 'Penting',
-    requestedDate: '2026-09-18',
-    purpose: 'Koordinasi teknis penjaminan mutu asesmen pembelajaran semester ganjil tahun ajaran berjalan.',
+    requestedDate: '2026-09-21',
+    purpose: 'Koordinasi teknis penjaminan mutu asesmen pembelajaran semester ganjil.',
     photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2338bdf8"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%232563eb"/></svg>',
     status: 'Disetujui',
     hostOfficer: 'Kepala SMAN 1 Kandangan',
     officialLetterNo: '421.3 / 084 / 101.6.14 / 2026',
     scheduledRoom: 'Ruang Kepala Sekolah',
-    scheduledDate: '2026-09-18',
+    scheduledDate: '2026-09-21',
     scheduledStart: '09:00',
     scheduledEnd: '10:30',
     approvalMessage: DEFAULT_APPROVE_TEMPLATE,
     rejectionReason: '',
     checkInAt: null,
-    createdAt: '2026-09-14T08:30:00.000Z'
+    createdAt: '2026-09-18T08:30:00.000Z'
   },
   {
-    ticketCode: 'TKT-2026-M4P7Q1',
-    category: 'Orang Tua Murid',
-    fullName: 'Siti Aminah, S.Pd',
+    ticketCode: 'SMANSAKA-4R7Q-9M1K2',
+    category: 'Siswa',
+    targetOfficial: 'Koordinator Guru BK',
+    fullName: 'Muhammad Farhan',
     whatsapp: '085712349988',
+    agencyName: null,
+    agencyAddress: null,
+    studentNisn: '0089123456',
+    studentClass: 'X-5',
+    parentChildName: null,
+    urgency: 'Penting',
+    requestedDate: '2026-09-21',
+    purpose: 'Konseling peminatan program sains dan pembinaan olimpiade astronomi.',
+    photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2310b981"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%23059669"/></svg>',
+    status: 'Disetujui',
+    hostOfficer: 'Koordinator Guru BK',
+    officialLetterNo: '421.3 / 085 / 101.6.14 / 2026',
+    scheduledRoom: 'Ruang Konseling BK',
+    scheduledDate: '2026-09-21',
+    scheduledStart: '08:20',
+    scheduledEnd: '09:40',
+    approvalMessage: 'Disetujui untuk sesi konseling bimbingan di Ruang BK.',
+    rejectionReason: '',
+    checkInAt: null,
+    createdAt: '2026-09-18T09:15:00.000Z'
+  },
+  {
+    ticketCode: 'SMANSAKA-3L1P-7Q8X9',
+    category: 'Orang Tua Murid',
+    targetOfficial: 'Waka Bidang Kesiswaan',
+    fullName: 'Siti Aminah, S.Pd',
+    whatsapp: '081299887766',
     agencyName: null,
     agencyAddress: null,
     studentNisn: null,
     studentClass: null,
     parentChildName: 'Muhammad Farhan (Kelas X-5)',
     urgency: 'Biasa',
-    requestedDate: '2026-09-16',
-    purpose: 'Konsultasi program beasiswa bakat prestasi akademik dan pembinaan olimpiade sains.',
-    photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2310b981"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%23059669"/></svg>',
-    status: 'Disetujui',
-    hostOfficer: 'Waka Bidang Kurikulum',
-    officialLetterNo: '421.3 / 085 / 101.6.14 / 2026',
-    scheduledRoom: 'Ruang Waka Kurikulum',
-    scheduledDate: '2026-09-16',
-    scheduledStart: '10:00',
-    scheduledEnd: '11:00',
-    approvalMessage: 'Didelegasikan ke Waka Kurikulum untuk koordinasi teknis.',
-    rejectionReason: '',
-    checkInAt: null,
-    createdAt: '2026-09-15T07:15:00.000Z'
-  },
-  {
-    ticketCode: 'TKT-2026-K9L2B5',
-    category: 'Umum',
-    fullName: 'Ir. Hendra Gunawan',
-    whatsapp: '081398765432',
-    agencyName: 'PT Edutech Nusantara Bersama',
-    agencyAddress: 'Surabaya',
-    studentNisn: null,
-    studentClass: null,
-    parentChildName: null,
-    urgency: 'Mendesak',
-    requestedDate: '2026-09-15',
-    purpose: 'Penyampaian proposal kemitraan beasiswa riset dan teknologi robotika sekolah.',
+    requestedDate: '2026-09-22',
+    purpose: 'Konsultasi koordinasi perkembangan akademik ananda Farhan di kelas X-5.',
     photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%23f59e0b"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%23d97706"/></svg>',
-    status: 'Ditolak',
-    hostOfficer: null,
+    status: 'Menunggu Konfirmasi',
+    hostOfficer: 'Waka Bidang Kesiswaan',
     officialLetterNo: null,
     scheduledRoom: null,
     scheduledDate: null,
     scheduledStart: null,
     scheduledEnd: null,
     approvalMessage: '',
-    rejectionReason: DEFAULT_REJECT_TEMPLATE,
+    rejectionReason: '',
     checkInAt: null,
-    createdAt: '2026-09-13T10:00:00.000Z'
+    createdAt: '2026-09-19T07:45:00.000Z'
   }
 ];
 
-// ==========================================================================
-// INISIALISASI APLIKASI
-// ==========================================================================
+// Inisialisasi Aplikasi
 document.addEventListener('DOMContentLoaded', () => {
   loadDatabase();
   initializeVisitDateInput();
   updateAuthUIState();
 
-  // Deteksi Scan QR Code dari Ponsel (?ticket=TKT-XXXX)
+  // Deteksi Scan QR Code (?ticket=SMANSAKA-XXXX-XXXXX)
   const urlParams = new URLSearchParams(window.location.search);
   const ticketParam = urlParams.get('ticket');
   if (ticketParam) {
     switchView('tracking-portal');
-    const inputTrack = document.getElementById('trackTicketCodeInput');
-    if (inputTrack) {
-      inputTrack.value = ticketParam;
+    const input = document.getElementById('trackTicketCodeInput');
+    if (input) {
+      input.value = ticketParam;
       trackTicketStatus();
     }
   }
@@ -154,7 +188,7 @@ function saveDatabase() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appData.appointments));
   } catch (e) {
-    showToast('Penyimpanan memori penuh! Silakan hapus beberapa data demo.', 'error');
+    showToast('Memori penyimpanan lokal penuh.', 'error');
   }
 }
 
@@ -182,21 +216,21 @@ function initializeVisitDateInput() {
 // ==========================================================================
 function switchView(viewId) {
   const views = ['guest-portal', 'tracking-portal', 'admin-portal'];
-  views.forEach(v => {
-    const el = document.getElementById(`${v}-view`);
-    if (el) el.classList.add('hidden');
-  });
+  views.forEach(v => document.getElementById(`${v}-view`)?.classList.add('hidden'));
 
   document.getElementById('tabGuestBtn')?.classList.remove('active');
   document.getElementById('tabTrackBtn')?.classList.remove('active');
   document.getElementById('tabAdminBtn')?.classList.remove('active');
 
+  if (appData.liveClockTimer) {
+    clearInterval(appData.liveClockTimer);
+    appData.liveClockTimer = null;
+  }
+
   if (viewId === 'guest-portal') {
     document.getElementById('guest-portal-view')?.classList.remove('hidden');
     document.getElementById('tabGuestBtn')?.classList.add('active');
-    if (appData.currentWizardStep === 3 && !appData.capturedBase64) {
-      startCamera();
-    }
+    if (appData.currentWizardStep === 3 && !appData.capturedBase64) startCamera();
   } else if (viewId === 'tracking-portal') {
     document.getElementById('tracking-portal-view')?.classList.remove('hidden');
     document.getElementById('tabTrackBtn')?.classList.add('active');
@@ -219,27 +253,46 @@ function handleAdminNavClick() {
 }
 
 // ==========================================================================
-// MODUL WIZARD STEP & VALIDASI BERJENJANG (3 LANGKAH)
+// SMART ROUTING & VALIDASI WIZARD FORM
 // ==========================================================================
+function handleCategoryChange() {
+  const cat = document.getElementById('guestCategory').value;
+  const targetSelect = document.getElementById('targetOfficial');
+  const studentBox = document.getElementById('dynamicStudentFields');
+  const parentBox = document.getElementById('dynamicParentFields');
+  const instansiBox = document.getElementById('dynamicInstansiFields');
+
+  studentBox?.classList.add('hidden');
+  parentBox?.classList.add('hidden');
+  instansiBox?.classList.add('hidden');
+
+  if (cat === 'Siswa') {
+    studentBox?.classList.remove('hidden');
+    if (targetSelect) targetSelect.value = 'Koordinator Guru BK';
+  } else if (cat === 'Orang Tua Murid') {
+    parentBox?.classList.remove('hidden');
+    if (targetSelect) targetSelect.value = 'Koordinator Guru BK';
+  } else if (cat === 'Instansi / Kedinasan') {
+    instansiBox?.classList.remove('hidden');
+    if (targetSelect) targetSelect.value = 'Kepala SMAN 1 Kandangan';
+  } else {
+    if (targetSelect) targetSelect.value = 'Kepala SMAN 1 Kandangan';
+  }
+}
+
 function goToStep(targetStep) {
   const currentStep = appData.currentWizardStep;
 
-  // 1. Validasi saat maju dari Langkah 1 ke Langkah 2
   if (targetStep === 2 && currentStep === 1) {
     if (!validateStep1()) return;
   }
-
-  // 2. Validasi saat maju dari Langkah 2 ke Langkah 3
   if (targetStep === 3 && currentStep === 2) {
     if (!validateStep2()) return;
   }
-
-  // 3. Pencegahan lompatan langsung dari 1 ke 3 tanpa validasi
   if (targetStep === 3 && currentStep === 1) {
     if (!validateStep1() || !validateStep2()) return;
   }
 
-  // Update Tampilan DOM Card Langkah
   for (let i = 1; i <= 3; i++) {
     document.getElementById(`wizardStep${i}`)?.classList.add('hidden');
     document.getElementById(`stepIndicator${i}`)?.classList.remove('active');
@@ -248,7 +301,6 @@ function goToStep(targetStep) {
   document.getElementById(`wizardStep${targetStep}`)?.classList.remove('hidden');
   document.getElementById(`stepIndicator${targetStep}`)?.classList.add('active');
 
-  // Update Garis Stepper Progress
   const ind1 = document.getElementById('stepIndicator1');
   const line1 = document.getElementById('stepLine1');
   const ind2 = document.getElementById('stepIndicator2');
@@ -278,73 +330,57 @@ function goToStep(targetStep) {
 
 function validateStep1() {
   const category = document.getElementById('guestCategory').value;
+  const targetOfficial = document.getElementById('targetOfficial').value;
   const fullName = document.getElementById('fullName').value.trim();
   const rawWa = document.getElementById('whatsappNumber').value.trim();
 
   if (!category) {
-    showToast('Pilih kategori tamu terlebih dahulu.', 'error');
-    document.getElementById('guestCategory').focus();
+    showToast('Pilih kategori pemohon terlebih dahulu.', 'error');
+    return false;
+  }
+  if (!targetOfficial) {
+    showToast('Pilih pihak/pejabat yang ingin Anda tuju.', 'error');
     return false;
   }
 
-  // Validasi Isian Dinamis Sesuai Kategori
   if (category === 'Siswa') {
     const nisn = document.getElementById('studentNisn').value.trim();
     const sClass = document.getElementById('studentClass').value.trim();
-    if (!nisn) {
-      showToast('Harap cantumkan 10 digit NISN siswa.', 'error');
-      document.getElementById('studentNisn').focus();
-      return false;
-    }
-    if (!/^\d{10}$/.test(nisn)) {
-      showToast('NISN harus berupa 10 digit angka valid.', 'error');
-      document.getElementById('studentNisn').focus();
+    if (!nisn || !/^\d{10}$/.test(nisn)) {
+      showToast('Harap cantumkan 10 digit NISN siswa yang valid.', 'error');
       return false;
     }
     if (!sClass) {
-      showToast('Harap cantumkan Kelas/Rombel siswa (misal: X-5).', 'error');
-      document.getElementById('studentClass').focus();
+      showToast('Cantumkan Kelas/Rombel siswa (misal: X-5).', 'error');
       return false;
     }
   } else if (category === 'Orang Tua Murid') {
     const child = document.getElementById('parentChildName').value.trim();
     if (!child || child.length < 3) {
-      showToast('Harap sebutkan nama putra/putri yang diwakili.', 'error');
-      document.getElementById('parentChildName').focus();
+      showToast('Sebutkan nama putra/putri yang Anda wakili.', 'error');
       return false;
     }
   } else if (category === 'Instansi / Kedinasan') {
     const agency = document.getElementById('agencyName').value.trim();
     const addr = document.getElementById('agencyAddress').value.trim();
     if (!agency || agency.length < 3) {
-      showToast('Harap cantumkan nama instansi/lembaga pengirim.', 'error');
-      document.getElementById('agencyName').focus();
+      showToast('Harap cantumkan nama instansi pengirim resmi.', 'error');
       return false;
     }
     if (!addr || addr.length < 5) {
-      showToast('Harap cantumkan alamat lengkap kantor instansi pengirim.', 'error');
-      document.getElementById('agencyAddress').focus();
+      showToast('Cantumkan alamat lengkap kantor instansi pengirim.', 'error');
       return false;
     }
   }
 
-  // Validasi Nama Pemohon
   if (!fullName || fullName.length < 3) {
-    showToast('Isi Nama Lengkap sesuai tanda pengenal (minimal 3 karakter).', 'error');
-    document.getElementById('fullName').focus();
+    showToast('Harap isi Nama Lengkap sesuai tanda pengenal (minimal 3 karakter).', 'error');
     return false;
   }
 
-  // Validasi Nomor WhatsApp
   const cleanPhone = rawWa.replace(/\D/g, '');
-  if (!cleanPhone) {
-    showToast('Harap isi nomor WhatsApp aktif.', 'error');
-    document.getElementById('whatsappNumber').focus();
-    return false;
-  }
   if (cleanPhone.length < 10 || cleanPhone.length > 14) {
     showToast('Nomor WhatsApp harus terdiri dari 10 hingga 14 digit angka.', 'error');
-    document.getElementById('whatsappNumber').focus();
     return false;
   }
 
@@ -356,8 +392,7 @@ function validateStep2() {
   const purpose = document.getElementById('visitPurpose').value.trim();
 
   if (!visitDate) {
-    showToast('Tentukan rencana tanggal kedatangan audiensi.', 'error');
-    document.getElementById('visitDate').focus();
+    showToast('Pilih rencana tanggal kedatangan audiensi.', 'error');
     return false;
   }
 
@@ -367,52 +402,24 @@ function validateStep2() {
 
   if (selectedDate < today) {
     showToast('Tanggal kunjungan tidak boleh di masa lampau.', 'error');
-    document.getElementById('visitDate').focus();
     return false;
   }
 
-  if (selectedDate.getDay() === 0) { // 0 = Hari Minggu
-    showToast('Layanan pimpinan libur pada hari Minggu. Silakan pilih hari kerja Senin–Sabtu.', 'error');
-    document.getElementById('visitDate').focus();
+  if (selectedDate.getDay() === 0) {
+    showToast('Layanan pimpinan libur pada hari Minggu. Silakan pilih hari kerja.', 'error');
     return false;
   }
 
-  if (!purpose) {
-    showToast('Harap jelaskan maksud dan pokok keperluan audiensi.', 'error');
-    document.getElementById('visitPurpose').focus();
-    return false;
-  }
-
-  if (purpose.length < 10) {
-    showToast('Uraian keperluan terlalu singkat. Mohon jelaskan lebih spesifik (minimal 10 karakter).', 'error');
-    document.getElementById('visitPurpose').focus();
+  if (!purpose || purpose.length < 10) {
+    showToast('Uraian keperluan terlalu singkat (minimal 10 karakter).', 'error');
     return false;
   }
 
   return true;
 }
 
-function handleCategoryChange() {
-  const cat = document.getElementById('guestCategory').value;
-  const studentBox = document.getElementById('dynamicStudentFields');
-  const parentBox = document.getElementById('dynamicParentFields');
-  const instansiBox = document.getElementById('dynamicInstansiFields');
-
-  studentBox?.classList.add('hidden');
-  parentBox?.classList.add('hidden');
-  instansiBox?.classList.add('hidden');
-
-  if (cat === 'Siswa') {
-    studentBox?.classList.remove('hidden');
-  } else if (cat === 'Orang Tua Murid') {
-    parentBox?.classList.remove('hidden');
-  } else if (cat === 'Instansi / Kedinasan') {
-    instansiBox?.classList.remove('hidden');
-  }
-}
-
 // ==========================================================================
-// ENGINE KAMERA LIVE WEBRTC (DENGAN KOMPRESI HEMAT MEMORI)
+// ENGINE KAMERA WEBRTC (KOMPRESI HEMAT MEMORI)
 // ==========================================================================
 async function startCamera() {
   const video = document.getElementById('webcamVideo');
@@ -420,10 +427,8 @@ async function startCamera() {
   const errMsg = document.getElementById('cameraErrMsg');
 
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    if (placeholder) {
-      placeholder.classList.remove('hidden');
-      errMsg.innerText = 'Fitur kamera tidak didukung oleh browser ini.';
-    }
+    placeholder?.classList.remove('hidden');
+    if (errMsg) errMsg.innerText = 'Fitur webcam tidak didukung browser ini.';
     return;
   }
 
@@ -439,11 +444,8 @@ async function startCamera() {
     }
     placeholder?.classList.add('hidden');
   } catch (err) {
-    console.warn('Camera error:', err);
-    if (placeholder) {
-      placeholder.classList.remove('hidden');
-      errMsg.innerText = 'Izin kamera ditolak atau perangkat kamera tidak ditemukan.';
-    }
+    placeholder?.classList.remove('hidden');
+    if (errMsg) errMsg.innerText = 'Izin kamera belum aktif atau tidak ditemukan.';
   }
 }
 
@@ -458,34 +460,27 @@ function takePhoto() {
   const video = document.getElementById('webcamVideo');
   const canvas = document.getElementById('photoCanvas');
   const capturedImg = document.getElementById('capturedImage');
-  const previewBox = document.getElementById('capturedResultContainer');
-  const cameraBox = document.getElementById('cameraPreviewContainer');
-  const snapBtn = document.getElementById('snapPhotoBtn');
-  const retakeBtn = document.getElementById('retakePhotoBtn');
 
   if (!appData.activeStream || !video || video.videoWidth === 0) {
     synthesizeFallbackPhoto();
     return;
   }
 
-  // Kunci Resolusi Avatar Pasfoto: 320 x 240 px (Hemat kuota LocalStorage)
   canvas.width = 320;
   canvas.height = 240;
   const ctx = canvas.getContext('2d');
-
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
   ctx.drawImage(video, 0, 0, 320, 240);
 
-  // Kompresi JPEG Kualitas 0.65 (~20 - 30 KB)
   const dataURL = canvas.toDataURL('image/jpeg', 0.65);
   appData.capturedBase64 = dataURL;
   if (capturedImg) capturedImg.src = dataURL;
 
-  cameraBox?.classList.add('hidden');
-  previewBox?.classList.remove('hidden');
-  snapBtn?.classList.add('hidden');
-  retakeBtn?.classList.remove('hidden');
+  document.getElementById('cameraPreviewContainer')?.classList.add('hidden');
+  document.getElementById('capturedResultContainer')?.classList.remove('hidden');
+  document.getElementById('snapPhotoBtn')?.classList.add('hidden');
+  document.getElementById('retakePhotoBtn')?.classList.remove('hidden');
 
   stopCamera();
   showToast('Foto wajah berhasil diverifikasi!', 'success');
@@ -505,15 +500,12 @@ function synthesizeFallbackPhoto() {
   canvas.width = 320;
   canvas.height = 240;
   const ctx = canvas.getContext('2d');
-
   ctx.fillStyle = '#0f172a';
   ctx.fillRect(0, 0, 320, 240);
-
   ctx.fillStyle = '#38bdf8';
   ctx.beginPath();
   ctx.arc(160, 90, 45, 0, Math.PI * 2);
   ctx.fill();
-
   ctx.fillStyle = '#1e40af';
   ctx.beginPath();
   ctx.arc(160, 220, 80, 0, Math.PI, true);
@@ -521,7 +513,6 @@ function synthesizeFallbackPhoto() {
 
   const data = canvas.toDataURL('image/jpeg', 0.65);
   appData.capturedBase64 = data;
-  
   const capturedImg = document.getElementById('capturedImage');
   if (capturedImg) capturedImg.src = data;
 
@@ -529,31 +520,76 @@ function synthesizeFallbackPhoto() {
   document.getElementById('capturedResultContainer')?.classList.remove('hidden');
   document.getElementById('snapPhotoBtn')?.classList.add('hidden');
   document.getElementById('retakePhotoBtn')?.classList.remove('hidden');
-  showToast('Simulasi biometrik wajah disiapkan.', 'info');
+  showToast('Simulasi biometrik wajah dimuat.', 'info');
 }
 
 // ==========================================================================
-// PENGIRIMAN FORMULIR AUDIENSI & PELACAKAN TIKET
+// KALKULATOR JAM PELAJARAN (E-DISPENSASI KELAS)
+// ==========================================================================
+function timeToMinutes(timeStr) {
+  if (!timeStr) return 0;
+  const [h, m] = timeStr.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function hitungDispensasiPelajaran(startStr, endStr) {
+  const startMin = timeToMinutes(startStr);
+  const endMin = timeToMinutes(endStr);
+
+  const jamTerpotong = [];
+  let totalMenitBelajar = 0;
+
+  ROSTER_SEKOLAH.forEach(sesi => {
+    const sesiMulaiMin = timeToMinutes(sesi.mulai);
+    const sesiSelesaiMin = timeToMinutes(sesi.selesai);
+    const adaIrisan = (startMin < sesiSelesaiMin && endMin > sesiMulaiMin);
+
+    if (adaIrisan && sesi.tipe === 'belajar') {
+      jamTerpotong.push(sesi.no);
+      const awal = Math.max(startMin, sesiMulaiMin);
+      const akhir = Math.min(endMin, sesiSelesaiMin);
+      totalMenitBelajar += (akhir - awal);
+    }
+  });
+
+  let labelJam = '-';
+  if (jamTerpotong.length === 1) {
+    labelJam = `Jam Pelajaran ke-${jamTerpotong[0]}`;
+  } else if (jamTerpotong.length > 1) {
+    labelJam = `Jam Pelajaran ke-${jamTerpotong[0]} s.d. ke-${jamTerpotong[jamTerpotong.length - 1]}`;
+  } else {
+    labelJam = `Waktu Istirahat (Bukan Jam Belajar)`;
+  }
+
+  return {
+    isKenaJamPelajaran: jamTerpotong.length > 0,
+    daftarJam: jamTerpotong,
+    labelJamPelajaran: labelJam,
+    totalMenitEfektif: totalMenitBelajar
+  };
+}
+
+// ==========================================================================
+// SUBMISSION & PELACAKAN TIKET SESUAI KATEGORI
 // ==========================================================================
 function handleFormSubmission(e) {
   e.preventDefault();
 
   if (!appData.capturedBase64) {
-    showToast('Harap ambil foto wajah Anda sebelum mengirimkan permohonan.', 'error');
+    showToast('Harap ambil foto wajah Anda sebelum mengirim permohonan.', 'error');
     return;
   }
 
-  const randomChars = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const ticketCode = `TKT-2026-${randomChars}`;
+  const ticketCode = generateTicketCode();
 
   const category = document.getElementById('guestCategory').value;
+  const targetOfficial = document.getElementById('targetOfficial').value;
   const fullName = document.getElementById('fullName').value.trim();
   const whatsapp = document.getElementById('whatsappNumber').value.trim();
   const visitDate = document.getElementById('visitDate').value;
   const urgency = document.getElementById('urgencyLevel').value;
   const purpose = document.getElementById('visitPurpose').value.trim();
 
-  // Ambil Nilai Kolom Khusus Kategori Tanpa Terpotong
   const studentNisn = document.getElementById('studentNisn')?.value.trim() || null;
   const studentClass = document.getElementById('studentClass')?.value.trim() || null;
   const parentChildName = document.getElementById('parentChildName')?.value.trim() || null;
@@ -563,6 +599,7 @@ function handleFormSubmission(e) {
   const newAppointment = {
     ticketCode,
     category,
+    targetOfficial,
     fullName,
     whatsapp,
     visitDate,
@@ -575,7 +612,7 @@ function handleFormSubmission(e) {
     agencyAddress,
     photoBase64: appData.capturedBase64,
     status: 'Menunggu Konfirmasi',
-    hostOfficer: null,
+    hostOfficer: targetOfficial,
     officialLetterNo: null,
     scheduledRoom: null,
     scheduledDate: null,
@@ -590,14 +627,13 @@ function handleFormSubmission(e) {
   appData.appointments.unshift(newAppointment);
   saveDatabase();
 
-  // Tampilkan Rincian pada Modal Berhasil
   document.getElementById('modalTicketCode').innerText = ticketCode;
   document.getElementById('modalSummaryName').innerText = fullName;
+  document.getElementById('modalSummaryOfficial').innerText = targetOfficial;
   document.getElementById('modalSummaryDate').innerText = visitDate;
   document.getElementById('modalSummaryPhone').innerText = whatsapp;
   document.getElementById('ticketSuccessModal')?.classList.remove('hidden');
 
-  // Bersihkan Input Form
   document.getElementById('guestAppointmentForm').reset();
   handleCategoryChange();
   retakePhoto();
@@ -611,17 +647,14 @@ function closeTicketModal() {
 function copyModalTicketCode() {
   const code = document.getElementById('modalTicketCode').innerText;
   navigator.clipboard.writeText(code).then(() => {
-    showToast('Kode tiket berhasil disalin ke papan klip!', 'success');
+    showToast('Kode tiket SMANSAKA berhasil disalin!', 'success');
   });
 }
 
 function formatToWhatsApp(phone) {
   let clean = phone.replace(/\D/g, '');
-  if (clean.startsWith('0')) {
-    clean = '62' + clean.substring(1);
-  } else if (!clean.startsWith('62')) {
-    clean = '62' + clean;
-  }
+  if (clean.startsWith('0')) clean = '62' + clean.substring(1);
+  else if (!clean.startsWith('62')) clean = '62' + clean;
   return clean;
 }
 
@@ -629,8 +662,13 @@ function trackTicketStatus() {
   const code = document.getElementById('trackTicketCodeInput').value.trim().toUpperCase();
   const resultBox = document.getElementById('trackerResultBox');
 
+  if (appData.liveClockTimer) {
+    clearInterval(appData.liveClockTimer);
+    appData.liveClockTimer = null;
+  }
+
   if (!code) {
-    showToast('Masukkan kode tiket Anda.', 'error');
+    showToast('Masukkan kode tiket SMANSAKA Anda.', 'error');
     return;
   }
 
@@ -641,7 +679,7 @@ function trackTicketStatus() {
         <i class="fa-solid fa-circle-xmark"></i>
         <div>
           <strong>Tiket Tidak Ditemukan</strong>
-          <p>Pastikan kode tiket yang Anda masukkan sudah sesuai (Contoh: TKT-2026-XXXXXX).</p>
+          <p>Pastikan kode tiket yang dimasukkan sesuai (Contoh: SMANSAKA-XXXX-XXXXX).</p>
         </div>
       </div>
     `;
@@ -649,78 +687,138 @@ function trackTicketStatus() {
     return;
   }
 
-  let hostNoteHTML = '';
-  let letterBtnHTML = '';
+  // 1. KATEGORI SISWA: TAMPILKAN KARTU E-DISPENSASI DIGITAL
+  if (found.category === 'Siswa') {
+    if (found.status === 'Disetujui' || found.status === 'Checked-In') {
+      const dispen = hitungDispensasiPelajaran(found.scheduledStart, found.scheduledEnd);
+      resultBox.innerHTML = `
+        <div class="edispen-card">
+          <div class="edispen-header">
+            <div class="edispen-brand">
+              <i class="fa-solid fa-graduation-cap"></i> E-DISPENSASI SMAN 1 KANDANGAN
+            </div>
+            <div class="edispen-live-clock" id="liveDispenClock">Memuat jam...</div>
+          </div>
+          
+          <div class="edispen-body">
+            <h3 class="edispen-student-name">${escapeHtml(found.fullName)}</h3>
+            <div class="edispen-student-class">
+              Kelas: <strong>${escapeHtml(found.studentClass || '-')}</strong> • NISN: ${escapeHtml(found.studentNisn || '-')}
+            </div>
+            
+            <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.5rem;">
+              Tujuan Audiensi: <strong style="color:#fff;">${escapeHtml(found.hostOfficer || 'Guru BK')}</strong> (${escapeHtml(found.scheduledRoom || 'Ruang BK')})
+            </div>
 
-  if (found.status === 'Disetujui' || found.status === 'Checked-In') {
-    const msg = (found.approvalMessage && found.approvalMessage.trim()) || DEFAULT_APPROVE_TEMPLATE;
-    hostNoteHTML = `
-      <div style="margin-top:1.1rem; padding:0.9rem 1.1rem; background:rgba(56, 189, 248, 0.08); border-left:3px solid var(--cyan-glow); border-radius:8px;">
-        <span style="font-size:0.75rem; color:var(--cyan-glow); font-weight:700; display:block; text-transform:uppercase;">
-          <i class="fa-solid fa-comment-dots"></i> Catatan Pimpinan:
-        </span>
-        <p style="font-size:0.92rem; color:var(--text-main); font-style:italic; margin-top:0.35rem; overflow-wrap:anywhere;">
-          "${escapeHtml(msg)}"
-        </p>
-      </div>
-    `;
+            <div class="edispen-highlight-box">
+              <div class="edispen-period-title">
+                <i class="fa-solid fa-bell"></i> ${dispen.labelJamPelajaran}
+              </div>
+              <div class="edispen-period-time">
+                Waktu: <strong>${found.scheduledStart} s.d. ${found.scheduledEnd} WIB</strong> (${dispen.totalMenitEfektif} Menit Efektif Pembelajaran)
+              </div>
+            </div>
+            
+            <p style="font-size:0.75rem; color:var(--text-dim); margin-top:0.5rem; font-style:italic;">
+              *Tunjukkan layar ini kepada Guru Mata Pelajaran di kelas sebagai bukti izin resmi meninggalkan pembelajaran.
+            </p>
+          </div>
 
-    letterBtnHTML = `
-      <div style="margin-top:1.2rem; text-align:center;">
-        <button type="button" class="btn btn-primary btn-block" onclick="openOfficialLetterModal('${found.ticketCode}')">
-          <i class="fa-solid fa-file-pdf"></i> Unduh / Cetak Surat Undangan Resmi Berkop
-        </button>
-      </div>
-    `;
-  } else if (found.status === 'Ditolak') {
-    const rejMsg = (found.rejectionReason && found.rejectionReason.trim()) || DEFAULT_REJECT_TEMPLATE;
-    hostNoteHTML = `
-      <div style="margin-top:1.1rem; padding:0.9rem 1.1rem; background:rgba(239, 68, 68, 0.08); border-left:3px solid var(--rose-danger); border-radius:8px;">
-        <span style="font-size:0.75rem; color:#FCA5A5; font-weight:700; display:block; text-transform:uppercase;">
-          <i class="fa-solid fa-circle-exclamation"></i> Catatan Penolakan:
-        </span>
-        <p style="font-size:0.92rem; color:#FCA5A5; font-style:italic; margin-top:0.35rem; overflow-wrap:anywhere;">
-          "${escapeHtml(rejMsg)}"
-        </p>
-      </div>
-    `;
-  }
-
-  // Label Asal Instansi / Siswa untuk Pelacakan Mandiri
-  let metaInfo = '';
-  if (found.agencyName) {
-    metaInfo = `<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Instansi: <strong style="color:#fff;">${escapeHtml(found.agencyName)}</strong></p>`;
-  } else if (found.category === 'Siswa') {
-    metaInfo = `<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Kelas: <strong style="color:#fff;">${escapeHtml(found.studentClass || '-')} (NISN: ${found.studentNisn || '-'})</strong></p>`;
-  } else if (found.parentChildName) {
-    metaInfo = `<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Orang Tua dari: <strong style="color:#fff;">${escapeHtml(found.parentChildName)}</strong></p>`;
-  }
-
-  resultBox.innerHTML = `
-    <div class="glass-card" style="padding:1.5rem; margin-top:1rem;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <span style="font-weight:800; color:var(--cyan-glow); font-size:1.15rem;">${found.ticketCode}</span>
-        <span class="badge ${getBadgeClass(found.status)}">${found.status}</span>
-      </div>
-      <div style="display:flex; gap:1rem; align-items:center; margin-bottom:0.75rem;">
-        <img src="${found.photoBase64 || ''}" alt="Foto Tamu" style="width:56px; height:56px; border-radius:8px; object-fit:cover; border:1px solid var(--border-subtle); flex-shrink:0; background:#050811;">
-        <div style="min-width:0; overflow-wrap:anywhere; word-break:break-word;">
-          <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Nama Pemohon: <strong style="color:#fff;">${escapeHtml(found.fullName)}</strong></p>
-          ${metaInfo}
-          <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Tanggal Pengajuan: <strong style="color:#fff;">${found.visitDate || found.requestedDate}</strong></p>
-          ${found.hostOfficer ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin:0;">Pejabat Penerima: <strong>${escapeHtml(found.hostOfficer)}</strong></p>` : ''}
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed rgba(255,255,255,0.18); padding-top:0.75rem;">
+            <span class="edispen-status-pill status-active-pulse">
+              <i class="fa-solid fa-circle-check"></i> IZIN SAH DIGITAL
+            </span>
+            <span style="font-size:0.74rem; color:var(--text-dim); font-family:monospace;">
+              ${found.ticketCode}
+            </span>
+          </div>
         </div>
-      </div>
-      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin-top:0.5rem; font-weight:600;"><i class="fa-solid fa-location-dot"></i> Tempat: ${found.scheduledRoom} (${found.scheduledStart} -${found.scheduledEnd} WIB)</p>` : ''}
-      ${hostNoteHTML}
-      ${letterBtnHTML}
-    </div>
-  `;
+      `;
+      startLiveDispenClock();
+    } else {
+      resultBox.innerHTML = renderStandardStatusCard(found);
+    }
+  } 
+  // 2. KATEGORI KEDINASAN: BERI TOMBOL CETAK SURAT RESMI BERKOP
+  else if (found.category === 'Instansi / Kedinasan') {
+    let letterBtn = '';
+    if (found.status === 'Disetujui' || found.status === 'Checked-In') {
+      letterBtn = `
+        <div style="margin-top:1.2rem; text-align:center;">
+          <button type="button" class="btn btn-primary btn-block" onclick="openOfficialLetterModal('${found.ticketCode}')">
+            <i class="fa-solid fa-file-pdf"></i> Unduh / Cetak Surat Undangan Resmi Berkop
+          </button>
+        </div>
+      `;
+    }
+    resultBox.innerHTML = renderStandardStatusCard(found) + letterBtn;
+  } 
+  // 3. KATEGORI ORANG TUA / UMUM: KARTU VISITOR E-PASS
+  else {
+    resultBox.innerHTML = renderStandardStatusCard(found);
+  }
+
   resultBox.classList.remove('hidden');
 }
 
+function renderStandardStatusCard(found) {
+  let noteHTML = '';
+  if (found.status === 'Disetujui' || found.status === 'Checked-In') {
+    const msg = (found.approvalMessage && found.approvalMessage.trim()) || DEFAULT_APPROVE_TEMPLATE;
+    noteHTML = `
+      <div style="margin-top:1rem; padding:0.8rem 1rem; background:rgba(56, 189, 248, 0.08); border-left:3px solid var(--cyan-glow); border-radius:6px;">
+        <span style="font-size:0.75rem; color:var(--cyan-glow); font-weight:700; display:block;">CATATAN RESMI PIMPINAN:</span>
+        <p style="font-size:0.86rem; color:#fff; font-style:italic; margin-top:0.25rem;">"${escapeHtml(msg)}"</p>
+      </div>
+    `;
+  } else if (found.status === 'Ditolak') {
+    const rej = (found.rejectionReason && found.rejectionReason.trim()) || DEFAULT_REJECT_TEMPLATE;
+    noteHTML = `
+      <div style="margin-top:1rem; padding:0.8rem 1rem; background:rgba(239, 68, 68, 0.08); border-left:3px solid var(--rose-danger); border-radius:6px;">
+        <span style="font-size:0.75rem; color:#FCA5A5; font-weight:700; display:block;">ALASAN PENOLAKAN:</span>
+        <p style="font-size:0.86rem; color:#FCA5A5; font-style:italic; margin-top:0.25rem;">"${escapeHtml(rej)}"</p>
+      </div>
+    `;
+  }
+
+  let extraIdentity = '';
+  if (found.agencyName) extraIdentity = `<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Instansi: <strong style="color:#fff;">${escapeHtml(found.agencyName)}</strong></p>`;
+  if (found.parentChildName) extraIdentity = `<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Orang Tua dari: <strong style="color:#fff;">${escapeHtml(found.parentChildName)}</strong></p>`;
+
+  return `
+    <div class="glass-card" style="padding:1.4rem; margin-top:1rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
+        <span style="font-weight:800; color:var(--cyan-glow); font-size:1.1rem;">${found.ticketCode}</span>
+        <span class="badge ${getBadgeClass(found.status)}">${found.status}</span>
+      </div>
+      <div style="display:flex; gap:1rem; align-items:center;">
+        <img src="${found.photoBase64 || ''}" alt="Foto Tamu" style="width:56px; height:56px; border-radius:8px; object-fit:cover; border:1px solid var(--border-subtle); flex-shrink:0;">
+        <div>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Pemohon: <strong style="color:#fff;">${escapeHtml(found.fullName)}</strong></p>
+          ${extraIdentity}
+          <p style="font-size:0.85rem; color:var(--cyan-glow); margin:0;">Tujuan: <strong>${escapeHtml(found.hostOfficer || found.targetOfficial)}</strong></p>
+        </div>
+      </div>
+      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--emerald-green); margin-top:0.65rem; font-weight:700;"><i class="fa-solid fa-clock"></i> Jadwal: ${found.scheduledRoom} (${found.scheduledStart} -${found.scheduledEnd} WIB)</p>` : ''}
+      ${noteHTML}
+    </div>
+  `;
+}
+
+function startLiveDispenClock() {
+  const updateClock = () => {
+    const clock = document.getElementById('liveDispenClock');
+    if (clock) {
+      const now = new Date();
+      clock.innerText = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
+    }
+  };
+  updateClock();
+  appData.liveClockTimer = setInterval(updateClock, 1000);
+}
+
 // ==========================================================================
-// PANEL ADMIN / DISPOSISI PIMPINAN
+// ADMIN DASHBOARD & DISPOSISI
 // ==========================================================================
 function switchAdminSubView(subview) {
   appData.activeAdminSubView = subview;
@@ -767,52 +865,36 @@ function renderAdminQueueTable() {
   if (!tbody) return;
 
   const filter = document.getElementById('tableFilterStatus')?.value || 'ALL';
-  const searchInput = document.getElementById('adminSearchInput')?.value.toLowerCase().trim() || '';
+  const search = document.getElementById('adminSearchInput')?.value.toLowerCase().trim() || '';
 
   let list = appData.appointments;
-
-  // Filter Berdasarkan Status
-  if (filter !== 'ALL') {
-    list = list.filter(item => item.status === filter);
-  }
-
-  // Filter Berdasarkan Kata Kunci Pencarian (Nama, Tiket, atau Instansi)
-  if (searchInput) {
+  if (filter !== 'ALL') list = list.filter(item => item.status === filter);
+  if (search) {
     list = list.filter(item => 
-      item.fullName.toLowerCase().includes(searchInput) ||
-      item.ticketCode.toLowerCase().includes(searchInput) ||
-      (item.agencyName && item.agencyName.toLowerCase().includes(searchInput)) ||
-      (item.parentChildName && item.parentChildName.toLowerCase().includes(searchInput))
+      item.fullName.toLowerCase().includes(search) ||
+      item.ticketCode.toLowerCase().includes(search) ||
+      (item.agencyName && item.agencyName.toLowerCase().includes(search)) ||
+      (item.parentChildName && item.parentChildName.toLowerCase().includes(search))
     );
   }
 
   if (list.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7" style="text-align:center; padding:2rem; color:var(--text-dim);">
-          Tidak ada data antrean permohonan yang sesuai.
-        </td>
-      </tr>
-    `;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-dim);">Tidak ada data permohonan antrean.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = list.map(item => {
     const cleanPhone = formatToWhatsApp(item.whatsapp);
-    
-    // Siapkan Template Pesan WhatsApp Resmi Otomatis
-    let waMessage = `Halo Bapak/Ibu ${item.fullName}, permohonan audiensi Anda di SMAN 1 Kandangan [Tiket: ${item.ticketCode}] `;
-    if (item.status === 'Disetujui') {
-      waMessage += `telah DISETUJUI. Pertemuan dijadwalkan pada ${item.scheduledDate} jam ${item.scheduledStart}-${item.scheduledEnd} WIB di ${item.scheduledRoom}. Cek status tiket Anda: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
-    } else {
-      waMessage += `saat ini berstatus: ${item.status}. Pantau status tiket Anda: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
-    }
-    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMessage)}`;
+    const waMsg = `Halo Bapak/Ibu ${item.fullName}, permohonan audiensi Anda di SMAN 1 Kandangan [Tiket: ${item.ticketCode}] status: ${item.status}. Cek status: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMsg)}`;
 
     let scheduleDisplay = '<span style="color:var(--text-dim);">-</span>';
     if (item.scheduledRoom) {
-      const hostLabel = item.hostOfficer ? `<span class="table-host-tag">${escapeHtml(item.hostOfficer)}</span><br>` : '';
-      scheduleDisplay = `${hostLabel}<strong style="color:var(--text-main); font-size:0.82rem;">${item.scheduledRoom}</strong><br><small style="color:var(--cyan-glow);">${item.scheduledDate} (${item.scheduledStart}-${item.scheduledEnd})</small>`;
+      scheduleDisplay = `
+        <span class="table-host-tag">${escapeHtml(item.hostOfficer || item.targetOfficial)}</span><br>
+        <strong style="color:var(--text-main); font-size:0.82rem;">${item.scheduledRoom}</strong><br>
+        <small style="color:var(--cyan-glow);">${item.scheduledDate} (${item.scheduledStart} - ${item.scheduledEnd} WIB)</small>
+      `;
     }
 
     let noteInTable = '';
@@ -827,62 +909,52 @@ function renderAdminQueueTable() {
     let actionButtons = '';
     if (item.status === 'Menunggu Konfirmasi') {
       actionButtons = `
-        <button class="btn btn-primary btn-sm" onclick="openScheduleModal('${item.ticketCode}')" title="Tinjau & Disposisi TU/Pimpinan">
-          <i class="fa-solid fa-calendar-check"></i> Disposisi
+        <button class="btn btn-primary btn-sm" onclick="openScheduleModal('${item.ticketCode}')" title="Disposisi Pimpinan">
+          <i class="fa-solid fa-calendar-check"></i>
         </button>
       `;
     } else if (item.status === 'Disetujui') {
       actionButtons = `
-        <button class="btn btn-emerald btn-sm" onclick="executeCheckIn('${item.ticketCode}')" title="Tandai Hadir di Lobi">
+        <button class="btn btn-emerald btn-sm" onclick="executeCheckIn('${item.ticketCode}')" title="Check-In Kedatangan">
           <i class="fa-solid fa-user-check"></i>
         </button>
-        <button class="btn btn-outline btn-sm" onclick="openOfficialLetterModal('${item.ticketCode}')" title="Cetak Surat Undangan Resmi Berkop">
-          <i class="fa-solid fa-file-pdf"></i>
-        </button>
-        <button class="btn btn-outline btn-sm" onclick="openScheduleModal('${item.ticketCode}')" title="Ubah Disposisi">
-          <i class="fa-solid fa-pen"></i>
-        </button>
+        ${item.category === 'Instansi / Kedinasan' ? `
+          <button class="btn btn-outline btn-sm" onclick="openOfficialLetterModal('${item.ticketCode}')" title="Cetak Surat Dinas">
+            <i class="fa-solid fa-file-pdf"></i>
+          </button>
+        ` : ''}
+        <a href="${waUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#22c55e;" title="Kirim Pesan WhatsApp">
+          <i class="fa-brands fa-whatsapp"></i>
+        </a>
       `;
     } else if (item.status === 'Checked-In') {
       actionButtons = `
-        <button class="btn btn-outline btn-sm" onclick="executeComplete('${item.ticketCode}')" title="Selesaikan Audiensi">
-          <i class="fa-solid fa-flag-checkered"></i> Selesai
-        </button>
-        <button class="btn btn-outline btn-sm" onclick="openOfficialLetterModal('${item.ticketCode}')" title="Cetak Surat Undangan Resmi Berkop">
-          <i class="fa-solid fa-file-pdf"></i>
+        <button class="btn btn-outline btn-sm" onclick="executeComplete('${item.ticketCode}')" title="Selesai">
+          <i class="fa-solid fa-flag-checkered"></i>
         </button>
       `;
-    } else {
-      actionButtons = `<span style="font-size:0.75rem; color:var(--text-dim);">-</span>`;
     }
 
-    // Detail asal instansi/siswa pada baris tabel
-    let extraMeta = '';
-    if (item.agencyName) {
-      extraMeta = `<br><small style="color:var(--text-muted);">${escapeHtml(item.agencyName)}</small>`;
-    } else if (item.parentChildName) {
-      extraMeta = `<br><small style="color:var(--text-muted);">Ortu: ${escapeHtml(item.parentChildName)}</small>`;
-    } else if (item.studentClass) {
-      extraMeta = `<br><small style="color:var(--text-muted);">Kelas: ${escapeHtml(item.studentClass)}</small>`;
-    }
+    actionButtons += `
+      <button class="btn btn-danger btn-sm" onclick="deleteAppointment('${item.ticketCode}')" title="Hapus Data Ini" style="margin-left:0.25rem;">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+    `;
 
     return `
       <tr>
+        <td><strong style="color:var(--cyan-glow); font-size:0.84rem;">${item.ticketCode}</strong></td>
         <td>
-          <strong style="color:var(--cyan-glow); font-size:0.84rem;">${item.ticketCode}</strong>
+          <strong style="overflow-wrap:anywhere;">${escapeHtml(item.fullName)}</strong>
+          <br>
+          <a href="${waUrl}" target="_blank" class="wa-link"><i class="fa-brands fa-whatsapp"></i> ${item.whatsapp}</a>
         </td>
         <td>
-          <strong style="overflow-wrap:anywhere; word-break:break-word;">${escapeHtml(item.fullName)}</strong>
-          ${extraMeta}
-          <br>
-          <a href="${waUrl}" target="_blank" class="wa-link">
-            <i class="fa-brands fa-whatsapp"></i> ${item.whatsapp}
-          </a>
+          <span style="font-size:0.82rem; font-weight:700;">${item.category}</span><br>
+          <small style="color:var(--text-muted);"><i class="fa-solid fa-arrow-right"></i> ${escapeHtml(item.targetOfficial)}</small>
         </td>
-        <td><span style="font-size:0.82rem;">${item.category}</span></td>
         <td>
-          <span style="font-size:0.82rem;">${item.visitDate || item.requestedDate}</span>
-          <br>
+          <span style="font-size:0.82rem;">${item.visitDate || item.requestedDate}</span><br>
           <span class="urgency-pill urgency-${item.urgency.toLowerCase()}">${item.urgency}</span>
         </td>
         <td>${scheduleDisplay}</td>
@@ -908,7 +980,7 @@ function getBadgeClass(status) {
 }
 
 // ==========================================================================
-// AKSI PENJADWALAN, DISPOSISI, DAN DELEGASI PIMPINAN
+// MODAL DISPOSISI & PENJADWALAN RUANGAN
 // ==========================================================================
 function openScheduleModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
@@ -918,41 +990,37 @@ function openScheduleModal(ticketCode) {
 
   document.getElementById('scheduleModalTicketPill').innerText = `Tiket: ${item.ticketCode}`;
   document.getElementById('schedModalName').innerText = item.fullName;
-  document.getElementById('schedModalCategoryMeta').innerText = `${item.category} • Urgensi: ${item.urgency}`;
+  document.getElementById('schedModalCategoryMeta').innerText = `${item.category} • Tujuan: ${item.targetOfficial}`;
   document.getElementById('schedModalPurpose').innerText = `"${item.purpose}"`;
 
   const modalPhoto = document.getElementById('schedModalPhoto');
-  if (modalPhoto) {
-    modalPhoto.src = item.photoBase64 || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2338bdf8"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%232563eb"/></svg>';
-  }
+  if (modalPhoto) modalPhoto.src = item.photoBase64 || '';
 
-  // Generate Nomor Surat Otomatis
   const autoLetterNo = item.officialLetterNo || generateOfficialLetterNumber(appData.appointments.indexOf(item) + 1);
   document.getElementById('schedLetterNoApprove').value = autoLetterNo;
   document.getElementById('schedLetterNoDelegate').value = autoLetterNo;
 
-  // Nilai Awal Tab Kepala Sekolah
   document.getElementById('schedRoom').value = item.scheduledRoom || 'Ruang Kepala Sekolah';
-  document.getElementById('schedDate').value = item.scheduledDate || item.visitDate || item.requestedDate;
+  document.getElementById('schedDate').value = item.scheduledDate || item.visitDate;
   document.getElementById('schedStartTime').value = item.scheduledStart || '09:00';
   document.getElementById('schedEndTime').value = item.scheduledEnd || '10:00';
 
-  // Nilai Awal Tab Delegasi
-  document.getElementById('schedDelegateDate').value = item.scheduledDate || item.visitDate || item.requestedDate;
-  if (item.hostOfficer && item.hostOfficer !== 'Kepala SMAN 1 Kandangan') {
-    document.getElementById('schedDelegateHost').value = item.hostOfficer;
+  document.getElementById('schedDelegateDate').value = item.scheduledDate || item.visitDate;
+  if (item.targetOfficial && item.targetOfficial !== 'Kepala SMAN 1 Kandangan') {
+    document.getElementById('schedDelegateHost').value = item.targetOfficial;
   }
   handleDelegateHostChange();
 
-  const existingApprove = item.approvalMessage && item.approvalMessage.trim();
-  document.getElementById('schedApprovalNotes').value = existingApprove ? existingApprove : DEFAULT_APPROVE_TEMPLATE;
+  document.getElementById('schedApprovalNotes').value = item.approvalMessage || DEFAULT_APPROVE_TEMPLATE;
+  document.getElementById('schedRejectionReason').value = item.rejectionReason || DEFAULT_REJECT_TEMPLATE;
 
-  const existingReject = item.rejectionReason && item.rejectionReason.trim();
-  document.getElementById('schedRejectionReason').value = existingReject ? existingReject : DEFAULT_REJECT_TEMPLATE;
+  if (item.targetOfficial === 'Kepala SMAN 1 Kandangan') {
+    switchActionTab('approve');
+  } else {
+    switchActionTab('delegate');
+  }
 
-  switchActionTab('approve');
   runLiveCollisionCheck();
-
   document.getElementById('scheduleActionModal')?.classList.remove('hidden');
 }
 
@@ -965,11 +1033,14 @@ function handleDelegateHostChange() {
   const host = document.getElementById('schedDelegateHost').value;
   const roomSelect = document.getElementById('schedDelegateRoom');
   
-  if (host === 'Waka Bidang Kurikulum') roomSelect.value = 'Ruang Waka Kurikulum';
+  if (host === 'Koordinator Guru BK') roomSelect.value = 'Ruang Konseling BK';
   else if (host === 'Waka Bidang Kesiswaan') roomSelect.value = 'Ruang Waka Kesiswaan';
+  else if (host === 'Waka Bidang Kurikulum') roomSelect.value = 'Ruang Waka Kurikulum';
   else if (host === 'Waka Bidang Sarpras' || host === 'Waka Bidang Humas') roomSelect.value = 'Ruang Waka Humas & Sarpras';
-  else if (host === 'Koordinator Guru BK') roomSelect.value = 'Ruang Konseling BK';
-  else roomSelect.value = 'Ruang Tamu Khusus';
+  else if (host === 'Tata Usaha') roomSelect.value = 'Ruang Tata Usaha';
+  else roomSelect.value = 'Ruang Tamu Khusus Lobi';
+
+  runLiveCollisionCheck();
 }
 
 function switchActionTab(tab) {
@@ -992,7 +1063,6 @@ function switchActionTab(tab) {
   if (tab === 'approve') {
     btnApprove?.classList.add('active');
     contentApprove?.classList.remove('hidden');
-    runLiveCollisionCheck();
   } else if (tab === 'delegate') {
     btnDelegate?.classList.add('active');
     contentDelegate?.classList.remove('hidden');
@@ -1004,23 +1074,30 @@ function switchActionTab(tab) {
       rejInput.value = DEFAULT_REJECT_TEMPLATE;
     }
   }
-}
 
-function applyDefaultRejectTemplate() {
-  document.getElementById('schedRejectionReason').value = DEFAULT_REJECT_TEMPLATE;
-  showToast("Template penolakan dimuat!", "info");
-}
-
-function applyDefaultApproveTemplate() {
-  document.getElementById('schedApprovalNotes').value = DEFAULT_APPROVE_TEMPLATE;
-  showToast("Template sambutan dimuat!", "info");
+  runLiveCollisionCheck();
 }
 
 function runLiveCollisionCheck() {
-  const room = document.getElementById('schedRoom').value;
-  const date = document.getElementById('schedDate').value;
-  const start = document.getElementById('schedStartTime').value;
-  const end = document.getElementById('schedEndTime').value;
+  const isApprove = !document.getElementById('tabContentApprove').classList.contains('hidden');
+  
+  let room = '';
+  let date = '';
+  let start = '';
+  let end = '';
+
+  if (isApprove) {
+    room = document.getElementById('schedRoom').value;
+    date = document.getElementById('schedDate').value;
+    start = document.getElementById('schedStartTime').value;
+    end = document.getElementById('schedEndTime').value;
+  } else {
+    room = document.getElementById('schedDelegateRoom').value;
+    date = document.getElementById('schedDelegateDate').value;
+    start = document.getElementById('schedDelegateStartTime').value;
+    end = document.getElementById('schedDelegateEndTime').value;
+  }
+
   const alertBox = document.getElementById('collisionAlertBox');
   const alertMsg = document.getElementById('collisionAlertMsg');
   const confirmBtn = document.getElementById('confirmApproveBtn');
@@ -1037,7 +1114,6 @@ function runLiveCollisionCheck() {
     return;
   }
 
-  // Deteksi Tumpang Tindih Interval Waktu Pertemuan
   const conflict = appData.appointments.find(a => {
     if (a.ticketCode === appData.selectedTicketForAction) return false;
     if (a.status !== 'Disetujui' && a.status !== 'Checked-In') return false;
@@ -1050,7 +1126,7 @@ function runLiveCollisionCheck() {
 
   if (conflict) {
     alertBox?.classList.remove('hidden');
-    if (alertMsg) alertMsg.innerText = `Ruangan "${room}" telah dialokasikan untuk tamu [${conflict.fullName}] pada jam ${conflict.scheduledStart} - ${conflict.scheduledEnd} WIB!`;
+    if (alertMsg) alertMsg.innerText = `Ruangan "${room}" telah dialokasikan untuk tamu [${conflict.fullName}] jam ${conflict.scheduledStart} - ${conflict.scheduledEnd} WIB!`;
     if (confirmBtn) {
       confirmBtn.disabled = true;
       confirmBtn.style.opacity = '0.5';
@@ -1068,11 +1144,9 @@ function executeApprove() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
 
-  const note = document.getElementById('schedApprovalNotes').value.trim();
-  item.approvalMessage = note || DEFAULT_APPROVE_TEMPLATE;
+  item.approvalMessage = document.getElementById('schedApprovalNotes').value.trim() || DEFAULT_APPROVE_TEMPLATE;
   item.officialLetterNo = document.getElementById('schedLetterNoApprove').value.trim() || generateOfficialLetterNumber();
   item.hostOfficer = 'Kepala SMAN 1 Kandangan';
-
   item.status = 'Disetujui';
   item.scheduledRoom = document.getElementById('schedRoom').value;
   item.scheduledDate = document.getElementById('schedDate').value;
@@ -1083,7 +1157,7 @@ function executeApprove() {
   saveDatabase();
   renderAdminDashboard();
   closeScheduleModal();
-  showToast(`Janji temu [${item.ticketCode}] disetujui bersama Kepala Sekolah!`, 'success');
+  showToast(`Janji temu [${item.ticketCode}] disetujui Kepala Sekolah!`, 'success');
 }
 
 function executeDelegate() {
@@ -1091,12 +1165,9 @@ function executeDelegate() {
   if (!item) return;
 
   const targetHost = document.getElementById('schedDelegateHost').value;
-  const note = document.getElementById('schedDelegateNotes').value.trim();
-  
   item.hostOfficer = targetHost;
   item.officialLetterNo = document.getElementById('schedLetterNoDelegate').value.trim() || generateOfficialLetterNumber();
-  item.approvalMessage = `Didelegasikan ke ${targetHost}. ${note}`;
-
+  item.approvalMessage = document.getElementById('schedDelegateNotes').value.trim() || `Disetujui untuk audiensi bersama ${targetHost}.`;
   item.status = 'Disetujui';
   item.scheduledRoom = document.getElementById('schedDelegateRoom').value;
   item.scheduledDate = document.getElementById('schedDelegateDate').value;
@@ -1107,30 +1178,27 @@ function executeDelegate() {
   saveDatabase();
   renderAdminDashboard();
   closeScheduleModal();
-  showToast(`Audiensi [${item.ticketCode}] berhasil didelegasikan ke ${targetHost}!`, 'success');
+  showToast(`Audiensi [${item.ticketCode}] didelegasikan ke ${targetHost}!`, 'success');
 }
 
 function executeReject() {
-  const reason = document.getElementById('schedRejectionReason').value.trim();
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
 
   item.status = 'Ditolak';
-  item.rejectionReason = reason || DEFAULT_REJECT_TEMPLATE;
+  item.rejectionReason = document.getElementById('schedRejectionReason').value.trim() || DEFAULT_REJECT_TEMPLATE;
 
   saveDatabase();
   renderAdminDashboard();
   closeScheduleModal();
-  showToast(`Permohonan [${item.ticketCode}] ditolak dengan catatan.`, 'info');
+  showToast(`Permohonan [${item.ticketCode}] ditolak secara resmi.`, 'info');
 }
 
 function executeCheckIn(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
   if (!item) return;
-
   item.status = 'Checked-In';
   item.checkInAt = new Date().toISOString();
-
   saveDatabase();
   renderAdminDashboard();
   showToast(`Tamu [${item.fullName}] berhasil check-in di lobi!`, 'success');
@@ -1139,15 +1207,72 @@ function executeCheckIn(ticketCode) {
 function executeComplete(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
   if (!item) return;
-
   item.status = 'Selesai';
   saveDatabase();
   renderAdminDashboard();
-  showToast(`Audiensi [${item.ticketCode}] selesai.`, 'success');
+  showToast(`Audiensi [${item.ticketCode}] dinyatakan selesai.`, 'success');
+}
+
+function deleteAppointment(ticketCode) {
+  const item = appData.appointments.find(a => a.ticketCode === ticketCode);
+  if (!item) return;
+
+  if (confirm(`Hapus antrean tiket [${ticketCode}] atas nama ${item.fullName}?`)) {
+    appData.appointments = appData.appointments.filter(a => a.ticketCode !== ticketCode);
+    saveDatabase();
+    renderAdminDashboard();
+    showToast(`Data tiket [${ticketCode}] telah dihapus.`, 'info');
+  }
 }
 
 // ==========================================================================
-// MODAL SURAT RESMI BERKOP (A4 PDF LAYOUT & QR CODE NYATA)
+// CADANGKAN & PULIHKAN DATA JSON (OFFLINE SAFETY NET)
+// ==========================================================================
+function backupDataToJSON() {
+  if (appData.appointments.length === 0) {
+    showToast('Belum ada data untuk dicadangkan.', 'error');
+    return;
+  }
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData.appointments, null, 2));
+  const a = document.createElement('a');
+  a.href = dataStr;
+  a.download = `Backup_BukuTamu_SMANSAKA_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  showToast('File cadangan JSON berhasil diunduh!', 'success');
+}
+
+function triggerRestoreJSON() {
+  document.getElementById('jsonFileInput')?.click();
+}
+
+function handleJSONFileRestore(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (Array.isArray(parsed)) {
+        appData.appointments = parsed;
+        saveDatabase();
+        renderAdminDashboard();
+        showToast('Data berhasil dipulihkan dari file JSON!', 'success');
+      } else {
+        showToast('Format JSON tidak sesuai struktur aplikasi.', 'error');
+      }
+    } catch (err) {
+      showToast('Gagal membaca file JSON.', 'error');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ==========================================================================
+// MODAL SURAT RESMI BERKOP DINAS (A4 PDF LAYOUT)
 // ==========================================================================
 function openOfficialLetterModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
@@ -1155,49 +1280,50 @@ function openOfficialLetterModal(ticketCode) {
 
   appData.activeLetterTicketCode = ticketCode;
 
-  const letterNo = item.officialLetterNo || generateOfficialLetterNumber();
-  document.getElementById('docLetterNo').innerText = letterNo;
-  
-  const today = new Date();
+  document.getElementById('docLetterNo').innerText = item.officialLetterNo || generateOfficialLetterNumber();
   const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-  document.getElementById('docLetterDate').innerText = `Kediri, ${today.toLocaleDateString('id-ID', dateOptions)}`;
+  document.getElementById('docLetterDate').innerText = `Kediri, ${new Date().toLocaleDateString('id-ID', dateOptions)}`;
 
   document.getElementById('docGuestName').innerText = item.fullName;
-  
-  // Format Identitas Asal Tamu Berdasarkan Kategori
-  let agencyDisplay = 'Masyarakat / Pemohon';
-  if (item.agencyName) {
-    agencyDisplay = `${item.agencyName} (${item.agencyAddress || '-'})`;
-  } else if (item.category === 'Siswa') {
-    agencyDisplay = `Siswa Kelas ${item.studentClass || '-'} (NISN: ${item.studentNisn || '-'})`;
-  } else if (item.category === 'Orang Tua Murid') {
-    agencyDisplay = `Wali Murid dari: ${item.parentChildName || '-'}`;
-  }
-  document.getElementById('docGuestAgency').innerText = agencyDisplay;
-
+  document.getElementById('docGuestAgency').innerText = item.agencyName ? `${item.agencyName} (${item.agencyAddress || '-'})` : 'Mitra SMAN 1 Kandangan';
   document.getElementById('docTicketCode').innerText = item.ticketCode;
 
-  let schedDayName = '-';
+  let schedDay = '-';
   if (item.scheduledDate) {
     const d = new Date(item.scheduledDate);
     const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    schedDayName = `${dayNames[d.getDay()]}, ${d.toLocaleDateString('id-ID', dateOptions)}`;
+    schedDay = `${dayNames[d.getDay()]}, ${d.toLocaleDateString('id-ID', dateOptions)}`;
   }
-  document.getElementById('docScheduleDateDay').innerText = schedDayName;
-  document.getElementById('docScheduleTime').innerText = `${item.scheduledStart || '09.00'} s/d ${item.scheduledEnd || '10.00'}`;
+  document.getElementById('docScheduleDateDay').innerText = schedDay;
+  document.getElementById('docScheduleTime').innerText = `${item.scheduledStart || '09:00'} s.d. ${item.scheduledEnd || '10:00'} WIB`;
   document.getElementById('docScheduleRoom').innerText = item.scheduledRoom || 'Ruang Pimpinan SMAN 1 Kandangan';
   document.getElementById('docHostOfficer').innerText = item.hostOfficer || 'Kepala SMAN 1 Kandangan';
   document.getElementById('docPurpose').innerText = item.purpose;
   document.getElementById('docHostNotes').innerText = `"${item.approvalMessage || DEFAULT_APPROVE_TEMPLATE}"`;
 
-  // Render QR Code Nyata yang Mengarah ke Tautan Verifikasi Sistem
-  const verificationUrl = `${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
-  const qrPlaceholder = document.querySelector('.sign-qr-box .qr-placeholder');
-  if (qrPlaceholder) {
-    qrPlaceholder.innerHTML = `
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(verificationUrl)}" 
-           alt="QR Verifikasi Tiket" 
-           style="width:90px; height:90px; border:1px solid #cbd5e1; padding:3px; border-radius:4px; background:#fff; margin-bottom:0.25rem;">
+  // Kolom Tanda Tangan Adaptif Tata Naskah Dinas
+  const isDelegated = item.hostOfficer && item.hostOfficer !== 'Kepala SMAN 1 Kandangan';
+  const roleTitleEl = document.getElementById('signRoleTitle');
+  const officerNameEl = document.getElementById('signOfficerName');
+  const officerNipEl = document.getElementById('signOfficerNip');
+
+  if (isDelegated) {
+    if (roleTitleEl) roleTitleEl.innerHTML = `a.n. Kepala SMAN 1 Kandangan<br><strong style="font-size:10.5pt;">${escapeHtml(item.hostOfficer)}</strong>`;
+    if (officerNameEl) officerNameEl.innerText = 'Tim Pelayanan & Disposisi Terpadu';
+    if (officerNipEl) officerNipEl.innerText = 'SMAN 1 Kandangan Kediri';
+  } else {
+    if (roleTitleEl) roleTitleEl.innerText = 'Kepala SMAN 1 Kandangan,';
+    if (officerNameEl) officerNameEl.innerText = 'Drs. H. M. Syarif, M.Pd.';
+    if (officerNipEl) officerNipEl.innerText = 'NIP. 19710412 199802 1 003';
+  }
+
+  // QR Code Dinamis
+  const verifyUrl = `${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
+  const qrBox = document.getElementById('letterQrContainer') || document.querySelector('.sign-qr-box .qr-placeholder');
+  if (qrBox) {
+    qrBox.innerHTML = `
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(verifyUrl)}" 
+           alt="QR Verifikasi" style="width:85px; height:85px; border:1px solid #cbd5e1; padding:2px; background:#fff;">
     `;
   }
 
@@ -1214,7 +1340,7 @@ function printOfficialLetter() {
 }
 
 // ==========================================================================
-// KALENDER MINGGUAN & HEATMAP KEPADATAN AUDIENSI
+// KALENDER MINGGUAN & HEATMAP ANALITIK
 // ==========================================================================
 function changeCalendarWeek(offset) {
   appData.calendarOffsetWeeks += offset;
@@ -1244,12 +1370,10 @@ function renderWeeklyCalendar() {
   
   const saturday = new Date(monday);
   saturday.setDate(monday.getDate() + 5);
-  
   const options = { day: 'numeric', month: 'short', year: 'numeric' };
+  
   const label = document.getElementById('calWeekRangeLabel');
-  if (label) {
-    label.innerText = `Minggu: ${monday.toLocaleDateString('id-ID', options)} - ${saturday.toLocaleDateString('id-ID', options)}`;
-  }
+  if (label) label.innerText = `Minggu: ${monday.toLocaleDateString('id-ID', options)} - ${saturday.toLocaleDateString('id-ID', options)}`;
 
   let html = '';
   const todayStr = new Date().toISOString().split('T')[0];
@@ -1260,26 +1384,19 @@ function renderWeeklyCalendar() {
     const dateISO = currentDay.toISOString().split('T')[0];
     const isToday = (dateISO === todayStr);
 
-    const dayAppointments = appData.appointments.filter(a => {
-      const matchDate = (a.scheduledDate === dateISO || a.requestedDate === dateISO);
-      return matchDate && (a.status === 'Disetujui' || a.status === 'Checked-In');
-    });
+    const dayApps = appData.appointments.filter(a => (a.scheduledDate === dateISO || a.requestedDate === dateISO) && (a.status === 'Disetujui' || a.status === 'Checked-In'));
 
     let eventsHTML = '';
-    if (dayAppointments.length === 0) {
-      eventsHTML = `<div class="cal-empty-day">Tidak ada agenda audiensi</div>`;
+    if (dayApps.length === 0) {
+      eventsHTML = `<div class="cal-empty-day">Tidak ada audiensi</div>`;
     } else {
-      eventsHTML = dayAppointments.map(app => {
-        const timeDisplay = app.scheduledStart ? `${app.scheduledStart} - ${app.scheduledEnd}` : 'Jam Belum Ditentukan';
-        const isUrgent = (app.urgency === 'Mendesak');
-        return `
-          <div class="cal-event-card ${isUrgent ? 'urgent' : ''}" onclick="openScheduleModal('${app.ticketCode}')">
-            <span class="cal-event-time"><i class="fa-regular fa-clock"></i> ${timeDisplay}</span>
-            <div class="cal-event-title">${escapeHtml(app.fullName)}</div>
-            <div class="cal-event-room"><i class="fa-solid fa-user-tie"></i> ${app.hostOfficer || 'Kepala Sekolah'}</div>
-          </div>
-        `;
-      }).join('');
+      eventsHTML = dayApps.map(app => `
+        <div class="cal-event-card ${app.urgency === 'Mendesak' ? 'urgent' : ''}" onclick="openScheduleModal('${app.ticketCode}')">
+          <span class="cal-event-time"><i class="fa-regular fa-clock"></i> ${app.scheduledStart || '09:00'} - ${app.scheduledEnd || '10:00'} WIB</span>
+          <div class="cal-event-title">${escapeHtml(app.fullName)}</div>
+          <div class="cal-event-room"><i class="fa-solid fa-user-tie"></i> ${app.hostOfficer || 'Kepala Sekolah'}</div>
+        </div>
+      `).join('');
     }
 
     html += `
@@ -1288,9 +1405,7 @@ function renderWeeklyCalendar() {
           <span class="cal-day-name">${dayNames[i]}</span>
           <span class="cal-day-date">${currentDay.getDate()}</span>
         </div>
-        <div class="cal-events-list">
-          ${eventsHTML}
-        </div>
+        <div class="cal-events-list">${eventsHTML}</div>
       </div>
     `;
   }
@@ -1299,11 +1414,6 @@ function renderWeeklyCalendar() {
 }
 
 function renderAnalyticsAndHeatmap() {
-  renderCategoryBreakdown();
-  renderHeatmapMatrix();
-}
-
-function renderCategoryBreakdown() {
   const total = appData.appointments.length;
   const categories = ['Siswa', 'Guru/Staf', 'Orang Tua Murid', 'Instansi / Kedinasan', 'Umum'];
   const counts = {};
@@ -1314,20 +1424,18 @@ function renderCategoryBreakdown() {
     else counts['Umum']++;
   });
 
-  const barsContainer = document.getElementById('categoryBarsContainer');
-  if (barsContainer) {
-    barsContainer.innerHTML = categories.map(cat => {
+  const bars = document.getElementById('categoryBarsContainer');
+  if (bars) {
+    bars.innerHTML = categories.map(cat => {
       const count = counts[cat];
       const percent = total > 0 ? Math.round((count / total) * 100) : 0;
       return `
         <div class="cat-bar-item">
           <div class="cat-bar-labels">
-            <span style="color:var(--text-main);">${cat}</span>
+            <span>${cat}</span>
             <span style="color:var(--cyan-glow);">${count} (${percent}%)</span>
           </div>
-          <div class="cat-bar-track">
-            <div class="cat-bar-fill" style="width: ${percent}%;"></div>
-          </div>
+          <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${percent}%;"></div></div>
         </div>
       `;
     }).join('');
@@ -1338,52 +1446,39 @@ function renderCategoryBreakdown() {
   const checkedIn = appData.appointments.filter(a => a.status === 'Checked-In' || a.status === 'Selesai').length;
   const rejected = appData.appointments.filter(a => a.status === 'Ditolak').length;
 
-  const pillsContainer = document.getElementById('statusSummaryPills');
-  if (pillsContainer) {
-    pillsContainer.innerHTML = `
-      <div class="status-pill-card">
-        <span class="status-pill-val" style="color:var(--amber-warning);">${pending}</span>
-        <span class="status-pill-lbl">Menunggu Disposisi</span>
-      </div>
-      <div class="status-pill-card">
-        <span class="status-pill-val" style="color:var(--emerald-green);">${approved}</span>
-        <span class="status-pill-lbl">Disetujui / Terjadwal</span>
-      </div>
-      <div class="status-pill-card">
-        <span class="status-pill-val" style="color:var(--cyan-glow);">${checkedIn}</span>
-        <span class="status-pill-lbl">Kehadiran Fisik</span>
-      </div>
-      <div class="status-pill-card">
-        <span class="status-pill-val" style="color:var(--rose-danger);">${rejected}</span>
-        <span class="status-pill-lbl">Ditolak</span>
-      </div>
+  const pills = document.getElementById('statusSummaryPills');
+  if (pills) {
+    pills.innerHTML = `
+      <div class="status-pill-card"><span class="status-pill-val" style="color:var(--amber-warning);">${pending}</span><span class="status-pill-lbl">Menunggu Disposisi</span></div>
+      <div class="status-pill-card"><span class="status-pill-val" style="color:var(--emerald-green);">${approved}</span><span class="status-pill-lbl">Disetujui / Terjadwal</span></div>
+      <div class="status-pill-card"><span class="status-pill-val" style="color:var(--cyan-glow);">${checkedIn}</span><span class="status-pill-lbl">Kehadiran Lobi</span></div>
+      <div class="status-pill-card"><span class="status-pill-val" style="color:var(--rose-danger);">${rejected}</span><span class="status-pill-lbl">Ditolak</span></div>
     `;
   }
+
+  renderHeatmapMatrix();
 }
 
 function renderHeatmapMatrix() {
   const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
   const hours = [
-    { label: '08.00 - 09.00', start: 8 },
-    { label: '09.00 - 10.00', start: 9 },
-    { label: '10.00 - 11.00', start: 10 },
-    { label: '11.00 - 12.00', start: 11 },
-    { label: '13.00 - 14.00', start: 13 },
-    { label: '14.00 - 15.00', start: 14 }
+    { label: '07.00 - 08.20', start: 7 },
+    { label: '08.20 - 09.40', start: 8 },
+    { label: '09.55 - 11.15', start: 9 },
+    { label: '11.15 - 12.40', start: 11 },
+    { label: '12.40 - 14.00', start: 12 },
+    { label: '14.00 - 15.20', start: 14 }
   ];
 
   const density = Array(hours.length).fill(0).map(() => Array(days.length).fill(0));
 
   appData.appointments.forEach(app => {
     if ((app.status === 'Disetujui' || app.status === 'Checked-In') && app.scheduledDate && app.scheduledStart) {
-      const dateObj = new Date(app.scheduledDate);
-      let dayIndex = dateObj.getDay() - 1;
+      const dayIndex = new Date(app.scheduledDate).getDay() - 1;
       if (dayIndex >= 0 && dayIndex < 5) {
         const startHour = parseInt(app.scheduledStart.split(':')[0], 10);
         hours.forEach((h, hIdx) => {
-          if (startHour === h.start) {
-            density[hIdx][dayIndex]++;
-          }
+          if (startHour >= h.start && startHour < h.start + 2) density[hIdx][dayIndex]++;
         });
       }
     }
@@ -1392,22 +1487,15 @@ function renderHeatmapMatrix() {
   const matrixEl = document.getElementById('heatmapMatrix');
   if (!matrixEl) return;
 
-  let html = '';
-  html += `<div class="heat-cell heat-header-cell">Waktu</div>`;
-  days.forEach(d => {
-    html += `<div class="heat-cell heat-header-cell">${d}</div>`;
-  });
+  let html = `<div class="heat-cell heat-header-cell">Waktu</div>`;
+  days.forEach(d => html += `<div class="heat-cell heat-header-cell">${d}</div>`);
 
   hours.forEach((h, hIdx) => {
     html += `<div class="heat-cell heat-hour-label">${h.label}</div>`;
     days.forEach((d, dIdx) => {
       const count = density[hIdx][dIdx];
-      let heatClass = 'heat-0';
-      if (count === 1) heatClass = 'heat-1';
-      else if (count === 2) heatClass = 'heat-2';
-      else if (count >= 3) heatClass = 'heat-3';
-
-      html += `<div class="heat-cell ${heatClass}" title="${days[dIdx]}, ${h.label}: ${count} sesi audiensi">${count > 0 ? count : '-'}</div>`;
+      let heatClass = count === 1 ? 'heat-1' : count === 2 ? 'heat-2' : count >= 3 ? 'heat-3' : 'heat-0';
+      html += `<div class="heat-cell ${heatClass}">${count > 0 ? count : '-'}</div>`;
     });
   });
 
@@ -1420,13 +1508,10 @@ function renderHeatmapMatrix() {
 function openFullPhotoModal() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
-
   const fullImg = document.getElementById('photoFullElement');
   const fullTitle = document.getElementById('photoFullTitle');
-  
   if (fullImg) fullImg.src = item.photoBase64 || '';
   if (fullTitle) fullTitle.innerText = item.fullName;
-
   document.getElementById('photoFullModal')?.classList.remove('hidden');
 }
 
@@ -1454,7 +1539,7 @@ function handleAdminLogin(e) {
     switchView('admin-portal');
     showToast('Login Berhasil! Selamat datang di Panel Pimpinan.', 'success');
   } else {
-    showToast('Username atau kata sandi tidak sesuai.', 'error');
+    showToast('Username atau password tidak valid.', 'error');
   }
 }
 
@@ -1478,68 +1563,50 @@ function updateAuthUIState() {
 // ==========================================================================
 function exportDataToCSV() {
   if (appData.appointments.length === 0) {
-    showToast('Tidak ada data untuk diekspor.', 'error');
+    showToast('Tidak ada data antrean.', 'error');
     return;
   }
 
-  const headers = ['Kode Tiket', 'No Surat Resmi', 'Pejabat Penerima', 'Kategori', 'Nama Lengkap', 'Instansi / Identitas', 'WhatsApp', 'Urgensi', 'Tgl Kunjungan', 'Status', 'Ruangan', 'Jam Mulai', 'Jam Selesai', 'Catatan'];
-  
+  const headers = ['Kode Tiket', 'No Surat Resmi', 'Kategori', 'Pihak Dituju', 'Nama Pemohon', 'Kontak WhatsApp', 'Urgensi', 'Tgl Pelaksanaan', 'Status', 'Ruangan', 'Waktu Mulai', 'Waktu Selesai'];
   const rows = appData.appointments.map(a => {
-    let identityMeta = '-';
-    if (a.agencyName) identityMeta = a.agencyName;
-    else if (a.parentChildName) identityMeta = `Ortu dari ${a.parentChildName}`;
-    else if (a.studentClass) identityMeta = `Siswa Kelas ${a.studentClass} (${a.studentNisn || '-'})`;
-
-    // Sanitasi Cegah Formula Injection di Microsoft Excel (=, +, -, @)
-    const sanitize = (text) => {
-      if (!text) return '-';
-      const str = String(text).replace(/"/g, '""');
+    const sanitize = (txt) => {
+      if (!txt) return '-';
+      const str = String(txt).replace(/"/g, '""');
       return (/^[=+\-@]/.test(str)) ? `'${str}` : str;
     };
-
     return [
       `"${sanitize(a.ticketCode)}"`,
       `"${sanitize(a.officialLetterNo)}"`,
-      `"${sanitize(a.hostOfficer)}"`,
       `"${sanitize(a.category)}"`,
+      `"${sanitize(a.hostOfficer || a.targetOfficial)}"`,
       `"${sanitize(a.fullName)}"`,
-      `"${sanitize(identityMeta)}"`,
       `"${sanitize(a.whatsapp)}"`,
       `"${sanitize(a.urgency)}"`,
-      `"${sanitize(a.visitDate || a.requestedDate)}"`,
+      `"${sanitize(a.scheduledDate || a.visitDate)}"`,
       `"${sanitize(a.status)}"`,
       `"${sanitize(a.scheduledRoom)}"`,
       `"${sanitize(a.scheduledStart)}"`,
-      `"${sanitize(a.scheduledEnd)}"`,
-      `"${sanitize(a.approvalMessage || a.rejectionReason)}"`
+      `"${sanitize(a.scheduledEnd)}"`
     ];
   });
 
   const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const link = document.createElement('a');
   link.href = encodeURI(csvContent);
-  link.download = `Buku_Tamu_SMAN1_Kandangan_${new Date().toISOString().split('T')[0]}.csv`;
+  link.download = `Data_BukuTamu_SMANSAKA_${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
-  showToast('Data CSV berhasil diunduh.', 'success');
+  showToast('Rekapitulasi CSV berhasil diunduh.', 'success');
 }
 
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   if (!container) return;
-
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-
-  let icon = 'fa-info-circle';
-  if (type === 'success') icon = 'fa-circle-check';
-  if (type === 'error') icon = 'fa-circle-exclamation';
-
+  let icon = (type === 'success') ? 'fa-circle-check' : (type === 'error') ? 'fa-circle-exclamation' : 'fa-circle-info';
   toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(message)}</span>`;
   container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 3200);
+  setTimeout(() => toast.remove(), 3200);
 }
 
 function escapeHtml(str) {

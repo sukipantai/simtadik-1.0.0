@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buku Tamu Digital & Penjadwalan Janji Temu | SMAN 1 Kandangan</title>
+  <title>Buku Tamu Digital & E-Dispensasi Siswa | SMAN 1 Kandangan</title>
   
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,13 +27,13 @@
         </div>
         <div class="brand-text">
           <span class="school-name">SMAN 1 KANDANGAN</span>
-          <h1 class="system-title">Buku Tamu & Jadwal Pimpinan</h1>
+          <h1 class="system-title">Buku Tamu & E-Dispensasi Terpadu</h1>
         </div>
       </div>
 
       <nav class="nav-actions">
         <button class="nav-tab-btn active" id="tabGuestBtn" onclick="switchView('guest-portal')">
-          <i class="fa-solid fa-pen-to-square"></i> <span>Form Tamu</span>
+          <i class="fa-solid fa-pen-to-square"></i> <span>Formulir</span>
         </button>
         <button class="nav-tab-btn" id="tabTrackBtn" onclick="switchView('tracking-portal')">
           <i class="fa-solid fa-ticket"></i> <span>Lacak Status</span>
@@ -48,15 +48,15 @@
   <!-- ================= MAIN CONTENT WRAPPER ================= -->
   <main class="main-content">
 
-    <!-- ================= VIEW 1: PORTAL TAMU (3 LANGKAH) ================= -->
+    <!-- ================= VIEW 1: PORTAL FORMULIR (3 LANGKAH) ================= -->
     <section id="guest-portal-view" class="portal-view active-view">
       <div class="hero-banner">
         <div class="pill-badge">
-          <i class="fa-solid fa-shield-halved"></i> Registrasi Audiensi Resmi SMAN 1 Kandangan
+          <i class="fa-solid fa-shield-halved"></i> Registrasi Audiensi & Dispensasi Resmi SMANSAKA
         </div>
-        <h2 class="hero-headline">Ajukan Pertemuan & Audiensi Formal</h2>
+        <h2 class="hero-headline">Registrasi Tamu & E-Dispensasi Audiensi</h2>
         <p class="hero-subtext">
-          Layanan digital terpadu untuk audiensi bersama pimpinan sekolah. Ikuti 3 langkah praktis di bawah untuk menerbitkan tiket resmi Anda.
+          Layanan digital terpadu untuk audiensi bersama Kepala Sekolah, Guru BK, dan Manajemen Sekolah.
         </p>
       </div>
 
@@ -64,12 +64,12 @@
       <div class="stepper-progress-bar">
         <div class="step-indicator active" id="stepIndicator1">
           <div class="step-num">1</div>
-          <span class="step-title">Kategori & Identitas</span>
+          <span class="step-title">Kategori & Tujuan</span>
         </div>
         <div class="step-line" id="stepLine1"></div>
         <div class="step-indicator" id="stepIndicator2">
           <div class="step-num">2</div>
-          <span class="step-title">Detail Kunjungan</span>
+          <span class="step-title">Detail Waktu</span>
         </div>
         <div class="step-line" id="stepLine2"></div>
         <div class="step-indicator" id="stepIndicator3">
@@ -83,25 +83,44 @@
         <div class="glass-card form-wizard-card">
           <form id="guestAppointmentForm" onsubmit="handleFormSubmission(event)">
 
-            <!-- LANGKAH 1: DATA DIRI & KATEGORI -->
+            <!-- LANGKAH 1: KATEGORI, TUJUAN & DATA DIRI -->
             <div id="wizardStep1" class="wizard-step active-step">
               <div class="step-inner-header">
-                <h3><i class="fa-solid fa-address-card"></i> Langkah 1: Data Diri & Kategori</h3>
-                <p>Tentukan kategori kunjungan Anda dan lengkapi data kontak aktif.</p>
+                <h3><i class="fa-solid fa-address-card"></i> Langkah 1: Kategori & Pihak yang Dituju</h3>
+                <p>Tentukan kategori pemohon, unit/guru yang ingin ditemui, dan kontak aktif.</p>
               </div>
 
-              <div class="form-group">
-                <label for="guestCategory" class="field-label">Kategori Tamu <span class="required">*</span></label>
-                <div class="select-wrapper">
-                  <select id="guestCategory" class="form-control" required onchange="handleCategoryChange()">
-                    <option value="" disabled selected>Pilih Kategori Tamu</option>
-                    <option value="Siswa">Siswa</option>
-                    <option value="Guru/Staf">Guru / Tenaga Pendidik Luar</option>
-                    <option value="Orang Tua Murid">Orang Tua / Wali Murid</option>
-                    <option value="Instansi / Kedinasan">Instansi Kedinasan / Pemerintah</option>
-                    <option value="Umum">Masyarakat Umum / Vendor</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down select-icon"></i>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="guestCategory" class="field-label">Kategori Pemohon <span class="required">*</span></label>
+                  <div class="select-wrapper">
+                    <select id="guestCategory" class="form-control" required onchange="handleCategoryChange()">
+                      <option value="" disabled selected>Pilih Kategori</option>
+                      <option value="Siswa">Siswa SMANSAKA</option>
+                      <option value="Orang Tua Murid">Orang Tua / Wali Murid</option>
+                      <option value="Instansi / Kedinasan">Instansi Kedinasan / Pemerintah</option>
+                      <option value="Guru/Staf">Guru / Tenaga Pendidik Luar</option>
+                      <option value="Umum">Masyarakat Umum / Vendor Mitra</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="targetOfficial" class="field-label">Pihak / Pejabat yang Dituju <span class="required">*</span></label>
+                  <div class="select-wrapper">
+                    <select id="targetOfficial" class="form-control" required>
+                      <option value="" disabled selected>Pilih Pejabat / Unit</option>
+                      <option value="Koordinator Guru BK">Guru Bimbingan Konseling (BK)</option>
+                      <option value="Kepala SMAN 1 Kandangan">Kepala SMAN 1 Kandangan</option>
+                      <option value="Waka Bidang Kesiswaan">Wakil Kepala Sekolah Bidang Kesiswaan</option>
+                      <option value="Waka Bidang Kurikulum">Wakil Kepala Sekolah Bidang Kurikulum</option>
+                      <option value="Waka Bidang Humas">Wakil Kepala Sekolah Bidang Humas</option>
+                      <option value="Waka Bidang Sarpras">Wakil Kepala Sekolah Bidang Sarana Prasarana</option>
+                      <option value="Tata Usaha">Layanan Administrasi Tata Usaha</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                  </div>
                 </div>
               </div>
 
@@ -114,7 +133,7 @@
                   </div>
                   <div class="form-group">
                     <label for="studentClass" class="field-label">Kelas / Rombel <span class="required">*</span></label>
-                    <input type="text" id="studentClass" class="form-control" placeholder="Contoh: X-5 / XII MIPA 1">
+                    <input type="text" id="studentClass" class="form-control" placeholder="Contoh: X-5 / XI-MIPA 1">
                   </div>
                 </div>
               </div>
@@ -122,19 +141,19 @@
               <!-- Input Dinamis: Orang Tua -->
               <div id="dynamicParentFields" class="dynamic-section hidden">
                 <div class="form-group">
-                  <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili <span class="required">*</span></label>
-                  <input type="text" id="parentChildName" class="form-control" placeholder="Nama lengkap putra/putri">
+                  <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili & Kelas <span class="required">*</span></label>
+                  <input type="text" id="parentChildName" class="form-control" placeholder="Contoh: Muhammad Farhan (Kelas X-5)">
                 </div>
               </div>
 
               <!-- Input Dinamis: Instansi -->
               <div id="dynamicInstansiFields" class="dynamic-section hidden">
                 <div class="form-group">
-                  <label for="agencyName" class="field-label">Nama Instansi / Kantor <span class="required">*</span></label>
-                  <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Dinas Pendidikan Wilayah Kediri">
+                  <label for="agencyName" class="field-label">Nama Instansi / Lembaga Resmi <span class="required">*</span></label>
+                  <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Cabang Dinas Pendidikan Wilayah Kediri">
                 </div>
                 <div class="form-group">
-                  <label for="agencyAddress" class="field-label">Alamat Kantor <span class="required">*</span></label>
+                  <label for="agencyAddress" class="field-label">Alamat Kantor Pengirim <span class="required">*</span></label>
                   <input type="text" id="agencyAddress" class="form-control" placeholder="Alamat lengkap instansi pengirim">
                 </div>
               </div>
@@ -152,15 +171,15 @@
 
               <div class="wizard-nav-actions text-right">
                 <button type="button" class="btn btn-primary" onclick="goToStep(2)">
-                  Lanjut ke Detail Kunjungan <i class="fa-solid fa-arrow-right"></i>
+                  Lanjut ke Detail Waktu <i class="fa-solid fa-arrow-right"></i>
                 </button>
               </div>
             </div>
 
-            <!-- LANGKAH 2: DETAIL KUNJUNGAN -->
+            <!-- LANGKAH 2: DETAIL WAKTU & MAKSUD -->
             <div id="wizardStep2" class="wizard-step hidden">
               <div class="step-inner-header">
-                <h3><i class="fa-solid fa-calendar-day"></i> Langkah 2: Detail Agenda Audiensi</h3>
+                <h3><i class="fa-solid fa-calendar-day"></i> Langkah 2: Rencana Waktu & Keperluan</h3>
                 <p>Tentukan rencana tanggal kedatangan dan uraikan pokok pembicaraan.</p>
               </div>
 
@@ -183,8 +202,8 @@
               </div>
 
               <div class="form-group">
-                <label for="visitPurpose" class="field-label">Maksud & Keperluan Audiensi <span class="required">*</span></label>
-                <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan maksud pokok audiensi secara ringkas dan jelas..." required></textarea>
+                <label for="visitPurpose" class="field-label">Maksud & Keperluan Pokok <span class="required">*</span></label>
+                <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan maksud pokok audiensi secara jelas (minimal 10 karakter)..." required></textarea>
               </div>
 
               <div class="wizard-nav-actions between">
@@ -222,9 +241,9 @@
                   <canvas id="photoCanvas" class="hidden"></canvas>
 
                   <div id="capturedResultContainer" class="captured-preview hidden">
-                    <img id="capturedImage" alt="Snapshot Tamu">
+                    <img id="capturedImage" alt="Snapshot Pemohon">
                     <div class="capture-badge-success">
-                      <i class="fa-solid fa-circle-check"></i> Foto Wajah Tervalidasi
+                      <i class="fa-solid fa-circle-check"></i> Foto Wajah Terverifikasi
                     </div>
                   </div>
                 </div>
@@ -254,20 +273,20 @@
       </div>
     </section>
 
-    <!-- ================= VIEW 2: LACAK TIKET MANDIRI ================= -->
+    <!-- ================= VIEW 2: LACAK TIKET & E-DISPEN ================= -->
     <section id="tracking-portal-view" class="portal-view hidden">
       <div class="tracker-container">
         <div class="glass-card tracker-card">
           <div class="tracker-header">
             <div class="pill-badge"><i class="fa-solid fa-magnifying-glass"></i> Cek Status Mandiri</div>
-            <h2>Pelacakan Tiket Kunjungan</h2>
-            <p>Masukkan kode tiket untuk melihat jadwal, nama pejabat penerima, dan unduh Surat Undangan Resmi.</p>
+            <h2>Pelacakan Tiket & E-Dispensasi</h2>
+            <p>Masukkan kode tiket Anda untuk melihat jadwal dan membuka Kartu E-Dispen atau Surat Undangan.</p>
           </div>
 
           <div class="tracker-input-box">
             <div class="input-with-icon">
               <i class="fa-solid fa-ticket-simple"></i>
-              <input type="text" id="trackTicketCodeInput" class="form-control track-input" placeholder="Contoh: TKT-2026-X8K9M2" autocomplete="off">
+              <input type="text" id="trackTicketCodeInput" class="form-control track-input" placeholder="Contoh: SMANSAKA-8K9M-2P4Q1" autocomplete="off">
             </div>
             <button type="button" class="btn btn-primary" onclick="trackTicketStatus()">
               <i class="fa-solid fa-search"></i> Lacak Tiket
@@ -284,15 +303,24 @@
       <div class="admin-dashboard-full">
         <div class="admin-topbar">
           <div class="admin-welcome">
-            <span class="admin-role-badge"><i class="fa-solid fa-user-tie"></i> Tata Usaha & Manajemen Pimpinan</span>
-            <h2>Panel Disposisi & Administrasi Audiensi</h2>
+            <span class="admin-role-badge"><i class="fa-solid fa-user-tie"></i> Tata Usaha & Manajemen Pimpinan SMAN 1 Kandangan</span>
+            <h2>Panel Disposisi & Administrasi Sekolah</h2>
           </div>
           <div class="admin-controls">
-            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke setelan awal bawaan">
-              <i class="fa-solid fa-rotate-left"></i> Reset Demo
+            <!-- Hidden input untuk restore JSON -->
+            <input type="file" id="jsonFileInput" accept=".json" style="display:none;" onchange="handleJSONFileRestore(event)">
+            
+            <button class="btn btn-outline btn-sm" onclick="backupDataToJSON()" title="Simpan arsip ke file JSON lokal">
+              <i class="fa-solid fa-download"></i> Cadangkan
             </button>
-            <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()">
+            <button class="btn btn-outline btn-sm" onclick="triggerRestoreJSON()" title="Pulihkan data dari file JSON cadangan">
+              <i class="fa-solid fa-upload"></i> Pulihkan
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()" title="Unduh rekapitulasi data format CSV">
               <i class="fa-solid fa-file-excel"></i> Ekspor CSV
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke setelan demo awal">
+              <i class="fa-solid fa-rotate-left"></i> Reset Demo
             </button>
             <button class="btn btn-danger btn-sm" onclick="logoutAdmin()">
               <i class="fa-solid fa-right-from-bracket"></i> Keluar
@@ -351,11 +379,15 @@
             <div class="table-toolbar">
               <div class="table-title-area">
                 <h3>Antrean Permohonan Masuk</h3>
-                <p>Kelola disposisi pimpinan, delegasi Waka/BK, dan terbitkan surat undangan resmi[cite: 2].</p>
+                <p>Kelola disposisi pimpinan, delegasi Guru BK/Waka, dan terbitkan izin resmi.</p>
               </div>
               <div class="table-filters">
+                <div class="input-with-icon" style="min-width: 220px;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="adminSearchInput" class="form-control form-control-sm" placeholder="Cari tiket, nama, instansi..." oninput="renderAdminQueueTable()">
+                </div>
                 <div class="filter-group">
-                  <label><i class="fa-solid fa-filter"></i> Filter Status:</label>
+                  <label><i class="fa-solid fa-filter"></i> Status:</label>
                   <select id="tableFilterStatus" class="form-control form-control-sm" onchange="renderAdminQueueTable()">
                     <option value="ALL">Semua Status</option>
                     <option value="Menunggu Konfirmasi">Menunggu Konfirmasi</option>
@@ -371,13 +403,13 @@
             <table class="custom-table" id="adminAppointmentsTable">
               <thead>
                 <tr>
-                  <th style="width: 13%;">Kode Tiket</th>
+                  <th style="width: 14%;">Kode Tiket</th>
                   <th style="width: 18%;">Pemohon & Kontak</th>
-                  <th style="width: 14%;">Kategori Tamu</th>
-                  <th style="width: 11%;">Tgl Diminta</th>
-                  <th style="width: 17%;">Alokasi Pejabat & Ruang</th>
-                  <th style="width: 16%;">Status & Catatan</th>
-                  <th style="width: 11%; text-align: right;">Aksi</th>
+                  <th style="width: 14%;">Kategori & Tujuan</th>
+                  <th style="width: 12%;">Tgl Diminta</th>
+                  <th style="width: 17%;">Alokasi & Ruangan</th>
+                  <th style="width: 15%;">Status</th>
+                  <th style="width: 10%; text-align: right;">Aksi</th>
                 </tr>
               </thead>
               <tbody id="adminTableBody">
@@ -393,7 +425,7 @@
             <div class="calendar-topbar">
               <div class="calendar-title-box">
                 <h3 id="calWeekRangeLabel">Minggu: Memuat...</h3>
-                <p>Timeline audiensi terjadwal di Ruang Kepala Sekolah & Ruang Pimpinan.</p>
+                <p>Timeline audiensi terjadwal di lingkungan SMAN 1 Kandangan (Format 24 Jam WIB).</p>
               </div>
               <div class="calendar-nav-buttons">
                 <button class="btn btn-outline btn-sm" onclick="changeCalendarWeek(-1)"><i class="fa-solid fa-chevron-left"></i> Minggu Lalu</button>
@@ -408,14 +440,13 @@
           </div>
         </div>
 
-        <!-- SUBVIEW C: BAGAN STATISTIK & HEATMAP JAM SIBUK -->
+        <!-- SUBVIEW C: STATISTIK & HEATMAP JAM SIBUK -->
         <div id="adminSubViewAnalytics" class="admin-subview-panel hidden">
           <div class="analytics-layout-grid">
-            
             <div class="glass-card analytics-card">
               <div class="analytics-card-header">
                 <h3><i class="fa-solid fa-chart-simple"></i> Komposisi Kategori Pemohon</h3>
-                <p>Distribusi latar belakang tamu yang tercatat di sistem.</p>
+                <p>Distribusi latar belakang tamu dan pemohon audiensi.</p>
               </div>
               <div id="categoryBarsContainer" class="category-bars-list"></div>
               <div class="status-summary-pills" id="statusSummaryPills"></div>
@@ -424,7 +455,7 @@
             <div class="glass-card analytics-card">
               <div class="analytics-card-header">
                 <h3><i class="fa-solid fa-fire-flame-curved"></i> Heatmap Jam Sibuk Audiensi</h3>
-                <p>Kepadatan alokasi waktu audiensi pada hari kerja operasional sekolah.</p>
+                <p>Kepadatan alokasi waktu audiensi pada jam kerja operasional sekolah.</p>
               </div>
               
               <div class="heatmap-legend">
@@ -438,7 +469,6 @@
                 <div class="heatmap-matrix-grid" id="heatmapMatrix"></div>
               </div>
             </div>
-
           </div>
         </div>
 
@@ -447,20 +477,18 @@
 
   </main>
 
-  <!-- ================= MODALS ================= -->
-
-  <!-- 1. TIKET SUKSES MODAL -->
+  <!-- ================= MODAL: TIKET SUKSES ================= -->
   <div id="ticketSuccessModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card">
       <div class="modal-header-icon success">
         <i class="fa-solid fa-circle-check"></i>
       </div>
-      <h3 class="modal-title">Permohonan Kunjungan Diterima</h3>
-      <p class="modal-subtitle">Simpan Kode Tiket Anda untuk melakukan pelacakan status konfirmasi.</p>
+      <h3 class="modal-title">Permohonan Berhasil Terkirim</h3>
+      <p class="modal-subtitle">Simpan Kode Tiket Anda untuk melacak status dan membuka E-Dispen / E-Pass.</p>
 
       <div class="ticket-badge-box">
-        <span class="ticket-sub">KODE TIKET RESMI:</span>
-        <h2 id="modalTicketCode" class="ticket-code-text">TKT-2026-XXXXXX</h2>
+        <span class="ticket-sub">KODE TIKET RESMI SMANSAKA:</span>
+        <h2 id="modalTicketCode" class="ticket-code-text">SMANSAKA-XXXX-XXXXX</h2>
         <button class="btn-copy-code" onclick="copyModalTicketCode()">
           <i class="fa-regular fa-copy"></i> Salin Kode
         </button>
@@ -471,7 +499,10 @@
           <span>Pemohon:</span> <strong id="modalSummaryName">-</strong>
         </div>
         <div class="summary-item">
-          <span>Tanggal Kunjungan:</span> <strong id="modalSummaryDate">-</strong>
+          <span>Tujuan:</span> <strong id="modalSummaryOfficial">-</strong>
+        </div>
+        <div class="summary-item">
+          <span>Rencana Tanggal:</span> <strong id="modalSummaryDate">-</strong>
         </div>
         <div class="summary-item">
           <span>WhatsApp Terdaftar:</span> <strong id="modalSummaryPhone">-</strong>
@@ -486,7 +517,7 @@
     </div>
   </div>
 
-  <!-- 2. LOGIN MODAL -->
+  <!-- ================= MODAL: LOGIN ADMIN ================= -->
   <div id="adminLoginModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card login-modal-box">
       <button class="modal-close-btn" onclick="closeAdminLoginModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -518,19 +549,18 @@
     </div>
   </div>
 
-  <!-- 3. ACTION & SCHEDULING MODAL (SETUJUI, DELEGASI WAKA/BK, TOLAK) -->
+  <!-- ================= MODAL: TINDAKAN & PENJADWALAN DISPOSISI ================= -->
   <div id="scheduleActionModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card schedule-modal-box">
       <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
       
       <div class="modal-badge-title">
         <span id="scheduleModalTicketPill" class="pill-badge">Tiket: #</span>
-        <h3>Tindakan Permohonan Audiensi</h3>
+        <h3>Disposisi & Penjadwalan Audiensi</h3>
       </div>
 
-      <!-- Kartu Pemohon Terpusat -->
       <div class="applicant-card-centered">
-        <img id="schedModalPhoto" src="" alt="Foto Tamu" class="applicant-photo-center" onclick="openFullPhotoModal()" title="Klik foto untuk melihat ukuran penuh">
+        <img id="schedModalPhoto" src="" alt="Foto Pemohon" class="applicant-photo-center" onclick="openFullPhotoModal()" title="Klik untuk memperbesar">
         <div class="compact-info">
           <h4 id="schedModalName">-</h4>
           <p id="schedModalCategoryMeta">-</p>
@@ -538,25 +568,24 @@
         </div>
       </div>
 
-      <!-- 3 Opsi Aksi Disposisi -->
+      <!-- Tab Opsi Tindakan -->
       <div class="action-tab-group">
         <button type="button" class="tab-pill-action active" id="btnTabApprove" onclick="switchActionTab('approve')">
           <i class="fa-solid fa-calendar-check"></i> Kepala Sekolah
         </button>
         <button type="button" class="tab-pill-action" id="btnTabDelegate" onclick="switchActionTab('delegate')">
-          <i class="fa-solid fa-users-gear"></i> Delegasi Waka/BK
+          <i class="fa-solid fa-users-gear"></i> Delegasi (BK/Waka/TU)
         </button>
         <button type="button" class="tab-pill-action" id="btnTabReject" onclick="switchActionTab('reject')">
           <i class="fa-solid fa-ban"></i> Tolak
         </button>
       </div>
 
-      <!-- Tab 1: Setujui Langsung Kepala Sekolah -->
+      <!-- Tab 1: Kepala Sekolah Langsung -->
       <div id="tabContentApprove" class="action-tab-body">
         <div class="form-group">
-          <label class="field-label"><i class="fa-solid fa-hashtag"></i> Nomor Surat Undangan Resmi (Auto-Generated)[cite: 2]</label>
+          <label class="field-label"><i class="fa-solid fa-hashtag"></i> Nomor Surat Dinas (Otomatis)</label>
           <input type="text" id="schedLetterNoApprove" class="form-control form-control-code">
-          <small style="color:var(--text-dim); font-size:0.72rem;">Format baku dinas pendidikan. Dapat disesuaikan dengan nomor buku agenda TU.</small>
         </div>
 
         <div class="form-row">
@@ -565,7 +594,7 @@
             <select id="schedRoom" class="form-control" onchange="runLiveCollisionCheck()">
               <option value="Ruang Kepala Sekolah">Ruang Kepala Sekolah</option>
               <option value="Ruang Rapat Pimpinan">Ruang Rapat Pimpinan</option>
-              <option value="Ruang Tamu Khusus">Ruang Tamu Khusus Lobi</option>
+              <option value="Ruang Tamu Khusus Lobi">Ruang Tamu Khusus Lobi</option>
             </select>
           </div>
           <div class="form-group">
@@ -576,20 +605,17 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label class="field-label">Jam Mulai <span class="required">*</span></label>
+            <label class="field-label">Jam Mulai (Format 24 Jam) <span class="required">*</span></label>
             <input type="time" id="schedStartTime" class="form-control" onchange="runLiveCollisionCheck()">
           </div>
           <div class="form-group">
-            <label class="field-label">Jam Selesai <span class="required">*</span></label>
+            <label class="field-label">Jam Selesai (Format 24 Jam) <span class="required">*</span></label>
             <input type="time" id="schedEndTime" class="form-control" onchange="runLiveCollisionCheck()">
           </div>
         </div>
 
         <div class="form-group">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-            <label class="field-label" style="margin: 0;"><i class="fa-regular fa-comment-dots"></i> Catatan Pimpinan untuk Tamu</label>
-            <button type="button" class="btn-copy-code" onclick="applyDefaultApproveTemplate()">Pakai Template</button>
-          </div>
+          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Catatan Resmi Pimpinan</label>
           <textarea id="schedApprovalNotes" class="form-control" rows="2"></textarea>
         </div>
 
@@ -597,7 +623,7 @@
           <i class="fa-solid fa-triangle-exclamation"></i>
           <div>
             <strong>Benturan Jadwal Terdeteksi!</strong>
-            <p id="collisionAlertMsg">Ruangan tersebut telah dialokasikan pada jam yang sama.</p>
+            <p id="collisionAlertMsg">Ruangan tersebut telah terisi pada jam yang sama.</p>
           </div>
         </div>
 
@@ -608,36 +634,38 @@
         </div>
       </div>
 
-      <!-- Tab 2: Alihkan / Delegasi ke Waka & Guru BK -->
+      <!-- Tab 2: Delegasi Waka / BK / TU -->
       <div id="tabContentDelegate" class="action-tab-body hidden">
         <div class="form-group">
-          <label class="field-label"><i class="fa-solid fa-user-tag"></i> Pejabat Penerima Delegasi <span class="required">*</span>[cite: 2]</label>
+          <label class="field-label"><i class="fa-solid fa-user-tag"></i> Pejabat / Guru Penerima <span class="required">*</span></label>
           <div class="select-wrapper">
             <select id="schedDelegateHost" class="form-control" onchange="handleDelegateHostChange()">
-              <option value="Waka Bidang Kurikulum">Wakil Kepala Sekolah Bidang Kurikulum</option>
+              <option value="Koordinator Guru BK">Guru Bimbingan Konseling (BK)</option>
               <option value="Waka Bidang Kesiswaan">Wakil Kepala Sekolah Bidang Kesiswaan</option>
-              <option value="Waka Bidang Sarpras">Wakil Kepala Sekolah Bidang Sarana & Prasarana</option>
-              <option value="Waka Bidang Humas">Wakil Kepala Sekolah Bidang Hubungan Masyarakat</option>
-              <option value="Koordinator Guru BK">Koordinator / Guru Bimbingan Konseling (BK)</option>
+              <option value="Waka Bidang Kurikulum">Wakil Kepala Sekolah Bidang Kurikulum</option>
+              <option value="Waka Bidang Humas">Wakil Kepala Sekolah Bidang Humas</option>
+              <option value="Waka Bidang Sarpras">Wakil Kepala Sekolah Bidang Sarpras</option>
+              <option value="Tata Usaha">Layanan Tata Usaha & Administrasi</option>
             </select>
             <i class="fa-solid fa-chevron-down select-icon"></i>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="field-label"><i class="fa-solid fa-hashtag"></i> Nomor Surat Undangan Delegasi</label>
+          <label class="field-label"><i class="fa-solid fa-hashtag"></i> Nomor Surat Dinas / Disposisi</label>
           <input type="text" id="schedLetterNoDelegate" class="form-control form-control-code">
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="field-label">Ruangan Delegasi <span class="required">*</span></label>
+            <label class="field-label">Ruangan Pelaksanaan <span class="required">*</span></label>
             <select id="schedDelegateRoom" class="form-control">
-              <option value="Ruang Waka Kurikulum">Ruang Waka Kurikulum</option>
-              <option value="Ruang Waka Kesiswaan">Ruang Waka Kesiswaan</option>
-              <option value="Ruang Waka Humas & Sarpras">Ruang Waka Humas & Sarpras</option>
               <option value="Ruang Konseling BK">Ruang Konseling BK</option>
-              <option value="Ruang Tamu Khusus">Ruang Tamu Khusus Lobi</option>
+              <option value="Ruang Waka Kesiswaan">Ruang Waka Kesiswaan</option>
+              <option value="Ruang Waka Kurikulum">Ruang Waka Kurikulum</option>
+              <option value="Ruang Waka Humas & Sarpras">Ruang Waka Humas & Sarpras</option>
+              <option value="Ruang Tata Usaha">Ruang Tata Usaha</option>
+              <option value="Ruang Tamu Khusus Lobi">Ruang Tamu Khusus Lobi</option>
             </select>
           </div>
           <div class="form-group">
@@ -648,23 +676,23 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label class="field-label">Jam Mulai <span class="required">*</span></label>
-            <input type="time" id="schedDelegateStartTime" class="form-control" value="09:00">
+            <label class="field-label">Jam Mulai (WIB) <span class="required">*</span></label>
+            <input type="time" id="schedDelegateStartTime" class="form-control" value="08:20">
           </div>
           <div class="form-group">
-            <label class="field-label">Jam Selesai <span class="required">*</span></label>
-            <input type="time" id="schedDelegateEndTime" class="form-control" value="10:00">
+            <label class="field-label">Jam Selesai (WIB) <span class="required">*</span></label>
+            <input type="time" id="schedDelegateEndTime" class="form-control" value="09:40">
           </div>
         </div>
 
         <div class="form-group">
-          <label class="field-label"><i class="fa-solid fa-clipboard-list"></i> Catatan Lembar Disposisi Digital TU / Pimpinan</label>
-          <textarea id="schedDelegateNotes" class="form-control" rows="2">Didelegasikan untuk diterima dan dikoordinasikan teknis pembahasannya.</textarea>
+          <label class="field-label"><i class="fa-solid fa-clipboard-list"></i> Catatan Lembar Disposisi</label>
+          <textarea id="schedDelegateNotes" class="form-control" rows="2"></textarea>
         </div>
 
         <div class="modal-footer-actions">
           <button type="button" class="btn btn-primary btn-block" onclick="executeDelegate()">
-            <i class="fa-solid fa-share-nodes"></i> Konfirmasi Delegasi & Kunci Jadwal
+            <i class="fa-solid fa-share-nodes"></i> Konfirmasi Disposisi & Kunci Jadwal
           </button>
         </div>
       </div>
@@ -672,10 +700,7 @@
       <!-- Tab 3: Tolak Audiensi -->
       <div id="tabContentReject" class="action-tab-body hidden">
         <div class="form-group">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-            <label class="field-label" style="margin: 0;"><i class="fa-solid fa-circle-exclamation"></i> Alasan Penolakan</label>
-            <button type="button" class="btn-copy-code" onclick="applyDefaultRejectTemplate()">Pakai Template</button>
-          </div>
+          <label class="field-label"><i class="fa-solid fa-circle-exclamation"></i> Alasan Penolakan Resmi</label>
           <textarea id="schedRejectionReason" class="form-control" rows="3"></textarea>
         </div>
         <div class="modal-footer-actions">
@@ -688,7 +713,7 @@
     </div>
   </div>
 
-  <!-- 4. MODAL FULL FOTO PEMOHON -->
+  <!-- ================= MODAL: FOTO FULL PEMOHON ================= -->
   <div id="photoFullModal" class="modal-overlay hidden" onclick="closeFullPhotoModal()">
     <div class="modal-dialog glass-card photo-full-dialog" onclick="event.stopPropagation()">
       <button type="button" class="modal-close-btn" onclick="closeFullPhotoModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -697,18 +722,17 @@
         <h3 id="photoFullTitle" class="photo-full-name">-</h3>
       </div>
       <div class="photo-full-img-box">
-        <img id="photoFullElement" src="" alt="Foto Pemohon Ukuran Penuh">
+        <img id="photoFullElement" src="" alt="Foto Pemohon">
       </div>
-      <p class="photo-full-hint">Klik tombol silang atau area luar untuk menutup tampilan.</p>
     </div>
   </div>
 
-  <!-- 5. MODAL SURAT UNDANGAN RESMI BERKOP (PDF GENERATOR / PRINT LAYOUT) -->
+  <!-- ================= MODAL: SURAT DINAS RESMI (A4 PDF LAYOUT) ================= -->
   <div id="officialLetterModal" class="modal-overlay hidden" onclick="closeOfficialLetterModal()">
     <div class="modal-dialog official-letter-dialog" onclick="event.stopPropagation()">
       <div class="letter-action-toolbar no-print">
         <div class="toolbar-left">
-          <span class="pill-badge"><i class="fa-solid fa-file-shield"></i> Dokumen Resmi Institusi[cite: 2]</span>
+          <span class="pill-badge"><i class="fa-solid fa-file-shield"></i> Dokumen Resmi Kedinasan SMANSAKA</span>
         </div>
         <div class="toolbar-right">
           <button type="button" class="btn btn-primary btn-sm" onclick="printOfficialLetter()">
@@ -720,10 +744,7 @@
         </div>
       </div>
 
-      <!-- LEMBAR DOKUMEN CETAK RESMI UKURAN A4 STANDAR TATA NASKAH DINAS -->
       <div class="official-sheet-a4" id="printableLetterArea">
-        
-        <!-- KOP SURAT DINAS RESMI -->
         <div class="letter-kop">
           <div class="kop-logo">
             <img src="logo.png" alt="Logo SMAN 1 Kandangan" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg/500px-Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg.png'">
@@ -739,34 +760,20 @@
         </div>
         <div class="kop-separator-line"></div>
 
-        <!-- NOMOR & IDENTITAS PERSURATAN -->
         <div class="letter-meta-row">
           <div class="meta-left">
             <table>
-              <tr>
-                <td style="width: 75px;">Nomor</td>
-                <td>: <strong id="docLetterNo">-</strong></td>
-              </tr>
-              <tr>
-                <td>Sifat</td>
-                <td>: Penting / Kedinasan</td>
-              </tr>
-              <tr>
-                <td>Lampiran</td>
-                <td>: 1 (Satu) Berkas Lembar Tiket</td>
-              </tr>
-              <tr>
-                <td>Perihal</td>
-                <td>: <strong>Konfirmasi & Undangan Audiensi Resmi</strong>[cite: 2]</td>
-              </tr>
+              <tr><td style="width: 75px;">Nomor</td><td>: <strong id="docLetterNo">-</strong></td></tr>
+              <tr><td>Sifat</td><td>: Penting / Kedinasan</td></tr>
+              <tr><td>Lampiran</td><td>: 1 (Satu) Berkas Lembar Tiket</td></tr>
+              <tr><td>Perihal</td><td>: <strong>Konfirmasi & Undangan Audiensi Resmi</strong></td></tr>
             </table>
           </div>
           <div class="meta-right">
-            <span id="docLetterDate">Kediri, 18 September 2026</span>
+            <span id="docLetterDate">Kediri, 19 September 2026</span>
           </div>
         </div>
 
-        <!-- TUJUAN SURAT -->
         <div class="letter-addressee">
           <p>Kepada Yth.</p>
           <p><strong id="docGuestName">-</strong></p>
@@ -774,69 +781,49 @@
           <p>di Tempat</p>
         </div>
 
-        <!-- ISI SURAT -->
         <div class="letter-body-content">
           <p>Dengan hormat,</p>
           <p style="text-align: justify; text-indent: 2.5rem;">
-            Menindaklanjuti permohonan audiensi yang diajukan melalui Sistem Buku Tamu Digital SMAN 1 Kandangan dengan Kode Registrasi <strong id="docTicketCode">-</strong>, dengan ini pimpinan sekolah menyambut baik dan mengundang Bapak/Ibu/Saudara untuk hadir dalam pertemuan kedinasan yang dijadwalkan sebagai berikut:
+            Menindaklanjuti permohonan audiensi melalui Sistem Buku Tamu Digital SMAN 1 Kandangan dengan Kode Registrasi <strong id="docTicketCode">-</strong>, dengan ini pimpinan sekolah mengundang Bapak/Ibu untuk hadir pada pertemuan kedinasan yang dijadwalkan sebagai berikut:
           </p>
 
           <table class="letter-table-schedule">
-            <tr>
-              <td style="width: 25%;">Hari / Tanggal</td>
-              <td>: <strong id="docScheduleDateDay">-</strong></td>
-            </tr>
-            <tr>
-              <td>Waktu Pertemuan</td>
-              <td>: <strong id="docScheduleTime">-</strong> WIB</td>
-            </tr>
-            <tr>
-              <td>Tempat / Ruangan</td>
-              <td>: <strong id="docScheduleRoom">-</strong></td>
-            </tr>
-            <tr>
-              <td>Pejabat Penerima</td>
-              <td>: <strong id="docHostOfficer" style="color:#000;">Kepala SMAN 1 Kandangan</strong>[cite: 2]</td>
-            </tr>
-            <tr>
-              <td>Agenda / Keperluan</td>
-              <td>: <span id="docPurpose">-</span></td>
-            </tr>
+            <tr><td style="width: 28%;">Hari / Tanggal</td><td>: <strong id="docScheduleDateDay">-</strong></td></tr>
+            <tr><td>Waktu Pertemuan</td><td>: <strong id="docScheduleTime">-</strong></td></tr>
+            <tr><td>Tempat / Ruangan</td><td>: <strong id="docScheduleRoom">-</strong></td></tr>
+            <tr><td>Pejabat Penerima</td><td>: <strong id="docHostOfficer">-</strong></td></tr>
+            <tr><td>Agenda / Keperluan</td><td>: <span id="docPurpose">-</span></td></tr>
           </table>
 
           <div class="letter-notes-box">
-            <strong>Catatan & Arahan Pimpinan:</strong>
-            <p id="docHostNotes">"Baik, saya tunggu 😊"</p>
+            <strong>Arahan & Catatan Pimpinan:</strong>
+            <p id="docHostNotes">"-"</p>
           </div>
 
           <p style="text-align: justify; text-indent: 2.5rem; margin-top: 1rem;">
-            Mengingat pentingnya agenda tersebut, kami mohon Bapak/Ibu hadir tepat waktu dan menunjukkan surat/tiket elektronik ini kepada petugas keamanan di lobi sekolah untuk keperluan presensi fisik kedatangan.
+            Mengingat pentingnya agenda tersebut, kami mohon Bapak/Ibu hadir tepat waktu dan menunjukkan surat ini kepada petugas keamanan di lobi sekolah untuk keperluan presensi kedatangan.
           </p>
-
           <p style="margin-top: 0.75rem;">Atas perhatian dan kerja samanya, kami sampaikan terima kasih.</p>
         </div>
 
-        <!-- TANDA TANGAN & STEMPEL DIGITAL -->
         <div class="letter-sign-section">
           <div class="sign-qr-box">
-            <div class="qr-placeholder">
-              <i class="fa-solid fa-qrcode"></i>
-            </div>
-            <span class="qr-caption">Dokumen Resmi Tervalidasi Sistem Digital SMAN 1 Kandangan</span>
+            <div id="letterQrContainer" style="display:flex; justify-content:center; margin-bottom:0.25rem;"></div>
+            <span class="qr-caption">Dokumen Resmi Tervalidasi Sistem SMAN 1 Kandangan</span>
           </div>
 
           <div class="sign-box">
-            <p>Kepala SMAN 1 Kandangan,</p>
+            <p id="signRoleTitle">Kepala SMAN 1 Kandangan,</p>
             <div class="stamp-and-sign-area">
               <div class="stamp-circle-purple">
                 <span>PEMERINTAH JAWA TIMUR</span>
                 <strong>SMAN 1 KANDANGAN</strong>
                 <small>DINAS PENDIDIKAN</small>
               </div>
-              <div class="signature-cursive">M. Syarif, M.Pd</div>
+              <div class="signature-cursive">M. Syarif</div>
             </div>
-            <p class="sign-name"><strong>Drs. H. M. Syarif, M.Pd.</strong></p>
-            <p class="sign-nip">NIP. 19710412 199802 1 003</p>
+            <p class="sign-name" id="signOfficerName"><strong>Istu Handayani, M.Pd.</strong></p>
+            <p class="sign-nip" id="signOfficerNip">NIP. 197608012005012009</p>
           </div>
         </div>
 
@@ -846,7 +833,7 @@
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Skrip Utama Versi 10.0 -->
-  <script src="script.js?v=10.0"></script>
+  <!-- Skrip Utama Versi 11.1 -->
+  <script src="script.js"></script>
 </body>
 </html>

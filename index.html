@@ -48,7 +48,7 @@
   <!-- ================= MAIN CONTENT WRAPPER ================= -->
   <main class="main-content">
 
-    <!-- ================= VIEW 1: PORTAL FORMULIR (3 LANGKAH) ================= -->
+    <!-- ================= VIEW 1: PORTAL PENDAFTARAN ================= -->
     <section id="guest-portal-view" class="portal-view active-view">
       <div class="hero-banner">
         <div class="pill-badge">
@@ -78,12 +78,12 @@
         </div>
       </div>
 
-      <!-- Multi-step Form Card -->
+      <!-- Form Card -->
       <div class="wizard-container">
         <div class="glass-card form-wizard-card">
           <form id="guestAppointmentForm" onsubmit="handleFormSubmission(event)">
 
-            <!-- LANGKAH 1: KATEGORI, TUJUAN & DATA DIRI -->
+            <!-- LANGKAH 1: DATA DIRI & TUJUAN -->
             <div id="wizardStep1" class="wizard-step active-step">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-address-card"></i> Langkah 1: Kategori & Pihak yang Dituju</h3>
@@ -133,7 +133,7 @@
                   </div>
                   <div class="form-group">
                     <label for="studentClass" class="field-label">Kelas / Rombel <span class="required">*</span></label>
-                    <input type="text" id="studentClass" class="form-control" placeholder="Contoh: X-5 / XI-MIPA 1">
+                    <input type="text" id="studentClass" class="form-control" placeholder="Contoh: X-5 / XI-2">
                   </div>
                 </div>
               </div>
@@ -141,7 +141,7 @@
               <!-- Input Dinamis: Orang Tua -->
               <div id="dynamicParentFields" class="dynamic-section hidden">
                 <div class="form-group">
-                  <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili & Kelas <span class="required">*</span></label>
+                  <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili <span class="required">*</span></label>
                   <input type="text" id="parentChildName" class="form-control" placeholder="Contoh: Muhammad Farhan (Kelas X-5)">
                 </div>
               </div>
@@ -149,19 +149,19 @@
               <!-- Input Dinamis: Instansi -->
               <div id="dynamicInstansiFields" class="dynamic-section hidden">
                 <div class="form-group">
-                  <label for="agencyName" class="field-label">Nama Instansi / Lembaga Resmi <span class="required">*</span></label>
+                  <label for="agencyName" class="field-label">Nama Instansi / Kantor Resmi <span class="required">*</span></label>
                   <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Cabang Dinas Pendidikan Wilayah Kediri">
                 </div>
                 <div class="form-group">
                   <label for="agencyAddress" class="field-label">Alamat Kantor Pengirim <span class="required">*</span></label>
-                  <input type="text" id="agencyAddress" class="form-control" placeholder="Alamat lengkap instansi pengirim">
+                  <input type="text" id="agencyAddress" class="form-control" placeholder="Alamat lengkap instansi">
                 </div>
               </div>
 
               <div class="form-row">
                 <div class="form-group">
                   <label for="fullName" class="field-label">Nama Lengkap Pemohon <span class="required">*</span></label>
-                  <input type="text" id="fullName" class="form-control" placeholder="Nama sesuai tanda pengenal" required>
+                  <input type="text" id="fullName" class="form-control" placeholder="Sesuai tanda pengenal" required>
                 </div>
                 <div class="form-group">
                   <label for="whatsappNumber" class="field-label">Nomor WhatsApp Aktif <span class="required">*</span></label>
@@ -202,7 +202,7 @@
               </div>
 
               <div class="form-group">
-                <label for="visitPurpose" class="field-label">Maksud & Keperluan Pokok <span class="required">*</span></label>
+                <label for="visitPurpose" class="field-label">Maksud & Keperluan Audiensi <span class="required">*</span></label>
                 <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan maksud pokok audiensi secara jelas (minimal 10 karakter)..." required></textarea>
               </div>
 
@@ -216,7 +216,7 @@
               </div>
             </div>
 
-            <!-- LANGKAH 3: VERIFIKASI FOTO LIVE -->
+            <!-- LANGKAH 3: VERIFIKASI FOTO WEBCAM -->
             <div id="wizardStep3" class="wizard-step hidden">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-camera"></i> Langkah 3: Verifikasi Foto Wajah Langsung</h3>
@@ -263,7 +263,7 @@
                   <i class="fa-solid fa-arrow-left"></i> Kembali
                 </button>
                 <button type="submit" id="submitFormBtn" class="btn btn-emerald">
-                  <i class="fa-solid fa-paper-plane"></i> Kirim Permohonan Audiensi
+                  <i class="fa-solid fa-paper-plane"></i> Kirim Permohonan
                 </button>
               </div>
             </div>
@@ -280,7 +280,7 @@
           <div class="tracker-header">
             <div class="pill-badge"><i class="fa-solid fa-magnifying-glass"></i> Cek Status Mandiri</div>
             <h2>Pelacakan Tiket & E-Dispensasi</h2>
-            <p>Masukkan kode tiket Anda untuk melihat jadwal dan membuka Kartu E-Dispen atau Surat Undangan.</p>
+            <p>Masukkan kode tiket untuk melihat jadwal dan mengakses E-Dispen atau Surat Undangan.</p>
           </div>
 
           <div class="tracker-input-box">
@@ -289,7 +289,7 @@
               <input type="text" id="trackTicketCodeInput" class="form-control track-input" placeholder="Contoh: SMANSAKA-8K9M-2P4Q1" autocomplete="off">
             </div>
             <button type="button" class="btn btn-primary" onclick="trackTicketStatus()">
-              <i class="fa-solid fa-search"></i> Lacak Tiket
+              <i class="fa-solid fa-search"></i> Lacak
             </button>
           </div>
 
@@ -310,16 +310,16 @@
             <!-- Hidden input untuk restore JSON -->
             <input type="file" id="jsonFileInput" accept=".json" style="display:none;" onchange="handleJSONFileRestore(event)">
             
-            <button class="btn btn-outline btn-sm" onclick="backupDataToJSON()" title="Simpan arsip ke file JSON lokal">
+            <button class="btn btn-outline btn-sm" onclick="backupDataToJSON()" title="Cadangkan seluruh data antrean ke file JSON lokal">
               <i class="fa-solid fa-download"></i> Cadangkan
             </button>
-            <button class="btn btn-outline btn-sm" onclick="triggerRestoreJSON()" title="Pulihkan data dari file JSON cadangan">
+            <button class="btn btn-outline btn-sm" onclick="triggerRestoreJSON()" title="Pulihkan data antrean dari file JSON">
               <i class="fa-solid fa-upload"></i> Pulihkan
             </button>
-            <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()" title="Unduh rekapitulasi data format CSV">
+            <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()" title="Unduh rekapitulasi data format CSV / Excel">
               <i class="fa-solid fa-file-excel"></i> Ekspor CSV
             </button>
-            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke setelan demo awal">
+            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke simulasi demo awal">
               <i class="fa-solid fa-rotate-left"></i> Reset Demo
             </button>
             <button class="btn btn-danger btn-sm" onclick="logoutAdmin()">
@@ -379,7 +379,7 @@
             <div class="table-toolbar">
               <div class="table-title-area">
                 <h3>Antrean Permohonan Masuk</h3>
-                <p>Kelola disposisi pimpinan, delegasi Guru BK/Waka, dan terbitkan izin resmi.</p>
+                <p>Kelola alokasi ruangan, disposisi pejabat, dan jadwal audiensi.</p>
               </div>
               <div class="table-filters">
                 <div class="input-with-icon" style="min-width: 220px;">
@@ -413,13 +413,13 @@
                 </tr>
               </thead>
               <tbody id="adminTableBody">
-                <!-- Render via script.js -->
+                <!-- Diisi via script.js -->
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- SUBVIEW B: KALENDER VISUAL MINGGUAN -->
+        <!-- SUBVIEW B: KALENDER MINGGUAN -->
         <div id="adminSubViewCalendar" class="admin-subview-panel hidden">
           <div class="glass-card calendar-wrapper-card">
             <div class="calendar-topbar">
@@ -435,12 +435,12 @@
             </div>
 
             <div class="calendar-grid-container" id="calendarGridWeek">
-              <!-- Render via script.js -->
+              <!-- Diisi via script.js -->
             </div>
           </div>
         </div>
 
-        <!-- SUBVIEW C: STATISTIK & HEATMAP JAM SIBUK -->
+        <!-- SUBVIEW C: STATISTIK & HEATMAP -->
         <div id="adminSubViewAnalytics" class="admin-subview-panel hidden">
           <div class="analytics-layout-grid">
             <div class="glass-card analytics-card">
@@ -455,7 +455,7 @@
             <div class="glass-card analytics-card">
               <div class="analytics-card-header">
                 <h3><i class="fa-solid fa-fire-flame-curved"></i> Heatmap Jam Sibuk Audiensi</h3>
-                <p>Kepadatan alokasi waktu audiensi pada jam kerja operasional sekolah.</p>
+                <p>Kepadatan waktu pertemuan pada jam kerja operasional sekolah.</p>
               </div>
               
               <div class="heatmap-legend">
@@ -727,7 +727,7 @@
     </div>
   </div>
 
-  <!-- ================= MODAL: SURAT DINAS RESMI (A4 PDF LAYOUT) ================= -->
+  <!-- ================= MODAL: SURAT DINAS RESMI (KHUSUS KEDINASAN / A4 PDF) ================= -->
   <div id="officialLetterModal" class="modal-overlay hidden" onclick="closeOfficialLetterModal()">
     <div class="modal-dialog official-letter-dialog" onclick="event.stopPropagation()">
       <div class="letter-action-toolbar no-print">
@@ -833,7 +833,7 @@
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Skrip Utama Versi 11.1 -->
+  <!-- Skrip Utama Versi 11.2 -->
   <script src="script.js"></script>
 </body>
 </html>

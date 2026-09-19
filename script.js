@@ -1,6 +1,6 @@
 /**
  * SISTEM BUKU TAMU DIGITAL & PENJADWALAN JANJI TEMU SEKOLAH
- * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 10.0 (OFFICIAL LETTER & DELEGATION ENGINE)
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 10.1 (STABLE CLIENT-SIDE)
  */
 
 const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V10';
@@ -11,11 +11,11 @@ const ADMIN_CREDENTIALS = {
   password: '1234admin'
 };
 
-// Template Baku
+// Template Baku Respon Pimpinan
 const DEFAULT_APPROVE_TEMPLATE = "Baik, saya tunggu 😊";
 const DEFAULT_REJECT_TEMPLATE = "Mohon maaf, pada waktu tersebut berbenturan dengan agenda kedinasan luar sekolah 🙏";
 
-// Global State
+// Global State Aplikasi
 let appData = {
   appointments: [],
   activeStream: null,
@@ -27,13 +27,13 @@ let appData = {
   activeAdminSubView: 'table'
 };
 
-// Generator Nomor Surat Baku Dinas Otomatis
+// Generator Nomor Surat Baku Dinas Pendidikan Jawa Timur
 function generateOfficialLetterNumber(index) {
   const paddedNo = String(index || Math.floor(Math.random() * 800) + 100).padStart(3, '0');
   return `421.3 / ${paddedNo} / 101.6.14 / 2026`;
 }
 
-// Mock Data Awal
+// Mock Data Awal (Untuk Simulasi Demo)
 const INITIAL_MOCK_DATA = [
   {
     ticketCode: 'TKT-2026-X8K9M2',
@@ -42,6 +42,9 @@ const INITIAL_MOCK_DATA = [
     whatsapp: '081234567890',
     agencyName: 'Cabang Dinas Pendidikan Wilayah Kediri',
     agencyAddress: 'Jl. Jaksa Agung Suprapto No. 2, Kediri',
+    studentNisn: null,
+    studentClass: null,
+    parentChildName: null,
     urgency: 'Penting',
     requestedDate: '2026-09-18',
     purpose: 'Koordinasi teknis penjaminan mutu asesmen pembelajaran semester ganjil tahun ajaran berjalan.',
@@ -63,7 +66,11 @@ const INITIAL_MOCK_DATA = [
     category: 'Orang Tua Murid',
     fullName: 'Siti Aminah, S.Pd',
     whatsapp: '085712349988',
-    parentChildName: 'Muhammad Farhan',
+    agencyName: null,
+    agencyAddress: null,
+    studentNisn: null,
+    studentClass: null,
+    parentChildName: 'Muhammad Farhan (Kelas X-5)',
     urgency: 'Biasa',
     requestedDate: '2026-09-16',
     purpose: 'Konsultasi program beasiswa bakat prestasi akademik dan pembinaan olimpiade sains.',
@@ -85,6 +92,11 @@ const INITIAL_MOCK_DATA = [
     category: 'Umum',
     fullName: 'Ir. Hendra Gunawan',
     whatsapp: '081398765432',
+    agencyName: 'PT Edutech Nusantara Bersama',
+    agencyAddress: 'Surabaya',
+    studentNisn: null,
+    studentClass: null,
+    parentChildName: null,
     urgency: 'Mendesak',
     requestedDate: '2026-09-15',
     purpose: 'Penyampaian proposal kemitraan beasiswa riset dan teknologi robotika sekolah.',
@@ -103,10 +115,25 @@ const INITIAL_MOCK_DATA = [
   }
 ];
 
+// ==========================================================================
+// INISIALISASI APLIKASI
+// ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
   loadDatabase();
   initializeVisitDateInput();
   updateAuthUIState();
+
+  // Deteksi Scan QR Code dari Ponsel (?ticket=TKT-XXXX)
+  const urlParams = new URLSearchParams(window.location.search);
+  const ticketParam = urlParams.get('ticket');
+  if (ticketParam) {
+    switchView('tracking-portal');
+    const inputTrack = document.getElementById('trackTicketCodeInput');
+    if (inputTrack) {
+      inputTrack.value = ticketParam;
+      trackTicketStatus();
+    }
+  }
 });
 
 function loadDatabase() {
@@ -124,7 +151,11 @@ function loadDatabase() {
 }
 
 function saveDatabase() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(appData.appointments));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData.appointments));
+  } catch (e) {
+    showToast('Penyimpanan memori penuh! Silakan hapus beberapa data demo.', 'error');
+  }
 }
 
 function resetAllData() {
@@ -147,29 +178,32 @@ function initializeVisitDateInput() {
 }
 
 // ==========================================================================
-// NAVIGATION & VIEW SWITCHER
+// PENGALIH TAMPILAN VIEW UTAMA
 // ==========================================================================
 function switchView(viewId) {
   const views = ['guest-portal', 'tracking-portal', 'admin-portal'];
-  views.forEach(v => document.getElementById(`${v}-view`).classList.add('hidden'));
+  views.forEach(v => {
+    const el = document.getElementById(`${v}-view`);
+    if (el) el.classList.add('hidden');
+  });
 
-  document.getElementById('tabGuestBtn').classList.remove('active');
-  document.getElementById('tabTrackBtn').classList.remove('active');
-  document.getElementById('tabAdminBtn').classList.remove('active');
+  document.getElementById('tabGuestBtn')?.classList.remove('active');
+  document.getElementById('tabTrackBtn')?.classList.remove('active');
+  document.getElementById('tabAdminBtn')?.classList.remove('active');
 
   if (viewId === 'guest-portal') {
-    document.getElementById('guest-portal-view').classList.remove('hidden');
-    document.getElementById('tabGuestBtn').classList.add('active');
+    document.getElementById('guest-portal-view')?.classList.remove('hidden');
+    document.getElementById('tabGuestBtn')?.classList.add('active');
     if (appData.currentWizardStep === 3 && !appData.capturedBase64) {
       startCamera();
     }
   } else if (viewId === 'tracking-portal') {
-    document.getElementById('tracking-portal-view').classList.remove('hidden');
-    document.getElementById('tabTrackBtn').classList.add('active');
+    document.getElementById('tracking-portal-view')?.classList.remove('hidden');
+    document.getElementById('tabTrackBtn')?.classList.add('active');
     stopCamera();
   } else if (viewId === 'admin-portal') {
-    document.getElementById('admin-portal-view').classList.remove('hidden');
-    document.getElementById('tabAdminBtn').classList.add('active');
+    document.getElementById('admin-portal-view')?.classList.remove('hidden');
+    document.getElementById('tabAdminBtn')?.classList.add('active');
     stopCamera();
     renderAdminDashboard();
   }
@@ -185,64 +219,177 @@ function handleAdminNavClick() {
 }
 
 // ==========================================================================
-// MULTI-STEP WIZARD (3 LANGKAH)
+// MODUL WIZARD STEP & VALIDASI BERJENJANG (3 LANGKAH)
 // ==========================================================================
-function goToStep(step) {
-  if (step === 2 && appData.currentWizardStep === 1) {
-    const category = document.getElementById('guestCategory').value;
-    const name = document.getElementById('fullName').value.trim();
-    const wa = document.getElementById('whatsappNumber').value.trim();
+function goToStep(targetStep) {
+  const currentStep = appData.currentWizardStep;
 
-    if (!category) {
-      showToast('Pilih kategori tamu terlebih dahulu.', 'error');
-      return;
-    }
-    if (!name || !wa) {
-      showToast('Lengkapi nama pemohon dan nomor WhatsApp aktif.', 'error');
-      return;
-    }
+  // 1. Validasi saat maju dari Langkah 1 ke Langkah 2
+  if (targetStep === 2 && currentStep === 1) {
+    if (!validateStep1()) return;
   }
 
-  if (step === 3 && appData.currentWizardStep === 2) {
-    const visitDate = document.getElementById('visitDate').value;
-    const purpose = document.getElementById('visitPurpose').value.trim();
-
-    if (!visitDate || !purpose) {
-      showToast('Lengkapi tanggal kunjungan dan pokok permohonan audiensi.', 'error');
-      return;
-    }
+  // 2. Validasi saat maju dari Langkah 2 ke Langkah 3
+  if (targetStep === 3 && currentStep === 2) {
+    if (!validateStep2()) return;
   }
 
+  // 3. Pencegahan lompatan langsung dari 1 ke 3 tanpa validasi
+  if (targetStep === 3 && currentStep === 1) {
+    if (!validateStep1() || !validateStep2()) return;
+  }
+
+  // Update Tampilan DOM Card Langkah
   for (let i = 1; i <= 3; i++) {
-    document.getElementById(`wizardStep${i}`).classList.add('hidden');
-    document.getElementById(`stepIndicator${i}`).classList.remove('active');
+    document.getElementById(`wizardStep${i}`)?.classList.add('hidden');
+    document.getElementById(`stepIndicator${i}`)?.classList.remove('active');
   }
 
-  document.getElementById(`wizardStep${step}`).classList.remove('hidden');
-  document.getElementById(`stepIndicator${step}`).classList.add('active');
+  document.getElementById(`wizardStep${targetStep}`)?.classList.remove('hidden');
+  document.getElementById(`stepIndicator${targetStep}`)?.classList.add('active');
 
-  if (step >= 2) {
-    document.getElementById('stepIndicator1').classList.add('completed');
-    document.getElementById('stepLine1').classList.add('filled');
+  // Update Garis Stepper Progress
+  const ind1 = document.getElementById('stepIndicator1');
+  const line1 = document.getElementById('stepLine1');
+  const ind2 = document.getElementById('stepIndicator2');
+  const line2 = document.getElementById('stepLine2');
+
+  if (targetStep >= 2) {
+    ind1?.classList.add('completed');
+    line1?.classList.add('filled');
   } else {
-    document.getElementById('stepIndicator1').classList.remove('completed');
-    document.getElementById('stepLine1').classList.remove('filled');
+    ind1?.classList.remove('completed');
+    line1?.classList.remove('filled');
   }
 
-  if (step === 3) {
-    document.getElementById('stepIndicator2').classList.add('completed');
-    document.getElementById('stepLine2').classList.add('filled');
-    if (!appData.capturedBase64) {
-      startCamera();
-    }
+  if (targetStep === 3) {
+    ind2?.classList.add('completed');
+    line2?.classList.add('filled');
+    if (!appData.capturedBase64) startCamera();
   } else {
-    document.getElementById('stepIndicator2').classList.remove('completed');
-    document.getElementById('stepLine2').classList.remove('filled');
+    ind2?.classList.remove('completed');
+    line2?.classList.remove('filled');
     stopCamera();
   }
 
-  appData.currentWizardStep = step;
-  window.scrollTo({ top: 120, behavior: 'smooth' });
+  appData.currentWizardStep = targetStep;
+  window.scrollTo({ top: 100, behavior: 'smooth' });
+}
+
+function validateStep1() {
+  const category = document.getElementById('guestCategory').value;
+  const fullName = document.getElementById('fullName').value.trim();
+  const rawWa = document.getElementById('whatsappNumber').value.trim();
+
+  if (!category) {
+    showToast('Pilih kategori tamu terlebih dahulu.', 'error');
+    document.getElementById('guestCategory').focus();
+    return false;
+  }
+
+  // Validasi Isian Dinamis Sesuai Kategori
+  if (category === 'Siswa') {
+    const nisn = document.getElementById('studentNisn').value.trim();
+    const sClass = document.getElementById('studentClass').value.trim();
+    if (!nisn) {
+      showToast('Harap cantumkan 10 digit NISN siswa.', 'error');
+      document.getElementById('studentNisn').focus();
+      return false;
+    }
+    if (!/^\d{10}$/.test(nisn)) {
+      showToast('NISN harus berupa 10 digit angka valid.', 'error');
+      document.getElementById('studentNisn').focus();
+      return false;
+    }
+    if (!sClass) {
+      showToast('Harap cantumkan Kelas/Rombel siswa (misal: X-5).', 'error');
+      document.getElementById('studentClass').focus();
+      return false;
+    }
+  } else if (category === 'Orang Tua Murid') {
+    const child = document.getElementById('parentChildName').value.trim();
+    if (!child || child.length < 3) {
+      showToast('Harap sebutkan nama putra/putri yang diwakili.', 'error');
+      document.getElementById('parentChildName').focus();
+      return false;
+    }
+  } else if (category === 'Instansi / Kedinasan') {
+    const agency = document.getElementById('agencyName').value.trim();
+    const addr = document.getElementById('agencyAddress').value.trim();
+    if (!agency || agency.length < 3) {
+      showToast('Harap cantumkan nama instansi/lembaga pengirim.', 'error');
+      document.getElementById('agencyName').focus();
+      return false;
+    }
+    if (!addr || addr.length < 5) {
+      showToast('Harap cantumkan alamat lengkap kantor instansi pengirim.', 'error');
+      document.getElementById('agencyAddress').focus();
+      return false;
+    }
+  }
+
+  // Validasi Nama Pemohon
+  if (!fullName || fullName.length < 3) {
+    showToast('Isi Nama Lengkap sesuai tanda pengenal (minimal 3 karakter).', 'error');
+    document.getElementById('fullName').focus();
+    return false;
+  }
+
+  // Validasi Nomor WhatsApp
+  const cleanPhone = rawWa.replace(/\D/g, '');
+  if (!cleanPhone) {
+    showToast('Harap isi nomor WhatsApp aktif.', 'error');
+    document.getElementById('whatsappNumber').focus();
+    return false;
+  }
+  if (cleanPhone.length < 10 || cleanPhone.length > 14) {
+    showToast('Nomor WhatsApp harus terdiri dari 10 hingga 14 digit angka.', 'error');
+    document.getElementById('whatsappNumber').focus();
+    return false;
+  }
+
+  return true;
+}
+
+function validateStep2() {
+  const visitDate = document.getElementById('visitDate').value;
+  const purpose = document.getElementById('visitPurpose').value.trim();
+
+  if (!visitDate) {
+    showToast('Tentukan rencana tanggal kedatangan audiensi.', 'error');
+    document.getElementById('visitDate').focus();
+    return false;
+  }
+
+  const selectedDate = new Date(visitDate + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (selectedDate < today) {
+    showToast('Tanggal kunjungan tidak boleh di masa lampau.', 'error');
+    document.getElementById('visitDate').focus();
+    return false;
+  }
+
+  if (selectedDate.getDay() === 0) { // 0 = Hari Minggu
+    showToast('Layanan pimpinan libur pada hari Minggu. Silakan pilih hari kerja Senin–Sabtu.', 'error');
+    document.getElementById('visitDate').focus();
+    return false;
+  }
+
+  if (!purpose) {
+    showToast('Harap jelaskan maksud dan pokok keperluan audiensi.', 'error');
+    document.getElementById('visitPurpose').focus();
+    return false;
+  }
+
+  if (purpose.length < 10) {
+    showToast('Uraian keperluan terlalu singkat. Mohon jelaskan lebih spesifik (minimal 10 karakter).', 'error');
+    document.getElementById('visitPurpose').focus();
+    return false;
+  }
+
+  return true;
 }
 
 function handleCategoryChange() {
@@ -251,17 +398,21 @@ function handleCategoryChange() {
   const parentBox = document.getElementById('dynamicParentFields');
   const instansiBox = document.getElementById('dynamicInstansiFields');
 
-  studentBox.classList.add('hidden');
-  parentBox.classList.add('hidden');
-  instansiBox.classList.add('hidden');
+  studentBox?.classList.add('hidden');
+  parentBox?.classList.add('hidden');
+  instansiBox?.classList.add('hidden');
 
-  if (cat === 'Siswa') studentBox.classList.remove('hidden');
-  else if (cat === 'Orang Tua Murid') parentBox.classList.remove('hidden');
-  else if (cat === 'Instansi / Kedinasan') instansiBox.classList.remove('hidden');
+  if (cat === 'Siswa') {
+    studentBox?.classList.remove('hidden');
+  } else if (cat === 'Orang Tua Murid') {
+    parentBox?.classList.remove('hidden');
+  } else if (cat === 'Instansi / Kedinasan') {
+    instansiBox?.classList.remove('hidden');
+  }
 }
 
 // ==========================================================================
-// WEBRTC LIVE CAMERA ENGINE
+// ENGINE KAMERA LIVE WEBRTC (DENGAN KOMPRESI HEMAT MEMORI)
 // ==========================================================================
 async function startCamera() {
   const video = document.getElementById('webcamVideo');
@@ -271,25 +422,27 @@ async function startCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     if (placeholder) {
       placeholder.classList.remove('hidden');
-      errMsg.innerText = 'Akses webcam tidak didukung browser ini.';
+      errMsg.innerText = 'Fitur kamera tidak didukung oleh browser ini.';
     }
     return;
   }
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
       audio: false
     });
     appData.activeStream = stream;
-    video.srcObject = stream;
-    video.classList.remove('hidden');
-    if (placeholder) placeholder.classList.add('hidden');
+    if (video) {
+      video.srcObject = stream;
+      video.classList.remove('hidden');
+    }
+    placeholder?.classList.add('hidden');
   } catch (err) {
     console.warn('Camera error:', err);
     if (placeholder) {
       placeholder.classList.remove('hidden');
-      errMsg.innerText = 'Izin kamera belum aktif atau tidak ditemukan.';
+      errMsg.innerText = 'Izin kamera ditolak atau perangkat kamera tidak ditemukan.';
     }
   }
 }
@@ -310,27 +463,29 @@ function takePhoto() {
   const snapBtn = document.getElementById('snapPhotoBtn');
   const retakeBtn = document.getElementById('retakePhotoBtn');
 
-  if (!appData.activeStream || video.videoWidth === 0) {
+  if (!appData.activeStream || !video || video.videoWidth === 0) {
     synthesizeFallbackPhoto();
     return;
   }
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+  // Kunci Resolusi Avatar Pasfoto: 320 x 240 px (Hemat kuota LocalStorage)
+  canvas.width = 320;
+  canvas.height = 240;
   const ctx = canvas.getContext('2d');
 
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(video, 0, 0, 320, 240);
 
-  const dataURL = canvas.toDataURL('image/jpeg', 0.85);
+  // Kompresi JPEG Kualitas 0.65 (~20 - 30 KB)
+  const dataURL = canvas.toDataURL('image/jpeg', 0.65);
   appData.capturedBase64 = dataURL;
-  capturedImg.src = dataURL;
+  if (capturedImg) capturedImg.src = dataURL;
 
-  cameraBox.classList.add('hidden');
-  previewBox.classList.remove('hidden');
-  snapBtn.classList.add('hidden');
-  retakeBtn.classList.remove('hidden');
+  cameraBox?.classList.add('hidden');
+  previewBox?.classList.remove('hidden');
+  snapBtn?.classList.add('hidden');
+  retakeBtn?.classList.remove('hidden');
 
   stopCamera();
   showToast('Foto wajah berhasil diverifikasi!', 'success');
@@ -338,50 +493,53 @@ function takePhoto() {
 
 function retakePhoto() {
   appData.capturedBase64 = null;
-  document.getElementById('cameraPreviewContainer').classList.remove('hidden');
-  document.getElementById('capturedResultContainer').classList.add('hidden');
-  document.getElementById('snapPhotoBtn').classList.remove('hidden');
-  document.getElementById('retakePhotoBtn').classList.add('hidden');
+  document.getElementById('cameraPreviewContainer')?.classList.remove('hidden');
+  document.getElementById('capturedResultContainer')?.classList.add('hidden');
+  document.getElementById('snapPhotoBtn')?.classList.remove('hidden');
+  document.getElementById('retakePhotoBtn')?.classList.add('hidden');
   startCamera();
 }
 
 function synthesizeFallbackPhoto() {
   const canvas = document.getElementById('photoCanvas');
-  canvas.width = 400;
-  canvas.height = 300;
+  canvas.width = 320;
+  canvas.height = 240;
   const ctx = canvas.getContext('2d');
 
   ctx.fillStyle = '#0f172a';
-  ctx.fillRect(0, 0, 400, 300);
+  ctx.fillRect(0, 0, 320, 240);
 
   ctx.fillStyle = '#38bdf8';
   ctx.beginPath();
-  ctx.arc(200, 110, 50, 0, Math.PI * 2);
+  ctx.arc(160, 90, 45, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = '#1e40af';
   ctx.beginPath();
-  ctx.arc(200, 260, 90, 0, Math.PI, true);
+  ctx.arc(160, 220, 80, 0, Math.PI, true);
   ctx.fill();
 
-  const data = canvas.toDataURL('image/jpeg', 0.85);
+  const data = canvas.toDataURL('image/jpeg', 0.65);
   appData.capturedBase64 = data;
-  document.getElementById('capturedImage').src = data;
-  document.getElementById('cameraPreviewContainer').classList.add('hidden');
-  document.getElementById('capturedResultContainer').classList.remove('hidden');
-  document.getElementById('snapPhotoBtn').classList.add('hidden');
-  document.getElementById('retakePhotoBtn').classList.remove('hidden');
+  
+  const capturedImg = document.getElementById('capturedImage');
+  if (capturedImg) capturedImg.src = data;
+
+  document.getElementById('cameraPreviewContainer')?.classList.add('hidden');
+  document.getElementById('capturedResultContainer')?.classList.remove('hidden');
+  document.getElementById('snapPhotoBtn')?.classList.add('hidden');
+  document.getElementById('retakePhotoBtn')?.classList.remove('hidden');
   showToast('Simulasi biometrik wajah disiapkan.', 'info');
 }
 
 // ==========================================================================
-// SUBMISSION & TRACKING
+// PENGIRIMAN FORMULIR AUDIENSI & PELACAKAN TIKET
 // ==========================================================================
 function handleFormSubmission(e) {
   e.preventDefault();
 
   if (!appData.capturedBase64) {
-    showToast('Harap ambil foto wajah Anda sebelum mengirim.', 'error');
+    showToast('Harap ambil foto wajah Anda sebelum mengirimkan permohonan.', 'error');
     return;
   }
 
@@ -395,6 +553,13 @@ function handleFormSubmission(e) {
   const urgency = document.getElementById('urgencyLevel').value;
   const purpose = document.getElementById('visitPurpose').value.trim();
 
+  // Ambil Nilai Kolom Khusus Kategori Tanpa Terpotong
+  const studentNisn = document.getElementById('studentNisn')?.value.trim() || null;
+  const studentClass = document.getElementById('studentClass')?.value.trim() || null;
+  const parentChildName = document.getElementById('parentChildName')?.value.trim() || null;
+  const agencyName = document.getElementById('agencyName')?.value.trim() || null;
+  const agencyAddress = document.getElementById('agencyAddress')?.value.trim() || null;
+
   const newAppointment = {
     ticketCode,
     category,
@@ -403,6 +568,11 @@ function handleFormSubmission(e) {
     visitDate,
     urgency,
     purpose,
+    studentNisn,
+    studentClass,
+    parentChildName,
+    agencyName,
+    agencyAddress,
     photoBase64: appData.capturedBase64,
     status: 'Menunggu Konfirmasi',
     hostOfficer: null,
@@ -420,26 +590,39 @@ function handleFormSubmission(e) {
   appData.appointments.unshift(newAppointment);
   saveDatabase();
 
+  // Tampilkan Rincian pada Modal Berhasil
   document.getElementById('modalTicketCode').innerText = ticketCode;
   document.getElementById('modalSummaryName').innerText = fullName;
   document.getElementById('modalSummaryDate').innerText = visitDate;
   document.getElementById('modalSummaryPhone').innerText = whatsapp;
-  document.getElementById('ticketSuccessModal').classList.remove('hidden');
+  document.getElementById('ticketSuccessModal')?.classList.remove('hidden');
 
+  // Bersihkan Input Form
   document.getElementById('guestAppointmentForm').reset();
+  handleCategoryChange();
   retakePhoto();
   goToStep(1);
 }
 
 function closeTicketModal() {
-  document.getElementById('ticketSuccessModal').classList.add('hidden');
+  document.getElementById('ticketSuccessModal')?.classList.add('hidden');
 }
 
 function copyModalTicketCode() {
   const code = document.getElementById('modalTicketCode').innerText;
   navigator.clipboard.writeText(code).then(() => {
-    showToast('Kode tiket berhasil disalin!', 'success');
+    showToast('Kode tiket berhasil disalin ke papan klip!', 'success');
   });
+}
+
+function formatToWhatsApp(phone) {
+  let clean = phone.replace(/\D/g, '');
+  if (clean.startsWith('0')) {
+    clean = '62' + clean.substring(1);
+  } else if (!clean.startsWith('62')) {
+    clean = '62' + clean;
+  }
+  return clean;
 }
 
 function trackTicketStatus() {
@@ -458,7 +641,7 @@ function trackTicketStatus() {
         <i class="fa-solid fa-circle-xmark"></i>
         <div>
           <strong>Tiket Tidak Ditemukan</strong>
-          <p>Pastikan kode tiket yang Anda masukkan sudah sesuai.</p>
+          <p>Pastikan kode tiket yang Anda masukkan sudah sesuai (Contoh: TKT-2026-XXXXXX).</p>
         </div>
       </div>
     `;
@@ -485,7 +668,7 @@ function trackTicketStatus() {
     letterBtnHTML = `
       <div style="margin-top:1.2rem; text-align:center;">
         <button type="button" class="btn btn-primary btn-block" onclick="openOfficialLetterModal('${found.ticketCode}')">
-          <i class="fa-solid fa-file-pdf"></i> Unduh / Cetak Surat Undangan Resmi Berkop[cite: 2]
+          <i class="fa-solid fa-file-pdf"></i> Unduh / Cetak Surat Undangan Resmi Berkop
         </button>
       </div>
     `;
@@ -503,6 +686,16 @@ function trackTicketStatus() {
     `;
   }
 
+  // Label Asal Instansi / Siswa untuk Pelacakan Mandiri
+  let metaInfo = '';
+  if (found.agencyName) {
+    metaInfo = `<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Instansi: <strong style="color:#fff;">${escapeHtml(found.agencyName)}</strong></p>`;
+  } else if (found.category === 'Siswa') {
+    metaInfo = `<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Kelas: <strong style="color:#fff;">${escapeHtml(found.studentClass || '-')} (NISN: ${found.studentNisn || '-'})</strong></p>`;
+  } else if (found.parentChildName) {
+    metaInfo = `<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Orang Tua dari: <strong style="color:#fff;">${escapeHtml(found.parentChildName)}</strong></p>`;
+  }
+
   resultBox.innerHTML = `
     <div class="glass-card" style="padding:1.5rem; margin-top:1rem;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
@@ -510,14 +703,15 @@ function trackTicketStatus() {
         <span class="badge ${getBadgeClass(found.status)}">${found.status}</span>
       </div>
       <div style="display:flex; gap:1rem; align-items:center; margin-bottom:0.75rem;">
-        <img src="${found.photoBase64 || ''}" alt="Foto Tamu" style="width:52px; height:52px; border-radius:8px; object-fit:cover; border:1px solid var(--border-subtle); flex-shrink:0; background:#050811;">
+        <img src="${found.photoBase64 || ''}" alt="Foto Tamu" style="width:56px; height:56px; border-radius:8px; object-fit:cover; border:1px solid var(--border-subtle); flex-shrink:0; background:#050811;">
         <div style="min-width:0; overflow-wrap:anywhere; word-break:break-word;">
           <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Nama Pemohon: <strong style="color:#fff;">${escapeHtml(found.fullName)}</strong></p>
+          ${metaInfo}
           <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Tanggal Pengajuan: <strong style="color:#fff;">${found.visitDate || found.requestedDate}</strong></p>
           ${found.hostOfficer ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin:0;">Pejabat Penerima: <strong>${escapeHtml(found.hostOfficer)}</strong></p>` : ''}
         </div>
       </div>
-      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin-top:0.5rem; font-weight:600;">Jadwal: ${found.scheduledRoom} (${found.scheduledStart} -${found.scheduledEnd} WIB)</p>` : ''}
+      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--cyan-glow); margin-top:0.5rem; font-weight:600;"><i class="fa-solid fa-location-dot"></i> Tempat: ${found.scheduledRoom} (${found.scheduledStart} -${found.scheduledEnd} WIB)</p>` : ''}
       ${hostNoteHTML}
       ${letterBtnHTML}
     </div>
@@ -526,30 +720,30 @@ function trackTicketStatus() {
 }
 
 // ==========================================================================
-// ADMIN DASHBOARD & SUB-VIEWS CONTROLLER
+// PANEL ADMIN / DISPOSISI PIMPINAN
 // ==========================================================================
 function switchAdminSubView(subview) {
   appData.activeAdminSubView = subview;
 
-  document.getElementById('subtabBtnTable').classList.remove('active');
-  document.getElementById('subtabBtnCalendar').classList.remove('active');
-  document.getElementById('subtabBtnAnalytics').classList.remove('active');
+  document.getElementById('subtabBtnTable')?.classList.remove('active');
+  document.getElementById('subtabBtnCalendar')?.classList.remove('active');
+  document.getElementById('subtabBtnAnalytics')?.classList.remove('active');
 
-  document.getElementById('adminSubViewTable').classList.add('hidden');
-  document.getElementById('adminSubViewCalendar').classList.add('hidden');
-  document.getElementById('adminSubViewAnalytics').classList.add('hidden');
+  document.getElementById('adminSubViewTable')?.classList.add('hidden');
+  document.getElementById('adminSubViewCalendar')?.classList.add('hidden');
+  document.getElementById('adminSubViewAnalytics')?.classList.add('hidden');
 
   if (subview === 'table') {
-    document.getElementById('subtabBtnTable').classList.add('active');
-    document.getElementById('adminSubViewTable').classList.remove('hidden');
+    document.getElementById('subtabBtnTable')?.classList.add('active');
+    document.getElementById('adminSubViewTable')?.classList.remove('hidden');
     renderAdminQueueTable();
   } else if (subview === 'calendar') {
-    document.getElementById('subtabBtnCalendar').classList.add('active');
-    document.getElementById('adminSubViewCalendar').classList.remove('hidden');
+    document.getElementById('subtabBtnCalendar')?.classList.add('active');
+    document.getElementById('adminSubViewCalendar')?.classList.remove('hidden');
     renderWeeklyCalendar();
   } else if (subview === 'analytics') {
-    document.getElementById('subtabBtnAnalytics').classList.add('active');
-    document.getElementById('adminSubViewAnalytics').classList.remove('hidden');
+    document.getElementById('subtabBtnAnalytics')?.classList.add('active');
+    document.getElementById('adminSubViewAnalytics')?.classList.remove('hidden');
     renderAnalyticsAndHeatmap();
   }
 }
@@ -570,18 +764,33 @@ function renderMetrics() {
 
 function renderAdminQueueTable() {
   const tbody = document.getElementById('adminTableBody');
-  const filter = document.getElementById('tableFilterStatus').value;
+  if (!tbody) return;
+
+  const filter = document.getElementById('tableFilterStatus')?.value || 'ALL';
+  const searchInput = document.getElementById('adminSearchInput')?.value.toLowerCase().trim() || '';
 
   let list = appData.appointments;
+
+  // Filter Berdasarkan Status
   if (filter !== 'ALL') {
     list = list.filter(item => item.status === filter);
+  }
+
+  // Filter Berdasarkan Kata Kunci Pencarian (Nama, Tiket, atau Instansi)
+  if (searchInput) {
+    list = list.filter(item => 
+      item.fullName.toLowerCase().includes(searchInput) ||
+      item.ticketCode.toLowerCase().includes(searchInput) ||
+      (item.agencyName && item.agencyName.toLowerCase().includes(searchInput)) ||
+      (item.parentChildName && item.parentChildName.toLowerCase().includes(searchInput))
+    );
   }
 
   if (list.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" style="text-align:center; padding:2rem; color:var(--text-dim);">
-          Tidak ada data antrean permohonan.
+          Tidak ada data antrean permohonan yang sesuai.
         </td>
       </tr>
     `;
@@ -589,8 +798,16 @@ function renderAdminQueueTable() {
   }
 
   tbody.innerHTML = list.map(item => {
-    const cleanPhone = item.whatsapp.replace(/^0/, '62').replace(/\D/g, '');
-    const waUrl = `https://wa.me/${cleanPhone}?text=Halo%20${encodeURIComponent(item.fullName)},%20terkait%20audiensi%20di%20SMAN%201%20Kandangan%20[Tiket:%20${item.ticketCode}].`;
+    const cleanPhone = formatToWhatsApp(item.whatsapp);
+    
+    // Siapkan Template Pesan WhatsApp Resmi Otomatis
+    let waMessage = `Halo Bapak/Ibu ${item.fullName}, permohonan audiensi Anda di SMAN 1 Kandangan [Tiket: ${item.ticketCode}] `;
+    if (item.status === 'Disetujui') {
+      waMessage += `telah DISETUJUI. Pertemuan dijadwalkan pada ${item.scheduledDate} jam ${item.scheduledStart}-${item.scheduledEnd} WIB di ${item.scheduledRoom}. Cek status tiket Anda: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
+    } else {
+      waMessage += `saat ini berstatus: ${item.status}. Pantau status tiket Anda: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
+    }
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMessage)}`;
 
     let scheduleDisplay = '<span style="color:var(--text-dim);">-</span>';
     if (item.scheduledRoom) {
@@ -628,7 +845,7 @@ function renderAdminQueueTable() {
       `;
     } else if (item.status === 'Checked-In') {
       actionButtons = `
-        <button class="btn btn-outline btn-sm" onclick="executeComplete('${item.ticketCode}')">
+        <button class="btn btn-outline btn-sm" onclick="executeComplete('${item.ticketCode}')" title="Selesaikan Audiensi">
           <i class="fa-solid fa-flag-checkered"></i> Selesai
         </button>
         <button class="btn btn-outline btn-sm" onclick="openOfficialLetterModal('${item.ticketCode}')" title="Cetak Surat Undangan Resmi Berkop">
@@ -639,6 +856,16 @@ function renderAdminQueueTable() {
       actionButtons = `<span style="font-size:0.75rem; color:var(--text-dim);">-</span>`;
     }
 
+    // Detail asal instansi/siswa pada baris tabel
+    let extraMeta = '';
+    if (item.agencyName) {
+      extraMeta = `<br><small style="color:var(--text-muted);">${escapeHtml(item.agencyName)}</small>`;
+    } else if (item.parentChildName) {
+      extraMeta = `<br><small style="color:var(--text-muted);">Ortu: ${escapeHtml(item.parentChildName)}</small>`;
+    } else if (item.studentClass) {
+      extraMeta = `<br><small style="color:var(--text-muted);">Kelas: ${escapeHtml(item.studentClass)}</small>`;
+    }
+
     return `
       <tr>
         <td>
@@ -646,14 +873,13 @@ function renderAdminQueueTable() {
         </td>
         <td>
           <strong style="overflow-wrap:anywhere; word-break:break-word;">${escapeHtml(item.fullName)}</strong>
+          ${extraMeta}
           <br>
           <a href="${waUrl}" target="_blank" class="wa-link">
             <i class="fa-brands fa-whatsapp"></i> ${item.whatsapp}
           </a>
         </td>
-        <td>
-          <span style="font-size:0.82rem;">${item.category}</span>
-        </td>
+        <td><span style="font-size:0.82rem;">${item.category}</span></td>
         <td>
           <span style="font-size:0.82rem;">${item.visitDate || item.requestedDate}</span>
           <br>
@@ -664,17 +890,12 @@ function renderAdminQueueTable() {
           <span class="badge ${getBadgeClass(item.status)}">${item.status}</span>
           ${noteInTable}
         </td>
-        <td style="text-align: right;">
-          ${actionButtons}
-        </td>
+        <td style="text-align: right;">${actionButtons}</td>
       </tr>
     `;
   }).join('');
 }
 
-// ==========================================================================
-// SCHEDULING & DELEGATION ENGINE
-// ==========================================================================
 function getBadgeClass(status) {
   switch (status) {
     case 'Menunggu Konfirmasi': return 'badge-pending';
@@ -686,6 +907,9 @@ function getBadgeClass(status) {
   }
 }
 
+// ==========================================================================
+// AKSI PENJADWALAN, DISPOSISI, DAN DELEGASI PIMPINAN
+// ==========================================================================
 function openScheduleModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
   if (!item) return;
@@ -702,7 +926,7 @@ function openScheduleModal(ticketCode) {
     modalPhoto.src = item.photoBase64 || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2338bdf8"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%232563eb"/></svg>';
   }
 
-  // Set Auto-generated Letter Number
+  // Generate Nomor Surat Otomatis
   const autoLetterNo = item.officialLetterNo || generateOfficialLetterNumber(appData.appointments.indexOf(item) + 1);
   document.getElementById('schedLetterNoApprove').value = autoLetterNo;
   document.getElementById('schedLetterNoDelegate').value = autoLetterNo;
@@ -729,11 +953,11 @@ function openScheduleModal(ticketCode) {
   switchActionTab('approve');
   runLiveCollisionCheck();
 
-  document.getElementById('scheduleActionModal').classList.remove('hidden');
+  document.getElementById('scheduleActionModal')?.classList.remove('hidden');
 }
 
 function closeScheduleModal() {
-  document.getElementById('scheduleActionModal').classList.add('hidden');
+  document.getElementById('scheduleActionModal')?.classList.add('hidden');
   appData.selectedTicketForAction = null;
 }
 
@@ -757,24 +981,24 @@ function switchActionTab(tab) {
   const contentDelegate = document.getElementById('tabContentDelegate');
   const contentReject = document.getElementById('tabContentReject');
 
-  btnApprove.classList.remove('active');
-  btnDelegate.classList.remove('active');
-  btnReject.classList.remove('active');
+  btnApprove?.classList.remove('active');
+  btnDelegate?.classList.remove('active');
+  btnReject?.classList.remove('active');
 
-  contentApprove.classList.add('hidden');
-  contentDelegate.classList.add('hidden');
-  contentReject.classList.add('hidden');
+  contentApprove?.classList.add('hidden');
+  contentDelegate?.classList.add('hidden');
+  contentReject?.classList.add('hidden');
 
   if (tab === 'approve') {
-    btnApprove.classList.add('active');
-    contentApprove.classList.remove('hidden');
+    btnApprove?.classList.add('active');
+    contentApprove?.classList.remove('hidden');
     runLiveCollisionCheck();
   } else if (tab === 'delegate') {
-    btnDelegate.classList.add('active');
-    contentDelegate.classList.remove('hidden');
+    btnDelegate?.classList.add('active');
+    contentDelegate?.classList.remove('hidden');
   } else {
-    btnReject.classList.add('active');
-    contentReject.classList.remove('hidden');
+    btnReject?.classList.add('active');
+    contentReject?.classList.remove('hidden');
     const rejInput = document.getElementById('schedRejectionReason');
     if (!rejInput.value || !rejInput.value.trim()) {
       rejInput.value = DEFAULT_REJECT_TEMPLATE;
@@ -804,13 +1028,16 @@ function runLiveCollisionCheck() {
   if (!room || !date || !start || !end) return;
 
   if (start >= end) {
-    alertBox.classList.remove('hidden');
-    alertMsg.innerText = 'Jam mulai harus lebih awal daripada jam selesai!';
-    confirmBtn.disabled = true;
-    confirmBtn.style.opacity = '0.5';
+    alertBox?.classList.remove('hidden');
+    if (alertMsg) alertMsg.innerText = 'Jam mulai harus lebih awal daripada jam selesai pertemuan!';
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.style.opacity = '0.5';
+    }
     return;
   }
 
+  // Deteksi Tumpang Tindih Interval Waktu Pertemuan
   const conflict = appData.appointments.find(a => {
     if (a.ticketCode === appData.selectedTicketForAction) return false;
     if (a.status !== 'Disetujui' && a.status !== 'Checked-In') return false;
@@ -822,18 +1049,21 @@ function runLiveCollisionCheck() {
   });
 
   if (conflict) {
-    alertBox.classList.remove('hidden');
-    alertMsg.innerText = `Ruangan "${room}" telah dipesan untuk [${conflict.fullName}] pada jam ${conflict.scheduledStart} - ${conflict.scheduledEnd} WIB!`;
-    confirmBtn.disabled = true;
-    confirmBtn.style.opacity = '0.5';
+    alertBox?.classList.remove('hidden');
+    if (alertMsg) alertMsg.innerText = `Ruangan "${room}" telah dialokasikan untuk tamu [${conflict.fullName}] pada jam ${conflict.scheduledStart} - ${conflict.scheduledEnd} WIB!`;
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.style.opacity = '0.5';
+    }
   } else {
-    alertBox.classList.add('hidden');
-    confirmBtn.disabled = false;
-    confirmBtn.style.opacity = '1';
+    alertBox?.classList.add('hidden');
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.style.opacity = '1';
+    }
   }
 }
 
-// Eksekusi Persetujuan Langsung Kepala Sekolah
 function executeApprove() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
@@ -856,7 +1086,6 @@ function executeApprove() {
   showToast(`Janji temu [${item.ticketCode}] disetujui bersama Kepala Sekolah!`, 'success');
 }
 
-// Eksekusi Delegasi ke Waka / BK
 function executeDelegate() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
@@ -918,7 +1147,7 @@ function executeComplete(ticketCode) {
 }
 
 // ==========================================================================
-// MODAL SURAT UNDANGAN RESMI BERKOP & PRINT GENERATOR
+// MODAL SURAT RESMI BERKOP (A4 PDF LAYOUT & QR CODE NYATA)
 // ==========================================================================
 function openOfficialLetterModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
@@ -926,7 +1155,6 @@ function openOfficialLetterModal(ticketCode) {
 
   appData.activeLetterTicketCode = ticketCode;
 
-  // Format Nomor Surat & Tanggal
   const letterNo = item.officialLetterNo || generateOfficialLetterNumber();
   document.getElementById('docLetterNo').innerText = letterNo;
   
@@ -934,12 +1162,21 @@ function openOfficialLetterModal(ticketCode) {
   const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
   document.getElementById('docLetterDate').innerText = `Kediri, ${today.toLocaleDateString('id-ID', dateOptions)}`;
 
-  // Data Tamu
   document.getElementById('docGuestName').innerText = item.fullName;
-  document.getElementById('docGuestAgency').innerText = item.agencyName || (item.category === 'Siswa' ? `Wali Siswa: ${item.fullName}` : 'Masyarakat / Pemohon');
+  
+  // Format Identitas Asal Tamu Berdasarkan Kategori
+  let agencyDisplay = 'Masyarakat / Pemohon';
+  if (item.agencyName) {
+    agencyDisplay = `${item.agencyName} (${item.agencyAddress || '-'})`;
+  } else if (item.category === 'Siswa') {
+    agencyDisplay = `Siswa Kelas ${item.studentClass || '-'} (NISN: ${item.studentNisn || '-'})`;
+  } else if (item.category === 'Orang Tua Murid') {
+    agencyDisplay = `Wali Murid dari: ${item.parentChildName || '-'}`;
+  }
+  document.getElementById('docGuestAgency').innerText = agencyDisplay;
+
   document.getElementById('docTicketCode').innerText = item.ticketCode;
 
-  // Rincian Pertemuan
   let schedDayName = '-';
   if (item.scheduledDate) {
     const d = new Date(item.scheduledDate);
@@ -953,11 +1190,22 @@ function openOfficialLetterModal(ticketCode) {
   document.getElementById('docPurpose').innerText = item.purpose;
   document.getElementById('docHostNotes').innerText = `"${item.approvalMessage || DEFAULT_APPROVE_TEMPLATE}"`;
 
-  document.getElementById('officialLetterModal').classList.remove('hidden');
+  // Render QR Code Nyata yang Mengarah ke Tautan Verifikasi Sistem
+  const verificationUrl = `${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
+  const qrPlaceholder = document.querySelector('.sign-qr-box .qr-placeholder');
+  if (qrPlaceholder) {
+    qrPlaceholder.innerHTML = `
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(verificationUrl)}" 
+           alt="QR Verifikasi Tiket" 
+           style="width:90px; height:90px; border:1px solid #cbd5e1; padding:3px; border-radius:4px; background:#fff; margin-bottom:0.25rem;">
+    `;
+  }
+
+  document.getElementById('officialLetterModal')?.classList.remove('hidden');
 }
 
 function closeOfficialLetterModal() {
-  document.getElementById('officialLetterModal').classList.add('hidden');
+  document.getElementById('officialLetterModal')?.classList.add('hidden');
   appData.activeLetterTicketCode = null;
 }
 
@@ -966,7 +1214,7 @@ function printOfficialLetter() {
 }
 
 // ==========================================================================
-// KALENDER MINGGUAN & HEATMAP
+// KALENDER MINGGUAN & HEATMAP KEPADATAN AUDIENSI
 // ==========================================================================
 function changeCalendarWeek(offset) {
   appData.calendarOffsetWeeks += offset;
@@ -992,13 +1240,16 @@ function renderWeeklyCalendar() {
   const monday = getStartOfWeek(baseDate, appData.calendarOffsetWeeks);
   const dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const grid = document.getElementById('calendarGridWeek');
+  if (!grid) return;
   
   const saturday = new Date(monday);
   saturday.setDate(monday.getDate() + 5);
   
   const options = { day: 'numeric', month: 'short', year: 'numeric' };
-  document.getElementById('calWeekRangeLabel').innerText = 
-    `Minggu: ${monday.toLocaleDateString('id-ID', options)} - ${saturday.toLocaleDateString('id-ID', options)}`;
+  const label = document.getElementById('calWeekRangeLabel');
+  if (label) {
+    label.innerText = `Minggu: ${monday.toLocaleDateString('id-ID', options)} - ${saturday.toLocaleDateString('id-ID', options)}`;
+  }
 
   let html = '';
   const todayStr = new Date().toISOString().split('T')[0];
@@ -1064,45 +1315,50 @@ function renderCategoryBreakdown() {
   });
 
   const barsContainer = document.getElementById('categoryBarsContainer');
-  barsContainer.innerHTML = categories.map(cat => {
-    const count = counts[cat];
-    const percent = total > 0 ? Math.round((count / total) * 100) : 0;
-    return `
-      <div class="cat-bar-item">
-        <div class="cat-bar-labels">
-          <span style="color:var(--text-main);">${cat}</span>
-          <span style="color:var(--cyan-glow);">${count} (${percent}%)</span>
+  if (barsContainer) {
+    barsContainer.innerHTML = categories.map(cat => {
+      const count = counts[cat];
+      const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+      return `
+        <div class="cat-bar-item">
+          <div class="cat-bar-labels">
+            <span style="color:var(--text-main);">${cat}</span>
+            <span style="color:var(--cyan-glow);">${count} (${percent}%)</span>
+          </div>
+          <div class="cat-bar-track">
+            <div class="cat-bar-fill" style="width: ${percent}%;"></div>
+          </div>
         </div>
-        <div class="cat-bar-track">
-          <div class="cat-bar-fill" style="width: ${percent}%;"></div>
-        </div>
-      </div>
-    `;
-  }).join('');
+      `;
+    }).join('');
+  }
 
   const approved = appData.appointments.filter(a => a.status === 'Disetujui').length;
   const pending = appData.appointments.filter(a => a.status === 'Menunggu Konfirmasi').length;
   const checkedIn = appData.appointments.filter(a => a.status === 'Checked-In' || a.status === 'Selesai').length;
   const rejected = appData.appointments.filter(a => a.status === 'Ditolak').length;
 
-  document.getElementById('statusSummaryPills').innerHTML = `
-    <div class="status-pill-card">
-      <span class="status-pill-val" style="color:var(--amber-warning);">${pending}</span>
-      <span class="status-pill-lbl">Menunggu Disposisi</span>
-    </div>
-    <div class="status-pill-card">
-      <span class="status-pill-val" style="color:var(--emerald-green);">${approved}</span>
-      <span class="status-pill-lbl">Disetujui / Terjadwal</span>
-    </div>
-    <div class="status-pill-card">
-      <span class="status-pill-val" style="color:var(--cyan-glow);">${checkedIn}</span>
-      <span class="status-pill-lbl">Kehadiran Fisik</span>
-    </div>
-    <div class="status-pill-card">
-      <span class="status-pill-val" style="color:var(--rose-danger);">${rejected}</span>
-      <span class="status-pill-lbl">Ditolak</span>
-    </div>
-  `;
+  const pillsContainer = document.getElementById('statusSummaryPills');
+  if (pillsContainer) {
+    pillsContainer.innerHTML = `
+      <div class="status-pill-card">
+        <span class="status-pill-val" style="color:var(--amber-warning);">${pending}</span>
+        <span class="status-pill-lbl">Menunggu Disposisi</span>
+      </div>
+      <div class="status-pill-card">
+        <span class="status-pill-val" style="color:var(--emerald-green);">${approved}</span>
+        <span class="status-pill-lbl">Disetujui / Terjadwal</span>
+      </div>
+      <div class="status-pill-card">
+        <span class="status-pill-val" style="color:var(--cyan-glow);">${checkedIn}</span>
+        <span class="status-pill-lbl">Kehadiran Fisik</span>
+      </div>
+      <div class="status-pill-card">
+        <span class="status-pill-val" style="color:var(--rose-danger);">${rejected}</span>
+        <span class="status-pill-lbl">Ditolak</span>
+      </div>
+    `;
+  }
 }
 
 function renderHeatmapMatrix() {
@@ -1134,8 +1390,9 @@ function renderHeatmapMatrix() {
   });
 
   const matrixEl = document.getElementById('heatmapMatrix');
-  let html = '';
+  if (!matrixEl) return;
 
+  let html = '';
   html += `<div class="heat-cell heat-header-cell">Waktu</div>`;
   days.forEach(d => {
     html += `<div class="heat-cell heat-header-cell">${d}</div>`;
@@ -1158,7 +1415,7 @@ function renderHeatmapMatrix() {
 }
 
 // ==========================================================================
-// PHOTO FULL & AUTH UTILITIES
+// MODAL FOTO FULL & AUTENTIKASI HOST PORTAL
 // ==========================================================================
 function openFullPhotoModal() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
@@ -1170,19 +1427,19 @@ function openFullPhotoModal() {
   if (fullImg) fullImg.src = item.photoBase64 || '';
   if (fullTitle) fullTitle.innerText = item.fullName;
 
-  document.getElementById('photoFullModal').classList.remove('hidden');
+  document.getElementById('photoFullModal')?.classList.remove('hidden');
 }
 
 function closeFullPhotoModal() {
-  document.getElementById('photoFullModal').classList.add('hidden');
+  document.getElementById('photoFullModal')?.classList.add('hidden');
 }
 
 function openAdminLoginModal() {
-  document.getElementById('adminLoginModal').classList.remove('hidden');
+  document.getElementById('adminLoginModal')?.classList.remove('hidden');
 }
 
 function closeAdminLoginModal() {
-  document.getElementById('adminLoginModal').classList.add('hidden');
+  document.getElementById('adminLoginModal')?.classList.add('hidden');
 }
 
 function handleAdminLogin(e) {
@@ -1195,9 +1452,9 @@ function handleAdminLogin(e) {
     closeAdminLoginModal();
     updateAuthUIState();
     switchView('admin-portal');
-    showToast('Login Berhasil!', 'success');
+    showToast('Login Berhasil! Selamat datang di Panel Pimpinan.', 'success');
   } else {
-    showToast('Username atau password salah.', 'error');
+    showToast('Username atau kata sandi tidak sesuai.', 'error');
   }
 }
 
@@ -1211,46 +1468,65 @@ function logoutAdmin() {
 function updateAuthUIState() {
   const session = localStorage.getItem(ADMIN_SESSION_KEY);
   const label = document.getElementById('adminNavLabel');
-  if (session === 'active') {
-    label.innerText = 'Dashboard Pimpinan';
-  } else {
-    label.innerText = 'Host Portal';
+  if (label) {
+    label.innerText = (session === 'active') ? 'Dashboard Pimpinan' : 'Host Portal';
   }
 }
 
+// ==========================================================================
+// EKSPOR CSV AMAN & TOAST NOTIFIKASI
+// ==========================================================================
 function exportDataToCSV() {
   if (appData.appointments.length === 0) {
-    showToast('Tidak ada data.', 'error');
+    showToast('Tidak ada data untuk diekspor.', 'error');
     return;
   }
 
-  const headers = ['Kode Tiket', 'No Surat Resmi', 'Pejabat Penerima', 'Kategori', 'Nama Lengkap', 'WhatsApp', 'Urgensi', 'Tgl Diminta', 'Status', 'Ruangan', 'Jam Mulai', 'Jam Selesai', 'Catatan'];
-  const rows = appData.appointments.map(a => [
-    `"${a.ticketCode}"`,
-    `"${a.officialLetterNo || '-'}"`,
-    `"${a.hostOfficer || '-'}"`,
-    `"${a.category}"`,
-    `"${a.fullName.replace(/"/g, '""')}"`,
-    `"${a.whatsapp}"`,
-    `"${a.urgency}"`,
-    `"${a.visitDate || a.requestedDate}"`,
-    `"${a.status}"`,
-    `"${a.scheduledRoom || '-'}"`,
-    `"${a.scheduledStart || '-'}"`,
-    `"${a.scheduledEnd || '-'}"`,
-    `"${(a.approvalMessage || a.rejectionReason || '-').replace(/"/g, '""')}"`
-  ]);
+  const headers = ['Kode Tiket', 'No Surat Resmi', 'Pejabat Penerima', 'Kategori', 'Nama Lengkap', 'Instansi / Identitas', 'WhatsApp', 'Urgensi', 'Tgl Kunjungan', 'Status', 'Ruangan', 'Jam Mulai', 'Jam Selesai', 'Catatan'];
+  
+  const rows = appData.appointments.map(a => {
+    let identityMeta = '-';
+    if (a.agencyName) identityMeta = a.agencyName;
+    else if (a.parentChildName) identityMeta = `Ortu dari ${a.parentChildName}`;
+    else if (a.studentClass) identityMeta = `Siswa Kelas ${a.studentClass} (${a.studentNisn || '-'})`;
+
+    // Sanitasi Cegah Formula Injection di Microsoft Excel (=, +, -, @)
+    const sanitize = (text) => {
+      if (!text) return '-';
+      const str = String(text).replace(/"/g, '""');
+      return (/^[=+\-@]/.test(str)) ? `'${str}` : str;
+    };
+
+    return [
+      `"${sanitize(a.ticketCode)}"`,
+      `"${sanitize(a.officialLetterNo)}"`,
+      `"${sanitize(a.hostOfficer)}"`,
+      `"${sanitize(a.category)}"`,
+      `"${sanitize(a.fullName)}"`,
+      `"${sanitize(identityMeta)}"`,
+      `"${sanitize(a.whatsapp)}"`,
+      `"${sanitize(a.urgency)}"`,
+      `"${sanitize(a.visitDate || a.requestedDate)}"`,
+      `"${sanitize(a.status)}"`,
+      `"${sanitize(a.scheduledRoom)}"`,
+      `"${sanitize(a.scheduledStart)}"`,
+      `"${sanitize(a.scheduledEnd)}"`,
+      `"${sanitize(a.approvalMessage || a.rejectionReason)}"`
+    ];
+  });
 
   const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const link = document.createElement('a');
   link.href = encodeURI(csvContent);
-  link.download = `Data_Buku_Tamu_SMAN1_${new Date().toISOString().split('T')[0]}.csv`;
+  link.download = `Buku_Tamu_SMAN1_Kandangan_${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
   showToast('Data CSV berhasil diunduh.', 'success');
 }
 
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
+  if (!container) return;
+
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
 
@@ -1268,5 +1544,10 @@ function showToast(message, type = 'info') {
 
 function escapeHtml(str) {
   if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

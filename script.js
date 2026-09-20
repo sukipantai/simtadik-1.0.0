@@ -1,6 +1,6 @@
 /**
  * SISTEM BUKU TAMU DIGITAL & E-DISPENSASI TERPADU (SIMTADIK)
- * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.4
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.5 (CLEAN PRODUCTION)
  */
 
 const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V11';
@@ -73,7 +73,6 @@ function applyTheme(theme) {
   }
 }
 
-// Format Tanggal Indonesia Baku
 function formatIndonesianDate(dateStr) {
   if (!dateStr) return '-';
   const d = new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'));
@@ -82,7 +81,6 @@ function formatIndonesianDate(dateStr) {
   return `${dayNames[d.getDay()]}, ${d.toLocaleDateString('id-ID', dateOptions)}`;
 }
 
-// Generator Kode Tiket Dinamis (SMANSAKA-XXXX-XXXXX)
 function generateTicketCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let part1 = '';
@@ -92,15 +90,14 @@ function generateTicketCode() {
   return `SMANSAKA-${part1}-${part2}`;
 }
 
-// Generator Nomor Surat Dinas Resmi
 function generateOfficialLetterNumber(index) {
   const paddedNo = String(index || Math.floor(Math.random() * 800) + 100).padStart(3, '0');
   const currentYear = new Date().getFullYear();
   return `421.3 / ${paddedNo} / 101.6.14 / ${currentYear}`;
 }
 
-// Mock Data Awal Simulasi Demo
-const INITIAL_MOCK_DATA [];
+// Data simulasi awal kosong murni
+const INITIAL_MOCK_DATA = [];
 
 // Inisialisasi Aplikasi
 document.addEventListener('DOMContentLoaded', () => {
@@ -124,13 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadDatabase() {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) {
-    appData.appointments = INITIAL_MOCK_DATA;
+    appData.appointments = [];
     saveDatabase();
   } else {
     try {
       appData.appointments = JSON.parse(stored);
     } catch (e) {
-      appData.appointments = INITIAL_MOCK_DATA;
+      appData.appointments = [];
     }
   }
 }
@@ -144,12 +141,12 @@ function saveDatabase() {
 }
 
 function resetAllData() {
-  if (confirm("Reset ulang seluruh data antrean ke setelan demo awal?")) {
+  if (confirm("Kosongkan seluruh data antrean di sistem?")) {
     localStorage.removeItem(STORAGE_KEY);
-    appData.appointments = INITIAL_MOCK_DATA;
+    appData.appointments = [];
     saveDatabase();
     renderAdminDashboard();
-    showToast("Data antrean berhasil direset!", "success");
+    showToast("Tabel antrean berhasil dibersihkan total!", "success");
   }
 }
 
@@ -638,7 +635,7 @@ function trackTicketStatus() {
     return;
   }
 
-  // 1. KATEGORI SISWA: TAMPILKAN KARTU E-DISPENSASI LENGKAP TANGGAL & CATATAN
+  // KATEGORI SISWA: TAMPILKAN KARTU E-DISPENSASI
   if (found.category === 'Siswa') {
     if (found.status === 'Disetujui' || found.status === 'Checked-In') {
       const dispen = hitungDispensasiPelajaran(found.scheduledStart, found.scheduledEnd);
@@ -701,7 +698,7 @@ function trackTicketStatus() {
       resultBox.innerHTML = renderStandardStatusCard(found);
     }
   } 
-  // 2. KATEGORI KEDINASAN: TOMBOL CETAK SURAT RESMI
+  // KATEGORI KEDINASAN: SURAT RESMI
   else if (found.category === 'Instansi / Kedinasan') {
     let letterBtn = '';
     if (found.status === 'Disetujui' || found.status === 'Checked-In') {
@@ -715,7 +712,7 @@ function trackTicketStatus() {
     }
     resultBox.innerHTML = renderStandardStatusCard(found) + letterBtn;
   } 
-  // 3. KATEGORI ORANG TUA / UMUM
+  // KATEGORI UMUM / ORANG TUA
   else {
     resultBox.innerHTML = renderStandardStatusCard(found);
   }
@@ -961,7 +958,6 @@ function openScheduleModal(ticketCode) {
   const modalPhoto = document.getElementById('schedModalPhoto');
   if (modalPhoto) modalPhoto.src = item.photoBase64 || '';
 
-  // Logika Khusus Siswa: Sembunyikan Nomor Surat Dinas!
   const isStudent = (item.category === 'Siswa');
   const groupApprove = document.getElementById('letterNoGroupApprove');
   const groupDelegate = document.getElementById('letterNoGroupDelegate');
@@ -1228,7 +1224,7 @@ function handleJSONFileRestore(event) {
 }
 
 // ==========================================================================
-// MODAL SURAT RESMI BERKOP DINAS (PERSIS FOTO 1 & 2)
+// MODAL SURAT RESMI BERKOP DINAS (A4 PRINT)
 // ==========================================================================
 function openOfficialLetterModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
@@ -1239,7 +1235,6 @@ function openOfficialLetterModal(ticketCode) {
   document.getElementById('docLetterNo').innerText = item.officialLetterNo || generateOfficialLetterNumber();
   const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
   
-  // Sesuai Foto 2: "Kandangan, [Tanggal]"
   document.getElementById('docLetterDate').innerText = `Kandangan, ${new Date().toLocaleDateString('id-ID', dateOptions)}`;
   document.getElementById('signPlaceDate').innerText = `Kandangan, ${new Date().toLocaleDateString('id-ID', dateOptions)}`;
 
@@ -1255,7 +1250,6 @@ function openOfficialLetterModal(ticketCode) {
   document.getElementById('docPurpose').innerText = item.purpose;
   document.getElementById('docHostNotes').innerText = `"${item.approvalMessage || DEFAULT_APPROVE_TEMPLATE}"`;
 
-  // Tanda Tangan & Data Kepala Sekolah (Persis Foto 2)
   const isDelegated = item.hostOfficer && item.hostOfficer !== 'Kepala SMAN 1 Kandangan';
   const roleTitleEl = document.getElementById('signRoleTitle');
   const officerNameEl = document.getElementById('signOfficerName');
@@ -1274,7 +1268,6 @@ function openOfficialLetterModal(ticketCode) {
     if (officerNipEl) officerNipEl.innerText = 'NIP 19760801 200501 2 009';
   }
 
-  // QR Code Dinamis
   const verifyUrl = `${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
   const qrBox = document.getElementById('letterQrContainer');
   if (qrBox) {

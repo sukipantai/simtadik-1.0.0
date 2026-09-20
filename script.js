@@ -5,13 +5,14 @@
 
 const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V11';
 const ADMIN_SESSION_KEY = 'SMAN1_ADMIN_AUTH_SESSION';
+const THEME_STORAGE_KEY = 'SMAN1_UI_THEME';
 
 const ADMIN_CREDENTIALS = {
   username: 'admin1234',
   password: '1234admin'
 };
 
-// Template Resmi Bahasa Dinas SMANSAKA
+// Template Resmi Bahasa Birokrasi SMANSAKA
 const DEFAULT_APPROVE_TEMPLATE = "Permohonan audiensi disetujui. Harap hadir tepat waktu di lokasi yang telah ditentukan dengan membawa tanda pengenal.";
 const DEFAULT_REJECT_TEMPLATE = "Mohon maaf, permohonan audiensi belum dapat dipenuhi sehubungan dengan adanya agenda kedinasan pimpinan pada waktu bersamaan.";
 
@@ -44,6 +45,39 @@ let appData = {
   activeAdminSubView: 'table',
   liveClockTimer: null
 };
+
+// ==========================================================================
+// PENGATUR TEMA GELAP / TERANG (LIGHT & DARK MODE)
+// ==========================================================================
+function initTheme() {
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
+  applyTheme(savedTheme);
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.contains('light-theme');
+  const newTheme = isLight ? 'dark' : 'light';
+  applyTheme(newTheme);
+  localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+  showToast(`Mode ${newTheme === 'light' ? 'Terang' : 'Gelap'} aktif`, 'info');
+}
+
+function applyTheme(theme) {
+  const icon = document.getElementById('themeToggleIcon');
+  if (theme === 'light') {
+    document.body.classList.add('light-theme');
+    if (icon) {
+      icon.classList.remove('fa-sun');
+      icon.classList.add('fa-moon');
+    }
+  } else {
+    document.body.classList.remove('light-theme');
+    if (icon) {
+      icon.classList.remove('fa-moon');
+      icon.classList.add('fa-sun');
+    }
+  }
+}
 
 // Generator Kode Tiket Dinamis (Format: SMANSAKA-XXXX-XXXXX)
 function generateTicketCode() {
@@ -153,6 +187,7 @@ const INITIAL_MOCK_DATA = [
 
 // Inisialisasi Aplikasi
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   loadDatabase();
   initializeVisitDateInput();
   updateAuthUIState();
@@ -1039,8 +1074,6 @@ function handleDelegateHostChange() {
   else if (host === 'Waka Bidang Sarpras' || host === 'Waka Bidang Humas') roomSelect.value = 'Ruang Waka Humas & Sarpras';
   else if (host === 'Tata Usaha') roomSelect.value = 'Ruang Tata Usaha';
   else roomSelect.value = 'Ruang Tamu Khusus Lobi';
-
-  runLiveCollisionCheck();
 }
 
 function switchActionTab(tab) {
@@ -1063,41 +1096,21 @@ function switchActionTab(tab) {
   if (tab === 'approve') {
     btnApprove?.classList.add('active');
     contentApprove?.classList.remove('hidden');
+    runLiveCollisionCheck();
   } else if (tab === 'delegate') {
     btnDelegate?.classList.add('active');
     contentDelegate?.classList.remove('hidden');
   } else {
     btnReject?.classList.add('active');
     contentReject?.classList.remove('hidden');
-    const rejInput = document.getElementById('schedRejectionReason');
-    if (!rejInput.value || !rejInput.value.trim()) {
-      rejInput.value = DEFAULT_REJECT_TEMPLATE;
-    }
   }
-
-  runLiveCollisionCheck();
 }
 
 function runLiveCollisionCheck() {
-  const isApprove = !document.getElementById('tabContentApprove').classList.contains('hidden');
-  
-  let room = '';
-  let date = '';
-  let start = '';
-  let end = '';
-
-  if (isApprove) {
-    room = document.getElementById('schedRoom').value;
-    date = document.getElementById('schedDate').value;
-    start = document.getElementById('schedStartTime').value;
-    end = document.getElementById('schedEndTime').value;
-  } else {
-    room = document.getElementById('schedDelegateRoom').value;
-    date = document.getElementById('schedDelegateDate').value;
-    start = document.getElementById('schedDelegateStartTime').value;
-    end = document.getElementById('schedDelegateEndTime').value;
-  }
-
+  const room = document.getElementById('schedRoom').value;
+  const date = document.getElementById('schedDate').value;
+  const start = document.getElementById('schedStartTime').value;
+  const end = document.getElementById('schedEndTime').value;
   const alertBox = document.getElementById('collisionAlertBox');
   const alertMsg = document.getElementById('collisionAlertMsg');
   const confirmBtn = document.getElementById('confirmApproveBtn');
@@ -1106,11 +1119,8 @@ function runLiveCollisionCheck() {
 
   if (start >= end) {
     alertBox?.classList.remove('hidden');
-    if (alertMsg) alertMsg.innerText = 'Jam mulai harus lebih awal daripada jam selesai pertemuan!';
-    if (confirmBtn) {
-      confirmBtn.disabled = true;
-      confirmBtn.style.opacity = '0.5';
-    }
+    if (alertMsg) alertMsg.innerText = 'Jam mulai harus lebih awal daripada jam selesai!';
+    if (confirmBtn) confirmBtn.disabled = true;
     return;
   }
 
@@ -1126,17 +1136,11 @@ function runLiveCollisionCheck() {
 
   if (conflict) {
     alertBox?.classList.remove('hidden');
-    if (alertMsg) alertMsg.innerText = `Ruangan "${room}" telah dialokasikan untuk tamu [${conflict.fullName}] jam ${conflict.scheduledStart} - ${conflict.scheduledEnd} WIB!`;
-    if (confirmBtn) {
-      confirmBtn.disabled = true;
-      confirmBtn.style.opacity = '0.5';
-    }
+    if (alertMsg) alertMsg.innerText = `Ruangan "${room}" telah dipesan untuk [${conflict.fullName}] jam ${conflict.scheduledStart} - ${conflict.scheduledEnd} WIB!`;
+    if (confirmBtn) confirmBtn.disabled = true;
   } else {
     alertBox?.classList.add('hidden');
-    if (confirmBtn) {
-      confirmBtn.disabled = false;
-      confirmBtn.style.opacity = '1';
-    }
+    if (confirmBtn) confirmBtn.disabled = false;
   }
 }
 
@@ -1303,23 +1307,19 @@ function openOfficialLetterModal(ticketCode) {
 
   // Kolom Tanda Tangan Adaptif Tata Naskah Dinas
   const isDelegated = item.hostOfficer && item.hostOfficer !== 'Kepala SMAN 1 Kandangan';
-  const roleTitleEl = document.getElementById('signRoleTitle');
-  const officerNameEl = document.getElementById('signOfficerName');
-  const officerNipEl = document.getElementById('signOfficerNip');
-
   if (isDelegated) {
-    if (roleTitleEl) roleTitleEl.innerHTML = `a.n. Kepala SMAN 1 Kandangan<br><strong style="font-size:10.5pt;">${escapeHtml(item.hostOfficer)}</strong>`;
-    if (officerNameEl) officerNameEl.innerText = 'Tim Pelayanan & Disposisi Terpadu';
-    if (officerNipEl) officerNipEl.innerText = 'SMAN 1 Kandangan Kediri';
+    document.getElementById('signRoleTitle').innerHTML = `a.n. Kepala SMAN 1 Kandangan<br><strong style="font-size:10.5pt;">${escapeHtml(item.hostOfficer)}</strong>`;
+    document.getElementById('signOfficerName').innerText = 'Tim Pelayanan & Disposisi Terpadu';
+    document.getElementById('signOfficerNip').innerText = 'SMAN 1 Kandangan Kediri';
   } else {
-    if (roleTitleEl) roleTitleEl.innerText = 'Kepala SMAN 1 Kandangan,';
-    if (officerNameEl) officerNameEl.innerText = 'Drs. H. M. Syarif, M.Pd.';
-    if (officerNipEl) officerNipEl.innerText = 'NIP. 19710412 199802 1 003';
+    document.getElementById('signRoleTitle').innerText = 'Kepala SMAN 1 Kandangan,';
+    document.getElementById('signOfficerName').innerText = 'Drs. H. M. Syarif, M.Pd.';
+    document.getElementById('signOfficerNip').innerText = 'NIP. 19710412 199802 1 003';
   }
 
   // QR Code Dinamis
   const verifyUrl = `${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
-  const qrBox = document.getElementById('letterQrContainer') || document.querySelector('.sign-qr-box .qr-placeholder');
+  const qrBox = document.getElementById('letterQrContainer');
   if (qrBox) {
     qrBox.innerHTML = `
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(verifyUrl)}" 

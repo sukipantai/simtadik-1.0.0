@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buku Tamu Digital & E-Dispensasi Siswa | SMAN 1 Kandangan</title>
+  <title>SIMTADIK | SMAN 1 Kandangan</title>
   
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=11.4">
+  <link rel="stylesheet" href="style.css?v=11.5">
 </head>
 <body>
 
@@ -59,7 +59,7 @@
         </div>
         <h2 class="hero-headline">Registrasi Tamu & E-Dispensasi Audiensi</h2>
         <p class="hero-subtext">
-          Layanan digital terpadu untuk audiensi bersama Kepala Sekolah, Guru BK, dan Manajemen Sekolah.
+          Sistem Informasi Manajemen Tamu & Dispensasi Akademik Terpadu SMAN 1 Kandangan.
         </p>
       </div>
 
@@ -321,8 +321,8 @@
             <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()" title="Unduh rekapitulasi data format CSV">
               <i class="fa-solid fa-file-excel"></i> Ekspor CSV
             </button>
-            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke setelan demo awal">
-              <i class="fa-solid fa-rotate-left"></i> Reset Demo
+            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kosongkan seluruh data antrean di sistem">
+              <i class="fa-solid fa-rotate-left"></i> Bersihkan Antrean
             </button>
             <button class="btn btn-danger btn-sm" onclick="logoutAdmin()">
               <i class="fa-solid fa-right-from-bracket"></i> Keluar
@@ -381,7 +381,7 @@
             <div class="table-toolbar">
               <div class="table-title-area">
                 <h3>Antrean Permohonan Masuk</h3>
-                <p>Kelola disposisi pimpinan, delegasi Guru BK/Waka, dan terbitkan izin resmi.</p>
+                <p>Kelola disposisi pimpinan, delegasi Guru BK/Waka, atur ulang jadwal, dan terbitkan izin resmi.</p>
               </div>
               <div class="table-filters">
                 <div class="input-with-icon" style="min-width: 220px;">
@@ -551,7 +551,7 @@
     </div>
   </div>
 
-  <!-- ================= MODAL: TINDAKAN & PENJADWALAN DISPOSISI ================= -->
+  <!-- ================= MODAL: DISPOSISI & ATUR ULANG (RESCHEDULE) ================= -->
   <div id="scheduleActionModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card schedule-modal-box">
       <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -566,8 +566,13 @@
         <div class="compact-info">
           <h4 id="schedModalName">-</h4>
           <p id="schedModalCategoryMeta">-</p>
-          <p class="compact-purpose" id="schedModalPurpose">-</p>
         </div>
+      </div>
+
+      <!-- Input Baru: Admin Bebas Edit Agenda / Keperluan Audiensi -->
+      <div class="form-group" style="margin-top: 0.75rem;">
+        <label class="field-label"><i class="fa-solid fa-pen-nib"></i> Pokok Agenda / Keperluan (Dapat Disesuaikan):</label>
+        <textarea id="schedModalPurposeInput" class="form-control" rows="2" placeholder="Agenda audiensi resmi..."></textarea>
       </div>
 
       <!-- Tab Opsi Tindakan -->
@@ -585,7 +590,6 @@
 
       <!-- Tab 1: Kepala Sekolah Langsung -->
       <div id="tabContentApprove" class="action-tab-body">
-        <!-- Input nomor surat hanya muncul untuk selain siswa -->
         <div class="form-group" id="letterNoGroupApprove">
           <label class="field-label"><i class="fa-solid fa-hashtag"></i> Nomor Surat Dinas (Otomatis)</label>
           <input type="text" id="schedLetterNoApprove" class="form-control form-control-code">
@@ -604,7 +608,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="field-label">Tanggal Disetujui <span class="required">*</span></label>
+            <label class="field-label">Tanggal Audiensi <span class="required">*</span></label>
             <input type="date" id="schedDate" class="form-control" onchange="runLiveCollisionCheck()">
           </div>
         </div>
@@ -621,8 +625,8 @@
         </div>
 
         <div class="form-group">
-          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Catatan Lembar Disposisi Pimpinan</label>
-          <textarea id="schedApprovalNotes" class="form-control" rows="2" placeholder="Tuliskan arahan atau catatan untuk pemohon..."></textarea>
+          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Catatan Lembar Disposisi / Permohonan Maaf Reschedule</label>
+          <textarea id="schedApprovalNotes" class="form-control" rows="2" placeholder="Tuliskan arahan resmi pimpinan..."></textarea>
         </div>
 
         <div id="collisionAlertBox" class="collision-alert hidden">
@@ -657,7 +661,6 @@
           </div>
         </div>
 
-        <!-- Input nomor surat delegasi disembunyikan jika siswa -->
         <div class="form-group" id="letterNoGroupDelegate">
           <label class="field-label"><i class="fa-solid fa-hashtag"></i> Nomor Surat Dinas / Disposisi</label>
           <input type="text" id="schedLetterNoDelegate" class="form-control form-control-code">
@@ -697,7 +700,7 @@
 
         <div class="form-group">
           <label class="field-label"><i class="fa-solid fa-clipboard-list"></i> Catatan Lembar Disposisi Petugas</label>
-          <textarea id="schedDelegateNotes" class="form-control" rows="2" placeholder="Tuliskan arahan tindak lanjut untuk pemohon..."></textarea>
+          <textarea id="schedDelegateNotes" class="form-control" rows="2" placeholder="Tuliskan arahan tindak lanjut..."></textarea>
         </div>
 
         <div class="modal-footer-actions">
@@ -788,7 +791,7 @@
             </table>
           </div>
           <div class="meta-right">
-            <span id="docLetterDate">Kandangan, 19 September 2026</span>
+            <span id="docLetterDate">Kandangan, 20 September 2026</span>
           </div>
         </div>
 
@@ -846,6 +849,7 @@
               </svg>
             </div>
             <p class="sign-name" id="signOfficerName"><strong>ISTU HANDAYANI, M.Pd</strong></p>
+            <p class="sign-rank" id="signOfficerRank">Pembina, IV/a</p>
             <p class="sign-nip" id="signOfficerNip">NIP 19760801 200501 2 009</p>
           </div>
         </div>
@@ -856,7 +860,7 @@
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Skrip Utama Versi 11.4 -->
-  <script src="script.js?v=11.4"></script>
+  <!-- Skrip Utama -->
+  <script src="script.js?v=11.5"></script>
 </body>
 </html>

@@ -26,6 +26,84 @@
   --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Mode Terang (Light Theme Override) */
+body.light-theme {
+  --bg-base: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --border-focus: #0284C7;
+
+  --cyan-glow: #0284C7;
+  --cyan-glow-dim: rgba(2, 132, 199, 0.12);
+
+  --text-main: #0F172A;
+  --text-muted: #475569;
+  --text-dim: #64748B;
+}
+
+body.light-theme .app-header {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .hero-headline {
+  background: linear-gradient(135deg, #0f172a 40%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.light-theme .form-control {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+body.light-theme .form-control:focus {
+  border-color: #0284C7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+body.light-theme .custom-table th {
+  background: #F1F5F9;
+  color: #334155;
+  border-bottom-color: #CBD5E1;
+}
+
+body.light-theme .custom-table td {
+  border-bottom-color: #E2E8F0;
+  color: #1E293B;
+}
+
+body.light-theme .calendar-day-col {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+}
+
+body.light-theme .cal-col-header {
+  background: #F8FAFC;
+  border-bottom-color: #E2E8F0;
+}
+
+body.light-theme .cal-event-card {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .cal-event-title {
+  color: #0F172A;
+}
+
+body.light-theme .modal-overlay {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+body.light-theme .status-pill-card {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
 /* Kunci pencegah geser horizontal di mobile */
 html, body {
   width: 100%;
@@ -620,7 +698,7 @@ body {
 
 /* ==========================================================================
    BUTTONS
-   ========================================================================== */
+   ========================================================================= */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -1172,6 +1250,12 @@ body {
 .sign-qr-box {
   text-align: center;
   width: 140px;
+}
+
+.qr-placeholder {
+  font-size: 3.5rem;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
 }
 
 .qr-caption {

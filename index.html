@@ -38,6 +38,9 @@
         <button class="nav-tab-btn" id="tabTrackBtn" onclick="switchView('tracking-portal')">
           <i class="fa-solid fa-ticket"></i> <span>Lacak Status</span>
         </button>
+        <button class="nav-tab-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema Gelap/Terang">
+          <i class="fa-solid fa-sun" id="themeToggleIcon"></i>
+        </button>
         <button class="nav-tab-btn nav-admin-btn" id="tabAdminBtn" onclick="handleAdminNavClick()">
           <i class="fa-solid fa-user-shield"></i> <span id="adminNavLabel">Host Portal</span>
         </button>
@@ -286,7 +289,7 @@
           <div class="tracker-input-box">
             <div class="input-with-icon">
               <i class="fa-solid fa-ticket-simple"></i>
-              <input type="text" id="trackTicketCodeInput" class="form-control track-input" placeholder="Contoh: SMANSAKA-8K9M-2P4Q1" autocomplete="off">
+              <input type="text" id="trackTicketCodeInput" class="form-control track-input" placeholder="Contoh: SMANSAKA-XXXX-XXXXX" autocomplete="off">
             </div>
             <button type="button" class="btn btn-primary" onclick="trackTicketStatus()">
               <i class="fa-solid fa-search"></i> Lacak
@@ -833,7 +836,7 @@
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Skrip Utama Versi 11.2 -->
+  <!-- Skrip Utama -->
   <script src="script.js"></script>
 </body>
 </html>

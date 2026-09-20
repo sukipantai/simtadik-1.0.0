@@ -1,6 +1,6 @@
 /**
  * SISTEM BUKU TAMU DIGITAL & E-DISPENSASI TERPADU (SIMTADIK)
- * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.5 (CLEAN PRODUCTION)
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.5 (FULL INTEGRATED PRODUCTION)
  */
 
 const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V11';
@@ -12,9 +12,10 @@ const ADMIN_CREDENTIALS = {
   password: '1234admin'
 };
 
-// Template Resmi Bahasa Birokrasi SMANSAKA
+// Template Resmi Birokrasi SMANSAKA
 const DEFAULT_APPROVE_TEMPLATE = "Permohonan audiensi disetujui. Harap hadir tepat waktu di lokasi yang telah ditentukan dengan membawa tanda pengenal.";
 const DEFAULT_REJECT_TEMPLATE = "Mohon maaf, permohonan audiensi belum dapat dipenuhi sehubungan dengan adanya agenda kedinasan pimpinan pada waktu bersamaan.";
+const DEFAULT_RESCHEDULE_TEMPLATE = "Pemberitahuan Penjadwalan Ulang (Reschedule): Mohon maaf yang sebesar-besarnya atas ketidaknyamanan ini. Sehubungan dengan adanya agenda kedinasan pimpinan yang mendesak dan mendadak, waktu audiensi disesuaikan kembali sesuai jadwal baru tertera.";
 
 // Master Roster Jam Pelajaran SMAN 1 Kandangan (Format 24 Jam WIB)
 const ROSTER_SEKOLAH = [
@@ -47,7 +48,7 @@ let appData = {
 };
 
 // ==========================================================================
-// PENGATUR TEMA GELAP / TERANG
+// TEMA GELAP / TERANG (LIGHT & DARK MODE)
 // ==========================================================================
 function initTheme() {
   const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
@@ -96,7 +97,7 @@ function generateOfficialLetterNumber(index) {
   return `421.3 / ${paddedNo} / 101.6.14 / ${currentYear}`;
 }
 
-// Data simulasi awal kosong murni
+// Data awal bersih kosong
 const INITIAL_MOCK_DATA = [];
 
 // Inisialisasi Aplikasi
@@ -160,7 +161,7 @@ function initializeVisitDateInput() {
 }
 
 // ==========================================================================
-// PENGALIH TAMPILAN VIEW UTAMA
+// PENGALIH VIEW UTAMA
 // ==========================================================================
 function switchView(viewId) {
   const views = ['guest-portal', 'tracking-portal', 'admin-portal'];
@@ -201,7 +202,7 @@ function handleAdminNavClick() {
 }
 
 // ==========================================================================
-// SMART ROUTING & VALIDASI WIZARD FORM
+// SMART ROUTING & VALIDASI WIZARD
 // ==========================================================================
 function handleCategoryChange() {
   const cat = document.getElementById('guestCategory').value;
@@ -472,7 +473,7 @@ function synthesizeFallbackPhoto() {
 }
 
 // ==========================================================================
-// KALKULATOR JAM PELAJARAN (E-DISPENSASI KELAS)
+// KALKULATOR JAM PELAJARAN (E-DISPEN)
 // ==========================================================================
 function timeToMinutes(timeStr) {
   if (!timeStr) return 0;
@@ -568,6 +569,7 @@ function handleFormSubmission(e) {
     scheduledEnd: null,
     approvalMessage: '',
     rejectionReason: '',
+    isRescheduled: false,
     checkInAt: null,
     createdAt: new Date().toISOString()
   };
@@ -635,7 +637,7 @@ function trackTicketStatus() {
     return;
   }
 
-  // KATEGORI SISWA: TAMPILKAN KARTU E-DISPENSASI
+  // 1. KATEGORI SISWA: TAMPILKAN KARTU E-DISPENSASI
   if (found.category === 'Siswa') {
     if (found.status === 'Disetujui' || found.status === 'Checked-In') {
       const dispen = hitungDispensasiPelajaran(found.scheduledStart, found.scheduledEnd);
@@ -698,7 +700,7 @@ function trackTicketStatus() {
       resultBox.innerHTML = renderStandardStatusCard(found);
     }
   } 
-  // KATEGORI KEDINASAN: SURAT RESMI
+  // 2. KATEGORI KEDINASAN: SURAT RESMI
   else if (found.category === 'Instansi / Kedinasan') {
     let letterBtn = '';
     if (found.status === 'Disetujui' || found.status === 'Checked-In') {
@@ -712,7 +714,7 @@ function trackTicketStatus() {
     }
     resultBox.innerHTML = renderStandardStatusCard(found) + letterBtn;
   } 
-  // KATEGORI UMUM / ORANG TUA
+  // 3. KATEGORI UMUM / ORANG TUA
   else {
     resultBox.innerHTML = renderStandardStatusCard(found);
   }
@@ -847,7 +849,29 @@ function renderAdminQueueTable() {
 
   tbody.innerHTML = list.map(item => {
     const cleanPhone = formatToWhatsApp(item.whatsapp);
-    const waMsg = `Halo Bapak/Ibu ${item.fullName}, permohonan audiensi Anda di SMAN 1 Kandangan [Tiket: ${item.ticketCode}] status: ${item.status}. Cek status: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
+    const isResched = item.isRescheduled;
+
+    // Template WhatsApp Adaptif: Otomatis Permohonan Maaf jika Reschedule
+    let waMsg = "";
+    if (isResched) {
+      waMsg = `*PEMBERITAHUAN PENJADWALAN ULANG (RESCHEDULE)*
+Yth. Bapak/Ibu ${item.fullName},
+
+Kami dari Sekretariat Pimpinan SMAN 1 Kandangan menyampaikan permohonan maaf yang sebesar-besarnya. Sehubungan dengan adanya agenda kedinasan mendadak yang tidak dapat ditinggalkan, waktu audiensi Anda [Tiket: ${item.ticketCode}] telah disesuaikan ulang menjadi:
+
+📅 *Tanggal:* ${item.scheduledDate}
+⏰ *Waktu:* ${item.scheduledStart} - ${item.scheduledEnd} WIB
+📍 *Tempat:* ${item.scheduledRoom}
+📝 *Catatan:* "${item.approvalMessage}"
+
+Silakan pantau pembaruan surat resmi/E-Dispen Anda melalui tautan berikut:
+${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}
+
+Atas pengertian dan kerja sama Bapak/Ibu, kami ucapkan terima kasih.`;
+    } else {
+      waMsg = `Halo Bapak/Ibu ${item.fullName}, permohonan audiensi Anda di SMAN 1 Kandangan [Tiket: ${item.ticketCode}] status: ${item.status}. Cek status: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
+    }
+
     const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMsg)}`;
 
     let scheduleDisplay = '<span style="color:var(--text-dim);">-</span>';
@@ -877,6 +901,10 @@ function renderAdminQueueTable() {
       `;
     } else if (item.status === 'Disetujui') {
       actionButtons = `
+        <!-- Tombol Edit / Reschedule Jadwal -->
+        <button class="btn btn-outline btn-sm" onclick="openScheduleModal('${item.ticketCode}')" title="Atur Ulang / Reschedule Jadwal" style="color:var(--amber-warning); border-color:var(--amber-warning);">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
         <button class="btn btn-emerald btn-sm" onclick="executeCheckIn('${item.ticketCode}')" title="Check-In Kedatangan">
           <i class="fa-solid fa-user-check"></i>
         </button>
@@ -885,7 +913,7 @@ function renderAdminQueueTable() {
             <i class="fa-solid fa-file-pdf"></i>
           </button>
         ` : ''}
-        <a href="${waUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#22c55e;" title="Kirim Pesan WhatsApp">
+        <a href="${waUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#22c55e;" title="Kirim Notifikasi WhatsApp">
           <i class="fa-brands fa-whatsapp"></i>
         </a>
       `;
@@ -942,7 +970,7 @@ function getBadgeClass(status) {
 }
 
 // ==========================================================================
-// MODAL DISPOSISI & PENJADWALAN RUANGAN
+// MODAL DISPOSISI & PENJADWALAN RUANGAN (MENDUKUNG RESCHEDULE)
 // ==========================================================================
 function openScheduleModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
@@ -950,14 +978,22 @@ function openScheduleModal(ticketCode) {
 
   appData.selectedTicketForAction = ticketCode;
 
-  document.getElementById('scheduleModalTicketPill').innerText = `Tiket: ${item.ticketCode}`;
+  const isReschedule = (item.status === 'Disetujui' || item.status === 'Checked-In');
+
+  document.getElementById('scheduleModalTicketPill').innerHTML = isReschedule 
+    ? `<span style="color:var(--amber-warning);"><i class="fa-solid fa-clock-rotate-left"></i> Atur Ulang (Reschedule) Tiket: ${item.ticketCode}</span>` 
+    : `Tiket: ${item.ticketCode}`;
+
   document.getElementById('schedModalName').innerText = item.fullName;
   document.getElementById('schedModalCategoryMeta').innerText = `${item.category} • Tujuan: ${item.targetOfficial}`;
-  document.getElementById('schedModalPurpose').innerText = `"${item.purpose}"`;
+  
+  // Tampilkan agenda di input textarea agar admin bisa mengeditnya
+  document.getElementById('schedModalPurposeInput').value = item.purpose;
 
   const modalPhoto = document.getElementById('schedModalPhoto');
   if (modalPhoto) modalPhoto.src = item.photoBase64 || '';
 
+  // Logika Khusus Siswa: Sembunyikan Nomor Surat Dinas!
   const isStudent = (item.category === 'Siswa');
   const groupApprove = document.getElementById('letterNoGroupApprove');
   const groupDelegate = document.getElementById('letterNoGroupDelegate');
@@ -991,8 +1027,19 @@ function openScheduleModal(ticketCode) {
   }
   handleDelegateHostChange();
 
-  document.getElementById('schedApprovalNotes').value = item.approvalMessage || DEFAULT_APPROVE_TEMPLATE;
-  document.getElementById('schedDelegateNotes').value = item.approvalMessage || (isStudent ? 'Disetujui untuk sesi bimbingan konseling di ruang BK.' : DEFAULT_APPROVE_TEMPLATE);
+  // Otomatis isi template permohonan maaf bila ini adalah RESCHEDULE
+  if (isReschedule) {
+    document.getElementById('schedApprovalNotes').value = item.approvalMessage.includes("Reschedule") 
+      ? item.approvalMessage 
+      : DEFAULT_RESCHEDULE_TEMPLATE;
+    document.getElementById('schedDelegateNotes').value = item.approvalMessage.includes("Reschedule") 
+      ? item.approvalMessage 
+      : DEFAULT_RESCHEDULE_TEMPLATE;
+  } else {
+    document.getElementById('schedApprovalNotes').value = item.approvalMessage || DEFAULT_APPROVE_TEMPLATE;
+    document.getElementById('schedDelegateNotes').value = item.approvalMessage || (isStudent ? 'Disetujui untuk sesi bimbingan konseling di ruang BK.' : DEFAULT_APPROVE_TEMPLATE);
+  }
+
   document.getElementById('schedRejectionReason').value = item.rejectionReason || DEFAULT_REJECT_TEMPLATE;
 
   if (item.targetOfficial === 'Kepala SMAN 1 Kandangan') {
@@ -1094,7 +1141,11 @@ function executeApprove() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
 
+  const wasApproved = (item.status === 'Disetujui');
   const isStudent = (item.category === 'Siswa');
+
+  // Simpan hasil editan agenda dari admin
+  item.purpose = document.getElementById('schedModalPurposeInput').value.trim() || item.purpose;
   item.approvalMessage = document.getElementById('schedApprovalNotes').value.trim() || DEFAULT_APPROVE_TEMPLATE;
   item.officialLetterNo = isStudent ? null : (document.getElementById('schedLetterNoApprove').value.trim() || generateOfficialLetterNumber());
   item.hostOfficer = 'Kepala SMAN 1 Kandangan';
@@ -1105,18 +1156,26 @@ function executeApprove() {
   item.scheduledEnd = document.getElementById('schedEndTime').value;
   item.rejectionReason = '';
 
+  if (wasApproved) {
+    item.isRescheduled = true;
+  }
+
   saveDatabase();
   renderAdminDashboard();
   closeScheduleModal();
-  showToast(`Janji temu [${item.ticketCode}] disetujui Kepala Sekolah!`, 'success');
+  showToast(wasApproved ? `Jadwal [${item.ticketCode}] berhasil diatur ulang (Rescheduled)!` : `Janji temu [${item.ticketCode}] disetujui!`, 'success');
 }
 
 function executeDelegate() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
 
+  const wasApproved = (item.status === 'Disetujui');
   const isStudent = (item.category === 'Siswa');
   const targetHost = document.getElementById('schedDelegateHost').value;
+
+  // Simpan hasil editan agenda dari admin
+  item.purpose = document.getElementById('schedModalPurposeInput').value.trim() || item.purpose;
   item.hostOfficer = targetHost;
   item.officialLetterNo = isStudent ? null : (document.getElementById('schedLetterNoDelegate').value.trim() || generateOfficialLetterNumber());
   item.approvalMessage = document.getElementById('schedDelegateNotes').value.trim() || `Disetujui untuk audiensi bersama ${targetHost}.`;
@@ -1127,10 +1186,14 @@ function executeDelegate() {
   item.scheduledEnd = document.getElementById('schedDelegateEndTime').value;
   item.rejectionReason = '';
 
+  if (wasApproved) {
+    item.isRescheduled = true;
+  }
+
   saveDatabase();
   renderAdminDashboard();
   closeScheduleModal();
-  showToast(`Audiensi [${item.ticketCode}] didelegasikan ke ${targetHost}!`, 'success');
+  showToast(wasApproved ? `Jadwal delegasi [${item.ticketCode}] berhasil diatur ulang!` : `Audiensi [${item.ticketCode}] didelegasikan ke ${targetHost}!`, 'success');
 }
 
 function executeReject() {
@@ -1224,7 +1287,7 @@ function handleJSONFileRestore(event) {
 }
 
 // ==========================================================================
-// MODAL SURAT RESMI BERKOP DINAS (A4 PRINT)
+// MODAL SURAT RESMI BERKOP DINAS (A4 PRINT SESUAI FOTO)
 // ==========================================================================
 function openOfficialLetterModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);

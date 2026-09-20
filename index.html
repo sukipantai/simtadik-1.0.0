@@ -4,21 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIMTADIK | SMAN 1 Kandangan</title>
-  
-  <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=11.5">
+  <link rel="stylesheet" href="style.css?v=11.6">
 </head>
 <body>
 
-  <!-- ================= NAVBAR ================= -->
+  <!-- NAVBAR -->
   <header class="app-header">
     <div class="nav-container">
       <div class="brand-wrapper">
@@ -30,7 +24,6 @@
           <h1 class="system-title">SIMTADIK Terpadu</h1>
         </div>
       </div>
-
       <nav class="nav-actions">
         <button class="nav-tab-btn active" id="tabGuestBtn" onclick="switchView('guest-portal')">
           <i class="fa-solid fa-pen-to-square"></i> <span>Formulir</span>
@@ -48,49 +41,33 @@
     </div>
   </header>
 
-  <!-- ================= MAIN CONTENT WRAPPER ================= -->
+  <!-- MAIN CONTENT -->
   <main class="main-content">
 
-    <!-- ================= VIEW 1: PORTAL PENDAFTARAN ================= -->
+    <!-- VIEW 1: FORMULIR -->
     <section id="guest-portal-view" class="portal-view active-view">
       <div class="hero-banner">
-        <div class="pill-badge">
-          <i class="fa-solid fa-shield-halved"></i> Registrasi Audiensi & Dispensasi Resmi SMANSAKA
-        </div>
+        <div class="pill-badge"><i class="fa-solid fa-shield-halved"></i> Sistem Manajemen Tamu & E-Dispensasi Akademik</div>
         <h2 class="hero-headline">Registrasi Tamu & E-Dispensasi Audiensi</h2>
-        <p class="hero-subtext">
-          Sistem Informasi Manajemen Tamu & Dispensasi Akademik Terpadu SMAN 1 Kandangan.
-        </p>
+        <p class="hero-subtext">Layanan administrasi terpadu pimpinan, manajemen sekolah, dan bimbingan konseling SMAN 1 Kandangan.</p>
       </div>
 
-      <!-- Stepper Progress Bar -->
       <div class="stepper-progress-bar">
-        <div class="step-indicator active" id="stepIndicator1">
-          <div class="step-num">1</div>
-          <span class="step-title">Kategori & Tujuan</span>
-        </div>
+        <div class="step-indicator active" id="stepIndicator1"><div class="step-num">1</div><span class="step-title">Kategori & Tujuan</span></div>
         <div class="step-line" id="stepLine1"></div>
-        <div class="step-indicator" id="stepIndicator2">
-          <div class="step-num">2</div>
-          <span class="step-title">Detail Waktu</span>
-        </div>
+        <div class="step-indicator" id="stepIndicator2"><div class="step-num">2</div><span class="step-title">Detail Waktu</span></div>
         <div class="step-line" id="stepLine2"></div>
-        <div class="step-indicator" id="stepIndicator3">
-          <div class="step-num">3</div>
-          <span class="step-title">Verifikasi Wajah</span>
-        </div>
+        <div class="step-indicator" id="stepIndicator3"><div class="step-num">3</div><span class="step-title">Verifikasi Wajah</span></div>
       </div>
 
-      <!-- Form Card -->
       <div class="wizard-container">
         <div class="glass-card form-wizard-card">
           <form id="guestAppointmentForm" onsubmit="handleFormSubmission(event)">
-
-            <!-- LANGKAH 1: KATEGORI, TUJUAN & DATA DIRI -->
+            <!-- LANGKAH 1 -->
             <div id="wizardStep1" class="wizard-step active-step">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-address-card"></i> Langkah 1: Kategori & Pihak yang Dituju</h3>
-                <p>Tentukan kategori pemohon, unit/guru yang ingin ditemui, dan kontak aktif.</p>
+                <p>Tentukan kategori pemohon, unit yang ingin ditemui, dan kontak aktif.</p>
               </div>
 
               <div class="form-row">
@@ -119,7 +96,7 @@
                       <option value="Waka Bidang Kesiswaan">Wakil Kepala Sekolah Bidang Kesiswaan</option>
                       <option value="Waka Bidang Kurikulum">Wakil Kepala Sekolah Bidang Kurikulum</option>
                       <option value="Waka Bidang Humas">Wakil Kepala Sekolah Bidang Humas</option>
-                      <option value="Waka Bidang Sarpras">Wakil Kepala Sekolah Bidang Sarana Prasarana</option>
+                      <option value="Waka Bidang Sarpras">Wakil Kepala Sekolah Bidang Sarpras</option>
                       <option value="Tata Usaha">Layanan Administrasi Tata Usaha</option>
                     </select>
                     <i class="fa-solid fa-chevron-down select-icon"></i>
@@ -127,7 +104,6 @@
                 </div>
               </div>
 
-              <!-- Input Dinamis: Siswa -->
               <div id="dynamicStudentFields" class="dynamic-section hidden">
                 <div class="form-row">
                   <div class="form-group">
@@ -141,7 +117,6 @@
                 </div>
               </div>
 
-              <!-- Input Dinamis: Orang Tua -->
               <div id="dynamicParentFields" class="dynamic-section hidden">
                 <div class="form-group">
                   <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili & Kelas <span class="required">*</span></label>
@@ -149,7 +124,6 @@
                 </div>
               </div>
 
-              <!-- Input Dinamis: Instansi -->
               <div id="dynamicInstansiFields" class="dynamic-section hidden">
                 <div class="form-group">
                   <label for="agencyName" class="field-label">Nama Instansi / Lembaga Resmi <span class="required">*</span></label>
@@ -173,13 +147,11 @@
               </div>
 
               <div class="wizard-nav-actions text-right">
-                <button type="button" class="btn btn-primary" onclick="goToStep(2)">
-                  Lanjut ke Detail Waktu <i class="fa-solid fa-arrow-right"></i>
-                </button>
+                <button type="button" class="btn btn-primary" onclick="goToStep(2)">Lanjut ke Detail Waktu <i class="fa-solid fa-arrow-right"></i></button>
               </div>
             </div>
 
-            <!-- LANGKAH 2: DETAIL WAKTU & MAKSUD -->
+            <!-- LANGKAH 2 -->
             <div id="wizardStep2" class="wizard-step hidden">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-calendar-day"></i> Langkah 2: Rencana Waktu & Keperluan</h3>
@@ -206,77 +178,57 @@
 
               <div class="form-group">
                 <label for="visitPurpose" class="field-label">Maksud & Keperluan Pokok <span class="required">*</span></label>
-                <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan maksud pokok audiensi secara jelas (minimal 10 karakter)..." required></textarea>
+                <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan maksud audiensi secara jelas (minimal 10 karakter)..." required></textarea>
               </div>
 
               <div class="wizard-nav-actions between">
-                <button type="button" class="btn btn-outline" onclick="goToStep(1)">
-                  <i class="fa-solid fa-arrow-left"></i> Kembali
-                </button>
-                <button type="button" class="btn btn-primary" onclick="goToStep(3)">
-                  Lanjut ke Verifikasi Wajah <i class="fa-solid fa-arrow-right"></i>
-                </button>
+                <button type="button" class="btn btn-outline" onclick="goToStep(1)"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+                <button type="button" class="btn btn-primary" onclick="goToStep(3)">Lanjut ke Verifikasi Wajah <i class="fa-solid fa-arrow-right"></i></button>
               </div>
             </div>
 
-            <!-- LANGKAH 3: VERIFIKASI FOTO LIVE -->
+            <!-- LANGKAH 3 -->
             <div id="wizardStep3" class="wizard-step hidden">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-camera"></i> Langkah 3: Verifikasi Foto Wajah Langsung</h3>
-                <p>Ambil foto wajah menggunakan kamera perangkat untuk validasi kehadiran di pos lobi.</p>
+                <p>Ambil foto wajah menggunakan kamera perangkat untuk verifikasi lobi.</p>
               </div>
 
               <div class="camera-center-wrapper">
                 <div class="camera-viewport-wrapper">
                   <div id="cameraPreviewContainer" class="camera-preview">
                     <video id="webcamVideo" autoplay playsinline muted></video>
-                    <div class="oval-guideline">
-                      <div class="oval-inner-line"></div>
-                      <span class="guide-text">Posisikan Wajah di Oval</span>
-                    </div>
+                    <div class="oval-guideline"><div class="oval-inner-line"></div><span class="guide-text">Posisikan Wajah di Oval</span></div>
                     <div id="cameraPlaceholder" class="camera-placeholder hidden">
                       <i class="fa-solid fa-video-slash"></i>
                       <p id="cameraErrMsg">Kamera belum aktif.</p>
                       <button type="button" class="btn btn-outline btn-sm" onclick="startCamera()">Aktifkan Kamera</button>
                     </div>
                   </div>
-
                   <canvas id="photoCanvas" class="hidden"></canvas>
-
                   <div id="capturedResultContainer" class="captured-preview hidden">
                     <img id="capturedImage" alt="Snapshot Pemohon">
-                    <div class="capture-badge-success">
-                      <i class="fa-solid fa-circle-check"></i> Foto Wajah Terverifikasi
-                    </div>
+                    <div class="capture-badge-success"><i class="fa-solid fa-circle-check"></i> Foto Terverifikasi</div>
                   </div>
                 </div>
 
                 <div class="camera-actions-row">
-                  <button type="button" id="snapPhotoBtn" class="btn btn-primary" onclick="takePhoto()">
-                    <i class="fa-solid fa-shutter-release"></i> Ambil Foto Wajah
-                  </button>
-                  <button type="button" id="retakePhotoBtn" class="btn btn-outline hidden" onclick="retakePhoto()">
-                    <i class="fa-solid fa-arrows-rotate"></i> Ulangi Foto
-                  </button>
+                  <button type="button" id="snapPhotoBtn" class="btn btn-primary" onclick="takePhoto()"><i class="fa-solid fa-shutter-release"></i> Ambil Foto Wajah</button>
+                  <button type="button" id="retakePhotoBtn" class="btn btn-outline hidden" onclick="retakePhoto()"><i class="fa-solid fa-arrows-rotate"></i> Ulangi Foto</button>
                 </div>
               </div>
 
               <div class="wizard-nav-actions between" style="margin-top: 2rem;">
-                <button type="button" class="btn btn-outline" onclick="goToStep(2)">
-                  <i class="fa-solid fa-arrow-left"></i> Kembali
-                </button>
-                <button type="submit" id="submitFormBtn" class="btn btn-emerald">
-                  <i class="fa-solid fa-paper-plane"></i> Kirim Permohonan Audiensi
-                </button>
+                <button type="button" class="btn btn-outline" onclick="goToStep(2)"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+                <button type="submit" id="submitFormBtn" class="btn btn-emerald"><i class="fa-solid fa-paper-plane"></i> Kirim Permohonan</button>
               </div>
             </div>
-
           </form>
         </div>
       </div>
     </section>
 
-    <!-- ================= VIEW 2: LACAK TIKET & E-DISPEN ================= -->
+    <!-- VIEW 2: LACAK TIKET & E-DISPEN -->
     <section id="tracking-portal-view" class="portal-view hidden">
       <div class="tracker-container">
         <div class="glass-card tracker-card">
@@ -285,23 +237,19 @@
             <h2>Pelacakan Tiket & E-Dispensasi</h2>
             <p>Masukkan kode tiket untuk melihat jadwal dan membuka Kartu E-Dispen atau Surat Undangan.</p>
           </div>
-
           <div class="tracker-input-box">
             <div class="input-with-icon">
               <i class="fa-solid fa-ticket-simple"></i>
               <input type="text" id="trackTicketCodeInput" class="form-control track-input" placeholder="Contoh: SMANSAKA-XXXX-XXXXX" autocomplete="off">
             </div>
-            <button type="button" class="btn btn-primary" onclick="trackTicketStatus()">
-              <i class="fa-solid fa-search"></i> Lacak Tiket
-            </button>
+            <button type="button" class="btn btn-primary" onclick="trackTicketStatus()"><i class="fa-solid fa-search"></i> Lacak Tiket</button>
           </div>
-
           <div id="trackerResultBox" class="tracker-result hidden"></div>
         </div>
       </div>
     </section>
 
-    <!-- ================= VIEW 3: HOST / ADMIN PORTAL ================= -->
+    <!-- VIEW 3: HOST PORTAL (ADMIN) -->
     <section id="admin-portal-view" class="portal-view hidden">
       <div class="admin-dashboard-full">
         <div class="admin-topbar">
@@ -311,83 +259,34 @@
           </div>
           <div class="admin-controls">
             <input type="file" id="jsonFileInput" accept=".json" style="display:none;" onchange="handleJSONFileRestore(event)">
-            
-            <button class="btn btn-outline btn-sm" onclick="backupDataToJSON()" title="Simpan arsip ke file JSON lokal">
-              <i class="fa-solid fa-download"></i> Cadangkan
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="triggerRestoreJSON()" title="Pulihkan data dari file JSON cadangan">
-              <i class="fa-solid fa-upload"></i> Pulihkan
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()" title="Unduh rekapitulasi data format CSV">
-              <i class="fa-solid fa-file-excel"></i> Ekspor CSV
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kosongkan seluruh data antrean di sistem">
-              <i class="fa-solid fa-rotate-left"></i> Bersihkan Antrean
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="logoutAdmin()">
-              <i class="fa-solid fa-right-from-bracket"></i> Keluar
-            </button>
+            <button class="btn btn-outline btn-sm" onclick="backupDataToJSON()" title="Simpan arsip ke file JSON lokal"><i class="fa-solid fa-download"></i> Cadangkan</button>
+            <button class="btn btn-outline btn-sm" onclick="triggerRestoreJSON()" title="Pulihkan data dari JSON"><i class="fa-solid fa-upload"></i> Pulihkan</button>
+            <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()" title="Unduh rekapitulasi data format CSV"><i class="fa-solid fa-file-excel"></i> Ekspor CSV</button>
+            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kosongkan seluruh data antrean di sistem"><i class="fa-solid fa-rotate-left"></i> Bersihkan Antrean</button>
+            <button class="btn btn-danger btn-sm" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
           </div>
         </div>
 
-        <!-- Metric Summary Cards -->
         <div class="metrics-grid">
-          <div class="metric-card glass-card">
-            <div class="metric-icon metric-blue"><i class="fa-solid fa-inbox"></i></div>
-            <div class="metric-data">
-              <span class="metric-number" id="metricTotal">0</span>
-              <span class="metric-label">Total Permohonan</span>
-            </div>
-          </div>
-          <div class="metric-card glass-card">
-            <div class="metric-icon metric-amber"><i class="fa-solid fa-hourglass-half"></i></div>
-            <div class="metric-data">
-              <span class="metric-number" id="metricPending">0</span>
-              <span class="metric-label">Menunggu Disposisi</span>
-            </div>
-          </div>
-          <div class="metric-card glass-card">
-            <div class="metric-icon metric-emerald"><i class="fa-solid fa-calendar-check"></i></div>
-            <div class="metric-data">
-              <span class="metric-number" id="metricApproved">0</span>
-              <span class="metric-label">Disetujui / Terjadwal</span>
-            </div>
-          </div>
-          <div class="metric-card glass-card">
-            <div class="metric-icon metric-purple"><i class="fa-solid fa-user-check"></i></div>
-            <div class="metric-data">
-              <span class="metric-number" id="metricToday">0</span>
-              <span class="metric-label">Kunjungan Hari Ini</span>
-            </div>
-          </div>
+          <div class="metric-card glass-card"><div class="metric-icon metric-blue"><i class="fa-solid fa-inbox"></i></div><div class="metric-data"><span class="metric-number" id="metricTotal">0</span><span class="metric-label">Total Permohonan</span></div></div>
+          <div class="metric-card glass-card"><div class="metric-icon metric-amber"><i class="fa-solid fa-hourglass-half"></i></div><div class="metric-data"><span class="metric-number" id="metricPending">0</span><span class="metric-label">Menunggu Disposisi</span></div></div>
+          <div class="metric-card glass-card"><div class="metric-icon metric-emerald"><i class="fa-solid fa-calendar-check"></i></div><div class="metric-data"><span class="metric-number" id="metricApproved">0</span><span class="metric-label">Disetujui / Terjadwal</span></div></div>
+          <div class="metric-card glass-card"><div class="metric-icon metric-purple"><i class="fa-solid fa-user-check"></i></div><div class="metric-data"><span class="metric-number" id="metricToday">0</span><span class="metric-label">Kunjungan Hari Ini</span></div></div>
         </div>
 
-        <!-- Sub-View Navigation Tabs -->
         <div class="admin-subview-nav">
-          <button class="admin-subtab-btn active" id="subtabBtnTable" onclick="switchAdminSubView('table')">
-            <i class="fa-solid fa-table-list"></i> Tabel Antrean & Disposisi
-          </button>
-          <button class="admin-subtab-btn" id="subtabBtnCalendar" onclick="switchAdminSubView('calendar')">
-            <i class="fa-solid fa-calendar-week"></i> Kalender Mingguan
-          </button>
-          <button class="admin-subtab-btn" id="subtabBtnAnalytics" onclick="switchAdminSubView('analytics')">
-            <i class="fa-solid fa-chart-pie"></i> Statistik & Heatmap
-          </button>
+          <button class="admin-subtab-btn active" id="subtabBtnTable" onclick="switchAdminSubView('table')"><i class="fa-solid fa-table-list"></i> Tabel Antrean & Disposisi</button>
+          <button class="admin-subtab-btn" id="subtabBtnCalendar" onclick="switchAdminSubView('calendar')"><i class="fa-solid fa-calendar-week"></i> Kalender Mingguan</button>
+          <button class="admin-subtab-btn" id="subtabBtnAnalytics" onclick="switchAdminSubView('analytics')"><i class="fa-solid fa-chart-pie"></i> Statistik & Heatmap</button>
         </div>
 
-        <!-- SUBVIEW A: TABEL ANTREAN (DEFAULT) -->
+        <!-- SUBVIEW A: TABEL -->
         <div id="adminSubViewTable" class="admin-subview-panel">
           <div class="glass-card table-section-full">
             <div class="table-toolbar">
-              <div class="table-title-area">
-                <h3>Antrean Permohonan Masuk</h3>
-                <p>Kelola disposisi pimpinan, delegasi Guru BK/Waka, atur ulang jadwal, dan terbitkan izin resmi.</p>
-              </div>
+              <div class="table-title-area"><h3>Antrean Permohonan Masuk</h3><p>Kelola disposisi pimpinan, delegasi Guru BK/Waka, atur ulang jadwal, dan terbitkan izin resmi.</p></div>
               <div class="table-filters">
-                <div class="input-with-icon" style="min-width: 220px;">
-                  <i class="fa-solid fa-magnifying-glass"></i>
-                  <input type="text" id="adminSearchInput" class="form-control form-control-sm" placeholder="Cari tiket, nama, instansi..." oninput="renderAdminQueueTable()">
-                </div>
+                <div class="input-with-icon" style="min-width: 220px;"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="adminSearchInput" class="form-control form-control-sm" placeholder="Cari tiket, nama, instansi..." oninput="renderAdminQueueTable()"></div>
                 <div class="filter-group">
                   <label><i class="fa-solid fa-filter"></i> Status:</label>
                   <select id="tableFilterStatus" class="form-control form-control-sm" onchange="renderAdminQueueTable()">
@@ -401,166 +300,99 @@
                 </div>
               </div>
             </div>
-
             <table class="custom-table" id="adminAppointmentsTable">
-              <thead>
-                <tr>
-                  <th style="width: 14%;">Kode Tiket</th>
-                  <th style="width: 18%;">Pemohon & Kontak</th>
-                  <th style="width: 14%;">Kategori & Tujuan</th>
-                  <th style="width: 12%;">Tgl Diminta</th>
-                  <th style="width: 17%;">Alokasi & Ruangan</th>
-                  <th style="width: 15%;">Status</th>
-                  <th style="width: 10%; text-align: right;">Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="adminTableBody">
-                <!-- Render via script.js -->
-              </tbody>
+              <thead><tr><th style="width: 14%;">Kode Tiket</th><th style="width: 18%;">Pemohon & Kontak</th><th style="width: 14%;">Kategori & Tujuan</th><th style="width: 12%;">Tgl Diminta</th><th style="width: 17%;">Alokasi & Ruangan</th><th style="width: 15%;">Status</th><th style="width: 10%; text-align: right;">Aksi</th></tr></thead>
+              <tbody id="adminTableBody"></tbody>
             </table>
           </div>
         </div>
 
-        <!-- SUBVIEW B: KALENDER MINGGUAN -->
+        <!-- SUBVIEW B: KALENDER -->
         <div id="adminSubViewCalendar" class="admin-subview-panel hidden">
           <div class="glass-card calendar-wrapper-card">
             <div class="calendar-topbar">
-              <div class="calendar-title-box">
-                <h3 id="calWeekRangeLabel">Minggu: Memuat...</h3>
-                <p>Timeline audiensi terjadwal di lingkungan SMAN 1 Kandangan (Format 24 Jam WIB).</p>
-              </div>
+              <div class="calendar-title-box"><h3 id="calWeekRangeLabel">Minggu: Memuat...</h3><p>Timeline audiensi terjadwal di SMAN 1 Kandangan (Format 24 Jam WIB).</p></div>
               <div class="calendar-nav-buttons">
                 <button class="btn btn-outline btn-sm" onclick="changeCalendarWeek(-1)"><i class="fa-solid fa-chevron-left"></i> Minggu Lalu</button>
                 <button class="btn btn-primary btn-sm" onclick="resetCalendarToCurrentWeek()">Minggu Ini</button>
                 <button class="btn btn-outline btn-sm" onclick="changeCalendarWeek(1)">Minggu Depan <i class="fa-solid fa-chevron-right"></i></button>
               </div>
             </div>
-
-            <div class="calendar-grid-container" id="calendarGridWeek">
-              <!-- Render via script.js -->
-            </div>
+            <div class="calendar-grid-container" id="calendarGridWeek"></div>
           </div>
         </div>
 
-        <!-- SUBVIEW C: STATISTIK & HEATMAP -->
+        <!-- SUBVIEW C: ANALITIK -->
         <div id="adminSubViewAnalytics" class="admin-subview-panel hidden">
           <div class="analytics-layout-grid">
             <div class="glass-card analytics-card">
-              <div class="analytics-card-header">
-                <h3><i class="fa-solid fa-chart-simple"></i> Komposisi Kategori Pemohon</h3>
-                <p>Distribusi latar belakang tamu dan pemohon audiensi.</p>
-              </div>
+              <div class="analytics-card-header"><h3><i class="fa-solid fa-chart-simple"></i> Komposisi Kategori Pemohon</h3><p>Distribusi latar belakang tamu dan pemohon audiensi.</p></div>
               <div id="categoryBarsContainer" class="category-bars-list"></div>
               <div class="status-summary-pills" id="statusSummaryPills"></div>
             </div>
-
             <div class="glass-card analytics-card">
-              <div class="analytics-card-header">
-                <h3><i class="fa-solid fa-fire-flame-curved"></i> Heatmap Jam Sibuk Audiensi</h3>
-                <p>Kepadatan alokasi waktu audiensi pada jam kerja operasional sekolah.</p>
-              </div>
-              
+              <div class="analytics-card-header"><h3><i class="fa-solid fa-fire-flame-curved"></i> Heatmap Jam Sibuk Audiensi</h3><p>Kepadatan alokasi waktu audiensi pada jam kerja operasional sekolah.</p></div>
               <div class="heatmap-legend">
                 <span class="legend-item"><span class="legend-box heat-0"></span> Kosong (0)</span>
                 <span class="legend-item"><span class="legend-box heat-1"></span> Tenang (1)</span>
                 <span class="legend-item"><span class="legend-box heat-2"></span> Ramai (2)</span>
                 <span class="legend-item"><span class="legend-box heat-3"></span> Padat (3+)</span>
               </div>
-
-              <div class="heatmap-scroll-area">
-                <div class="heatmap-matrix-grid" id="heatmapMatrix"></div>
-              </div>
+              <div class="heatmap-scroll-area"><div class="heatmap-matrix-grid" id="heatmapMatrix"></div></div>
             </div>
           </div>
         </div>
-
       </div>
     </section>
 
   </main>
 
-  <!-- ================= MODAL: TIKET SUKSES ================= -->
+  <!-- MODAL: TIKET SUKSES -->
   <div id="ticketSuccessModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card">
-      <div class="modal-header-icon success">
-        <i class="fa-solid fa-circle-check"></i>
-      </div>
+      <div class="modal-header-icon success"><i class="fa-solid fa-circle-check"></i></div>
       <h3 class="modal-title">Permohonan Berhasil Terkirim</h3>
       <p class="modal-subtitle">Simpan Kode Tiket Anda untuk melacak status dan membuka E-Dispen / E-Pass.</p>
-
       <div class="ticket-badge-box">
         <span class="ticket-sub">KODE TIKET RESMI SMANSAKA:</span>
         <h2 id="modalTicketCode" class="ticket-code-text">SMANSAKA-XXXX-XXXXX</h2>
-        <button class="btn-copy-code" onclick="copyModalTicketCode()">
-          <i class="fa-regular fa-copy"></i> Salin Kode
-        </button>
+        <button class="btn-copy-code" onclick="copyModalTicketCode()"><i class="fa-regular fa-copy"></i> Salin Kode</button>
       </div>
-
       <div class="ticket-summary-box">
-        <div class="summary-item">
-          <span>Pemohon:</span> <strong id="modalSummaryName">-</strong>
-        </div>
-        <div class="summary-item">
-          <span>Tujuan:</span> <strong id="modalSummaryOfficial">-</strong>
-        </div>
-        <div class="summary-item">
-          <span>Rencana Tanggal:</span> <strong id="modalSummaryDate">-</strong>
-        </div>
-        <div class="summary-item">
-          <span>WhatsApp Terdaftar:</span> <strong id="modalSummaryPhone">-</strong>
-        </div>
+        <div class="summary-item"><span>Pemohon:</span> <strong id="modalSummaryName">-</strong></div>
+        <div class="summary-item"><span>Tujuan:</span> <strong id="modalSummaryOfficial">-</strong></div>
+        <div class="summary-item"><span>Rencana Tanggal:</span> <strong id="modalSummaryDate">-</strong></div>
+        <div class="summary-item"><span>WhatsApp Terdaftar:</span> <strong id="modalSummaryPhone">-</strong></div>
       </div>
-
       <div class="modal-actions">
-        <button type="button" class="btn btn-primary btn-block" onclick="closeTicketModal()">
-          Saya Mengerti & Selesai
-        </button>
+        <button type="button" class="btn btn-primary btn-block" onclick="closeTicketModal()">Saya Mengerti & Selesai</button>
       </div>
     </div>
   </div>
 
-  <!-- ================= MODAL: LOGIN ADMIN ================= -->
+  <!-- MODAL: LOGIN ADMIN -->
   <div id="adminLoginModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card login-modal-box">
       <button class="modal-close-btn" onclick="closeAdminLoginModal()"><i class="fa-solid fa-xmark"></i></button>
-      <div class="modal-header-icon admin-icon">
-        <i class="fa-solid fa-lock"></i>
-      </div>
+      <div class="modal-header-icon admin-icon"><i class="fa-solid fa-lock"></i></div>
       <h3 class="modal-title">Autentikasi Host Portal</h3>
       <p class="modal-subtitle">Akses Tata Usaha & Pimpinan SMAN 1 Kandangan.</p>
-
       <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
-        <div class="form-group">
-          <label class="field-label">Username</label>
-          <div class="input-with-icon">
-            <i class="fa-solid fa-user"></i>
-            <input type="text" id="adminUsername" class="form-control" placeholder="admin1234" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="field-label">Kata Sandi</label>
-          <div class="input-with-icon">
-            <i class="fa-solid fa-key"></i>
-            <input type="password" id="adminPassword" class="form-control" placeholder="••••••••" required>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">
-          <i class="fa-solid fa-right-to-bracket"></i> Masuk ke Dashboard
-        </button>
+        <div class="form-group"><label class="field-label">Username</label><div class="input-with-icon"><i class="fa-solid fa-user"></i><input type="text" id="adminUsername" class="form-control" placeholder="admin1234" required></div></div>
+        <div class="form-group"><label class="field-label">Kata Sandi</label><div class="input-with-icon"><i class="fa-solid fa-key"></i><input type="password" id="adminPassword" class="form-control" placeholder="••••••••" required></div></div>
+        <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-right-to-bracket"></i> Masuk ke Dashboard</button>
       </form>
     </div>
   </div>
 
-  <!-- ================= MODAL: DISPOSISI & ATUR ULANG (RESCHEDULE) ================= -->
+  <!-- MODAL: DISPOSISI & RESCHEDULE -->
   <div id="scheduleActionModal" class="modal-overlay hidden">
     <div class="modal-dialog glass-card schedule-modal-box">
       <button class="modal-close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
-      
       <div class="modal-badge-title">
         <span id="scheduleModalTicketPill" class="pill-badge">Tiket: #</span>
         <h3>Disposisi & Penjadwalan Audiensi</h3>
       </div>
-
       <div class="applicant-card-centered">
         <img id="schedModalPhoto" src="" alt="Foto Pemohon" class="applicant-photo-center" onclick="openFullPhotoModal()" title="Klik untuk memperbesar">
         <div class="compact-info">
@@ -569,26 +401,19 @@
         </div>
       </div>
 
-      <!-- Input Baru: Admin Bebas Edit Agenda / Keperluan Audiensi -->
+      <!-- EDIT AGENDA RESMI ADMIN -->
       <div class="form-group" style="margin-top: 0.75rem;">
         <label class="field-label"><i class="fa-solid fa-pen-nib"></i> Pokok Agenda / Keperluan (Dapat Disesuaikan):</label>
         <textarea id="schedModalPurposeInput" class="form-control" rows="2" placeholder="Agenda audiensi resmi..."></textarea>
       </div>
 
-      <!-- Tab Opsi Tindakan -->
       <div class="action-tab-group">
-        <button type="button" class="tab-pill-action active" id="btnTabApprove" onclick="switchActionTab('approve')">
-          <i class="fa-solid fa-calendar-check"></i> Kepala Sekolah
-        </button>
-        <button type="button" class="tab-pill-action" id="btnTabDelegate" onclick="switchActionTab('delegate')">
-          <i class="fa-solid fa-users-gear"></i> Delegasi (BK/Waka/TU)
-        </button>
-        <button type="button" class="tab-pill-action" id="btnTabReject" onclick="switchActionTab('reject')">
-          <i class="fa-solid fa-ban"></i> Tolak
-        </button>
+        <button type="button" class="tab-pill-action active" id="btnTabApprove" onclick="switchActionTab('approve')"><i class="fa-solid fa-calendar-check"></i> Kepala Sekolah</button>
+        <button type="button" class="tab-pill-action" id="btnTabDelegate" onclick="switchActionTab('delegate')"><i class="fa-solid fa-users-gear"></i> Delegasi (BK/Waka/TU)</button>
+        <button type="button" class="tab-pill-action" id="btnTabReject" onclick="switchActionTab('reject')"><i class="fa-solid fa-ban"></i> Tolak</button>
       </div>
 
-      <!-- Tab 1: Kepala Sekolah Langsung -->
+      <!-- TAB APPROVE -->
       <div id="tabContentApprove" class="action-tab-body">
         <div class="form-group" id="letterNoGroupApprove">
           <label class="field-label"><i class="fa-solid fa-hashtag"></i> Nomor Surat Dinas (Otomatis)</label>
@@ -597,7 +422,6 @@
         <div id="studentNoticeApprove" class="student-dispen-notice hidden">
           <i class="fa-solid fa-graduation-cap"></i> <strong>Jalur Siswa:</strong> Nomor surat dinas dinonaktifkan. Sistem otomatis menerbitkan <strong>Kartu E-Dispensasi Kelas Digital</strong>.
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label class="field-label">Ruangan Pertemuan <span class="required">*</span></label>
@@ -607,44 +431,26 @@
               <option value="Ruang Tamu Khusus Lobi">Ruang Tamu Khusus Lobi</option>
             </select>
           </div>
-          <div class="form-group">
-            <label class="field-label">Tanggal Audiensi <span class="required">*</span></label>
-            <input type="date" id="schedDate" class="form-control" onchange="runLiveCollisionCheck()">
-          </div>
+          <div class="form-group"><label class="field-label">Tanggal Audiensi <span class="required">*</span></label><input type="date" id="schedDate" class="form-control" onchange="runLiveCollisionCheck()"></div>
         </div>
-
         <div class="form-row">
-          <div class="form-group">
-            <label class="field-label">Jam Mulai (Format 24 Jam) <span class="required">*</span></label>
-            <input type="time" id="schedStartTime" class="form-control" onchange="runLiveCollisionCheck()">
-          </div>
-          <div class="form-group">
-            <label class="field-label">Jam Selesai (Format 24 Jam) <span class="required">*</span></label>
-            <input type="time" id="schedEndTime" class="form-control" onchange="runLiveCollisionCheck()">
-          </div>
+          <div class="form-group"><label class="field-label">Jam Mulai (24 Jam) <span class="required">*</span></label><input type="time" id="schedStartTime" class="form-control" onchange="runLiveCollisionCheck()"></div>
+          <div class="form-group"><label class="field-label">Jam Selesai (24 Jam) <span class="required">*</span></label><input type="time" id="schedEndTime" class="form-control" onchange="runLiveCollisionCheck()"></div>
         </div>
-
         <div class="form-group">
-          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Catatan Lembar Disposisi / Permohonan Maaf Reschedule</label>
+          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Catatan Disposisi / Notif Reschedule</label>
           <textarea id="schedApprovalNotes" class="form-control" rows="2" placeholder="Tuliskan arahan resmi pimpinan..."></textarea>
         </div>
-
         <div id="collisionAlertBox" class="collision-alert hidden">
           <i class="fa-solid fa-triangle-exclamation"></i>
-          <div>
-            <strong>Benturan Jadwal Terdeteksi!</strong>
-            <p id="collisionAlertMsg">Ruangan tersebut telah terisi pada jam yang sama.</p>
-          </div>
+          <div><strong>Benturan Jadwal Terdeteksi!</strong><p id="collisionAlertMsg">Ruangan tersebut telah terisi pada jam yang sama.</p></div>
         </div>
-
         <div class="modal-footer-actions">
-          <button type="button" id="confirmApproveBtn" class="btn btn-emerald btn-block" onclick="executeApprove()">
-            <i class="fa-solid fa-check-double"></i> Kunci Jadwal Kepala Sekolah
-          </button>
+          <button type="button" id="confirmApproveBtn" class="btn btn-emerald btn-block" onclick="executeApprove()"><i class="fa-solid fa-check-double"></i> Kunci Jadwal Kepala Sekolah</button>
         </div>
       </div>
 
-      <!-- Tab 2: Delegasi Waka / BK / TU -->
+      <!-- TAB DELEGATE -->
       <div id="tabContentDelegate" class="action-tab-body hidden">
         <div class="form-group">
           <label class="field-label"><i class="fa-solid fa-user-tag"></i> Pejabat / Guru Penerima <span class="required">*</span></label>
@@ -660,7 +466,6 @@
             <i class="fa-solid fa-chevron-down select-icon"></i>
           </div>
         </div>
-
         <div class="form-group" id="letterNoGroupDelegate">
           <label class="field-label"><i class="fa-solid fa-hashtag"></i> Nomor Surat Dinas / Disposisi</label>
           <input type="text" id="schedLetterNoDelegate" class="form-control form-control-code">
@@ -668,7 +473,6 @@
         <div id="studentNoticeDelegate" class="student-dispen-notice hidden">
           <i class="fa-solid fa-graduation-cap"></i> <strong>Jalur Siswa:</strong> Nomor surat dinas dinonaktifkan. Sistem otomatis menerbitkan <strong>Kartu E-Dispensasi Kelas Digital</strong>.
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label class="field-label">Ruangan Pelaksanaan <span class="required">*</span></label>
@@ -681,87 +485,59 @@
               <option value="Ruang Tamu Khusus Lobi">Ruang Tamu Khusus Lobi</option>
             </select>
           </div>
-          <div class="form-group">
-            <label class="field-label">Tanggal Pelaksanaan <span class="required">*</span></label>
-            <input type="date" id="schedDelegateDate" class="form-control">
-          </div>
+          <div class="form-group"><label class="field-label">Tanggal Pelaksanaan <span class="required">*</span></label><input type="date" id="schedDelegateDate" class="form-control"></div>
         </div>
-
         <div class="form-row">
-          <div class="form-group">
-            <label class="field-label">Jam Mulai (WIB) <span class="required">*</span></label>
-            <input type="time" id="schedDelegateStartTime" class="form-control" value="08:20">
-          </div>
-          <div class="form-group">
-            <label class="field-label">Jam Selesai (WIB) <span class="required">*</span></label>
-            <input type="time" id="schedDelegateEndTime" class="form-control" value="09:40">
-          </div>
+          <div class="form-group"><label class="field-label">Jam Mulai (WIB) <span class="required">*</span></label><input type="time" id="schedDelegateStartTime" class="form-control" value="08:20"></div>
+          <div class="form-group"><label class="field-label">Jam Selesai (WIB) <span class="required">*</span></label><input type="time" id="schedDelegateEndTime" class="form-control" value="09:40"></div>
         </div>
-
         <div class="form-group">
           <label class="field-label"><i class="fa-solid fa-clipboard-list"></i> Catatan Lembar Disposisi Petugas</label>
           <textarea id="schedDelegateNotes" class="form-control" rows="2" placeholder="Tuliskan arahan tindak lanjut..."></textarea>
         </div>
-
         <div class="modal-footer-actions">
-          <button type="button" class="btn btn-primary btn-block" onclick="executeDelegate()">
-            <i class="fa-solid fa-share-nodes"></i> Konfirmasi Disposisi & Kunci Jadwal
-          </button>
+          <button type="button" class="btn btn-primary btn-block" onclick="executeDelegate()"><i class="fa-solid fa-share-nodes"></i> Konfirmasi Disposisi & Kunci Jadwal</button>
         </div>
       </div>
 
-      <!-- Tab 3: Tolak Audiensi -->
+      <!-- TAB REJECT -->
       <div id="tabContentReject" class="action-tab-body hidden">
         <div class="form-group">
           <label class="field-label"><i class="fa-solid fa-circle-exclamation"></i> Alasan Penolakan Resmi</label>
           <textarea id="schedRejectionReason" class="form-control" rows="3"></textarea>
         </div>
         <div class="modal-footer-actions">
-          <button type="button" class="btn btn-danger btn-block" onclick="executeReject()">
-            <i class="fa-solid fa-times-circle"></i> Konfirmasi Tolak Permohonan
-          </button>
+          <button type="button" class="btn btn-danger btn-block" onclick="executeReject()"><i class="fa-solid fa-times-circle"></i> Konfirmasi Tolak Permohonan</button>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- ================= MODAL: FOTO FULL PEMOHON ================= -->
+  <!-- MODAL: FOTO FULL -->
   <div id="photoFullModal" class="modal-overlay hidden" onclick="closeFullPhotoModal()">
     <div class="modal-dialog glass-card photo-full-dialog" onclick="event.stopPropagation()">
       <button type="button" class="modal-close-btn" onclick="closeFullPhotoModal()"><i class="fa-solid fa-xmark"></i></button>
-      <div class="photo-full-header">
-        <span class="pill-badge"><i class="fa-solid fa-camera"></i> Foto Verifikasi Live</span>
-        <h3 id="photoFullTitle" class="photo-full-name">-</h3>
-      </div>
-      <div class="photo-full-img-box">
-        <img id="photoFullElement" src="" alt="Foto Pemohon">
-      </div>
+      <div class="photo-full-header"><span class="pill-badge"><i class="fa-solid fa-camera"></i> Foto Verifikasi Live</span><h3 id="photoFullTitle" class="photo-full-name">-</h3></div>
+      <div class="photo-full-img-box"><img id="photoFullElement" src="" alt="Foto Pemohon"></div>
     </div>
   </div>
 
-  <!-- ================= MODAL: SURAT DINAS RESMI (A4 LAYOUT SESUAI FOTO) ================= -->
+  <!-- MODAL: SURAT DINAS RESMI (A4 PRINT DENGAN 2 LOGO & INLINE EDIT) -->
   <div id="officialLetterModal" class="modal-overlay hidden" onclick="closeOfficialLetterModal()">
     <div class="modal-dialog official-letter-dialog" onclick="event.stopPropagation()">
       <div class="letter-action-toolbar no-print">
-        <div class="toolbar-left">
-          <span class="pill-badge"><i class="fa-solid fa-file-shield"></i> Dokumen Resmi Kedinasan SMANSAKA</span>
-        </div>
+        <div class="toolbar-left"><span class="pill-badge"><i class="fa-solid fa-file-shield"></i> Dokumen Resmi Kedinasan SMANSAKA</span></div>
         <div class="toolbar-right">
-          <button type="button" class="btn btn-primary btn-sm" onclick="printOfficialLetter()">
-            <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
-          </button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="closeOfficialLetterModal()">
-            <i class="fa-solid fa-xmark"></i> Tutup
-          </button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="printOfficialLetter()"><i class="fa-solid fa-print"></i> Cetak / Simpan PDF</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeOfficialLetterModal()"><i class="fa-solid fa-xmark"></i> Tutup</button>
         </div>
       </div>
 
       <div class="official-sheet-a4" id="printableLetterArea">
-        <!-- Kop Surat 2 Logo Sesuai Foto 1 -->
+        <!-- KOP DUA LOGO RESMI -->
         <div class="letter-kop">
           <div class="kop-logo-left">
-            <img src="jatim.png" alt="Lambang Jawa Timur" onerror="this.src='logo.png'">
+            <img src="jatim.png" alt="Lambang Jawa Timur Jer Basuki Mawa Beya" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Coat_of_arms_of_East_Java.svg/400px-Coat_of_arms_of_East_Java.svg.png'">
           </div>
           <div class="kop-text">
             <h4>PEMERINTAH PROVINSI JAWA TIMUR</h4>
@@ -769,16 +545,12 @@
             <h2>SMA NEGERI 1 KANDANGAN KABUPATEN KEDIRI</h2>
             <p class="kop-address">Jalan Hayam Wuruk No. 96 Telpon 0354-326759</p>
             <p class="kop-contact">Website : www.sman1kandangan.sch.id email : sma1kandangankediri@gmail.com</p>
-            <div class="kop-city-zip">
-              <span>KEDIRI</span>
-              <span>Kode Pos 64294</span>
-            </div>
+            <div class="kop-city-zip"><span>KEDIRI</span><span>Kode Pos 64294</span></div>
           </div>
           <div class="kop-logo-right">
             <img src="logo.png" alt="Logo SMAN 1 Kandangan" onerror="this.style.opacity='0'">
           </div>
         </div>
-        <!-- Garis Ganda Kop Surat -->
         <div class="kop-separator-line"></div>
 
         <div class="letter-meta-row">
@@ -790,9 +562,7 @@
               <tr><td>Perihal</td><td>: <strong>Konfirmasi & Undangan Audiensi Resmi</strong></td></tr>
             </table>
           </div>
-          <div class="meta-right">
-            <span id="docLetterDate">Kandangan, 20 September 2026</span>
-          </div>
+          <div class="meta-right"><span id="docLetterDate">Kandangan, 20 September 2026</span></div>
         </div>
 
         <div class="letter-addressee">
@@ -813,7 +583,13 @@
             <tr><td>Waktu Pertemuan</td><td>: <strong id="docScheduleTime">-</strong></td></tr>
             <tr><td>Tempat / Ruangan</td><td>: <strong id="docScheduleRoom">-</strong></td></tr>
             <tr><td>Pejabat Penerima</td><td>: <strong id="docHostOfficer">-</strong></td></tr>
-            <tr><td>Agenda / Keperluan</td><td>: <span id="docPurpose">-</span></td></tr>
+            <tr>
+              <td style="vertical-align: top;">Agenda / Keperluan</td>
+              <td>: 
+                <span id="docPurpose" contenteditable="true" class="editable-doc-field" title="Klik langsung untuk menyempurnakan redaksi agenda" onblur="saveEditedDocPurpose()">-</span>
+                <span class="no-print edit-hint-badge"><i class="fa-solid fa-pen"></i> Edit</span>
+              </td>
+            </tr>
           </table>
 
           <div class="letter-notes-box">
@@ -822,12 +598,12 @@
           </div>
 
           <p style="text-align: justify; text-indent: 2.5rem; margin-top: 1rem;">
-            Mengingat pentingnya agenda tersebut, kami mohon Bapak/Ibu hadir tepat waktu dan menunjukkan surat ini kepada petugas keamanan di lobi sekolah untuk keperluan presensi kedatangan.
+            Mengingat pentingnya agenda tersebut, kami mohon Bapak/Ibu hadir tepat waktu dan menunjukkan surat ini kepada petugas keamanan di lobi sekolah untuk presensi kedatangan.
           </p>
           <p style="margin-top: 0.75rem;">Atas perhatian dan kerja samanya, kami sampaikan terima kasih.</p>
         </div>
 
-        <!-- Tanda Tangan Sesuai Foto 2 (Kepala Sekolah Istu Handayani) -->
+        <!-- TANDA TANGAN & STEMPEL IBU ISTU HANDAYANI -->
         <div class="letter-sign-section">
           <div class="sign-qr-box">
             <div id="letterQrContainer" style="display:flex; justify-content:center; margin-bottom:0.25rem;"></div>
@@ -859,8 +635,6 @@
   </div>
 
   <div id="toastContainer" class="toast-container"></div>
-
-  <!-- Skrip Utama -->
-  <script src="script.js?v=11.5"></script>
+  <script src="script.js?v=11.6"></script>
 </body>
 </html>

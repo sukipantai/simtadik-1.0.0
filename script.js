@@ -1,6 +1,6 @@
 /**
- * SISTEM BUKU TAMU DIGITAL & E-DISPENSASI TERPADU
- * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.2 (FULL INTEGRATED)
+ * SISTEM BUKU TAMU DIGITAL & E-DISPENSASI TERPADU (SIMTADIK)
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.4
  */
 
 const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V11';
@@ -47,7 +47,7 @@ let appData = {
 };
 
 // ==========================================================================
-// PENGATUR TEMA GELAP / TERANG (LIGHT & DARK MODE)
+// PENGATUR TEMA GELAP / TERANG
 // ==========================================================================
 function initTheme() {
   const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
@@ -59,37 +59,36 @@ function toggleTheme() {
   const newTheme = isLight ? 'dark' : 'light';
   applyTheme(newTheme);
   localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-  showToast(`Mode ${newTheme === 'light' ? 'Terang' : 'Gelap'} aktif`, 'info');
+  showToast(`Mode ${newTheme === 'light' ? 'Terang' : 'Gelap'} diaktifkan`, 'info');
 }
 
 function applyTheme(theme) {
   const icon = document.getElementById('themeToggleIcon');
   if (theme === 'light') {
     document.body.classList.add('light-theme');
-    if (icon) {
-      icon.classList.remove('fa-sun');
-      icon.classList.add('fa-moon');
-    }
+    if (icon) icon.className = 'fa-solid fa-moon';
   } else {
     document.body.classList.remove('light-theme');
-    if (icon) {
-      icon.classList.remove('fa-moon');
-      icon.classList.add('fa-sun');
-    }
+    if (icon) icon.className = 'fa-solid fa-sun';
   }
 }
 
-// Generator Kode Tiket Dinamis (Format: SMANSAKA-XXXX-XXXXX)
+// Format Tanggal Indonesia Baku
+function formatIndonesianDate(dateStr) {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'));
+  const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+  return `${dayNames[d.getDay()]}, ${d.toLocaleDateString('id-ID', dateOptions)}`;
+}
+
+// Generator Kode Tiket Dinamis (SMANSAKA-XXXX-XXXXX)
 function generateTicketCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let part1 = '';
-  for (let i = 0; i < 4; i++) {
-    part1 += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  for (let i = 0; i < 4; i++) part1 += chars.charAt(Math.floor(Math.random() * chars.length));
   let part2 = '';
-  for (let i = 0; i < 5; i++) {
-    part2 += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  for (let i = 0; i < 5; i++) part2 += chars.charAt(Math.floor(Math.random() * chars.length));
   return `SMANSAKA-${part1}-${part2}`;
 }
 
@@ -146,12 +145,12 @@ const INITIAL_MOCK_DATA = [
     photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%230f172a"/><circle cx="60" cy="45" r="22" fill="%2310b981"/><path d="M25 105 C25 78, 95 78, 95 105" fill="%23059669"/></svg>',
     status: 'Disetujui',
     hostOfficer: 'Koordinator Guru BK',
-    officialLetterNo: '421.3 / 085 / 101.6.14 / 2026',
+    officialLetterNo: null,
     scheduledRoom: 'Ruang Konseling BK',
     scheduledDate: '2026-09-21',
     scheduledStart: '08:20',
     scheduledEnd: '09:40',
-    approvalMessage: 'Disetujui untuk sesi konseling bimbingan di Ruang BK.',
+    approvalMessage: 'Harap hadir tepat waktu di Ruang BK membawa buku catatan peminatan.',
     rejectionReason: '',
     checkInAt: null,
     createdAt: '2026-09-18T09:15:00.000Z'
@@ -192,7 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeVisitDateInput();
   updateAuthUIState();
 
-  // Deteksi Scan QR Code (?ticket=SMANSAKA-XXXX-XXXXX)
   const urlParams = new URLSearchParams(window.location.search);
   const ticketParam = urlParams.get('ticket');
   if (ticketParam) {
@@ -454,7 +452,7 @@ function validateStep2() {
 }
 
 // ==========================================================================
-// ENGINE KAMERA WEBRTC (KOMPRESI HEMAT MEMORI)
+// ENGINE KAMERA WEBRTC
 // ==========================================================================
 async function startCamera() {
   const video = document.getElementById('webcamVideo');
@@ -605,7 +603,7 @@ function hitungDispensasiPelajaran(startStr, endStr) {
 }
 
 // ==========================================================================
-// SUBMISSION & PELACAKAN TIKET SESUAI KATEGORI
+// SUBMISSION & PELACAKAN TIKET
 // ==========================================================================
 function handleFormSubmission(e) {
   e.preventDefault();
@@ -722,10 +720,12 @@ function trackTicketStatus() {
     return;
   }
 
-  // 1. KATEGORI SISWA: TAMPILKAN KARTU E-DISPENSASI DIGITAL
+  // 1. KATEGORI SISWA: TAMPILKAN KARTU E-DISPENSASI LENGKAP TANGGAL & CATATAN
   if (found.category === 'Siswa') {
     if (found.status === 'Disetujui' || found.status === 'Checked-In') {
       const dispen = hitungDispensasiPelajaran(found.scheduledStart, found.scheduledEnd);
+      const tanggalIzin = formatIndonesianDate(found.scheduledDate || found.visitDate);
+
       resultBox.innerHTML = `
         <div class="edispen-card">
           <div class="edispen-header">
@@ -740,8 +740,12 @@ function trackTicketStatus() {
             <div class="edispen-student-class">
               Kelas: <strong>${escapeHtml(found.studentClass || '-')}</strong> • NISN: ${escapeHtml(found.studentNisn || '-')}
             </div>
+
+            <div class="edispen-date-row">
+              <i class="fa-solid fa-calendar-day"></i> ${tanggalIzin}
+            </div>
             
-            <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.5rem;">
+            <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.4rem;">
               Tujuan Audiensi: <strong style="color:#fff;">${escapeHtml(found.hostOfficer || 'Guru BK')}</strong> (${escapeHtml(found.scheduledRoom || 'Ruang BK')})
             </div>
 
@@ -753,13 +757,18 @@ function trackTicketStatus() {
                 Waktu: <strong>${found.scheduledStart} s.d. ${found.scheduledEnd} WIB</strong> (${dispen.totalMenitEfektif} Menit Efektif Pembelajaran)
               </div>
             </div>
+
+            <div class="edispen-note-box">
+              <span class="edispen-note-label"><i class="fa-solid fa-comment-dots"></i> Catatan Lembar Disposisi:</span>
+              <p class="edispen-note-text">"${escapeHtml(found.approvalMessage || 'Disetujui untuk mengikuti sesi bimbingan/audiensi.')}"</p>
+            </div>
             
-            <p style="font-size:0.75rem; color:var(--text-dim); margin-top:0.5rem; font-style:italic;">
+            <p style="font-size:0.75rem; color:var(--text-dim); margin-top:0.4rem; font-style:italic;">
               *Tunjukkan layar ini kepada Guru Mata Pelajaran di kelas sebagai bukti izin resmi meninggalkan pembelajaran.
             </p>
           </div>
 
-          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed rgba(255,255,255,0.18); padding-top:0.75rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed rgba(255,255,255,0.18); padding-top:0.75rem; margin-top:0.5rem;">
             <span class="edispen-status-pill status-active-pulse">
               <i class="fa-solid fa-circle-check"></i> IZIN SAH DIGITAL
             </span>
@@ -774,7 +783,7 @@ function trackTicketStatus() {
       resultBox.innerHTML = renderStandardStatusCard(found);
     }
   } 
-  // 2. KATEGORI KEDINASAN: BERI TOMBOL CETAK SURAT RESMI BERKOP
+  // 2. KATEGORI KEDINASAN: TOMBOL CETAK SURAT RESMI
   else if (found.category === 'Instansi / Kedinasan') {
     let letterBtn = '';
     if (found.status === 'Disetujui' || found.status === 'Checked-In') {
@@ -788,7 +797,7 @@ function trackTicketStatus() {
     }
     resultBox.innerHTML = renderStandardStatusCard(found) + letterBtn;
   } 
-  // 3. KATEGORI ORANG TUA / UMUM: KARTU VISITOR E-PASS
+  // 3. KATEGORI ORANG TUA / UMUM
   else {
     resultBox.innerHTML = renderStandardStatusCard(found);
   }
@@ -820,6 +829,8 @@ function renderStandardStatusCard(found) {
   if (found.agencyName) extraIdentity = `<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Instansi: <strong style="color:#fff;">${escapeHtml(found.agencyName)}</strong></p>`;
   if (found.parentChildName) extraIdentity = `<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Orang Tua dari: <strong style="color:#fff;">${escapeHtml(found.parentChildName)}</strong></p>`;
 
+  const tanggalKunjungan = formatIndonesianDate(found.scheduledDate || found.visitDate);
+
   return `
     <div class="glass-card" style="padding:1.4rem; margin-top:1rem;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
@@ -832,6 +843,7 @@ function renderStandardStatusCard(found) {
           <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Pemohon: <strong style="color:#fff;">${escapeHtml(found.fullName)}</strong></p>
           ${extraIdentity}
           <p style="font-size:0.85rem; color:var(--cyan-glow); margin:0;">Tujuan: <strong>${escapeHtml(found.hostOfficer || found.targetOfficial)}</strong></p>
+          <p style="font-size:0.8rem; color:var(--text-dim); margin-top:0.2rem;"><i class="fa-solid fa-calendar"></i> Tanggal: ${tanggalKunjungan}</p>
         </div>
       </div>
       ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--emerald-green); margin-top:0.65rem; font-weight:700;"><i class="fa-solid fa-clock"></i> Jadwal: ${found.scheduledRoom} (${found.scheduledStart} -${found.scheduledEnd} WIB)</p>` : ''}
@@ -900,16 +912,16 @@ function renderAdminQueueTable() {
   if (!tbody) return;
 
   const filter = document.getElementById('tableFilterStatus')?.value || 'ALL';
-  const search = document.getElementById('adminSearchInput')?.value.toLowerCase().trim() || '';
+  const searchInput = document.getElementById('adminSearchInput')?.value.toLowerCase().trim() || '';
 
   let list = appData.appointments;
   if (filter !== 'ALL') list = list.filter(item => item.status === filter);
-  if (search) {
+  if (searchInput) {
     list = list.filter(item => 
-      item.fullName.toLowerCase().includes(search) ||
-      item.ticketCode.toLowerCase().includes(search) ||
-      (item.agencyName && item.agencyName.toLowerCase().includes(search)) ||
-      (item.parentChildName && item.parentChildName.toLowerCase().includes(search))
+      item.fullName.toLowerCase().includes(searchInput) ||
+      item.ticketCode.toLowerCase().includes(searchInput) ||
+      (item.agencyName && item.agencyName.toLowerCase().includes(searchInput)) ||
+      (item.parentChildName && item.parentChildName.toLowerCase().includes(searchInput))
     );
   }
 
@@ -1031,9 +1043,28 @@ function openScheduleModal(ticketCode) {
   const modalPhoto = document.getElementById('schedModalPhoto');
   if (modalPhoto) modalPhoto.src = item.photoBase64 || '';
 
+  // Logika Khusus Siswa: Sembunyikan Nomor Surat Dinas!
+  const isStudent = (item.category === 'Siswa');
+  const groupApprove = document.getElementById('letterNoGroupApprove');
+  const groupDelegate = document.getElementById('letterNoGroupDelegate');
+  const noticeApprove = document.getElementById('studentNoticeApprove');
+  const noticeDelegate = document.getElementById('studentNoticeDelegate');
+
+  if (isStudent) {
+    groupApprove?.classList.add('hidden');
+    groupDelegate?.classList.add('hidden');
+    noticeApprove?.classList.remove('hidden');
+    noticeDelegate?.classList.remove('hidden');
+  } else {
+    groupApprove?.classList.remove('hidden');
+    groupDelegate?.classList.remove('hidden');
+    noticeApprove?.classList.add('hidden');
+    noticeDelegate?.classList.add('hidden');
+  }
+
   const autoLetterNo = item.officialLetterNo || generateOfficialLetterNumber(appData.appointments.indexOf(item) + 1);
-  document.getElementById('schedLetterNoApprove').value = autoLetterNo;
-  document.getElementById('schedLetterNoDelegate').value = autoLetterNo;
+  document.getElementById('schedLetterNoApprove').value = isStudent ? '' : autoLetterNo;
+  document.getElementById('schedLetterNoDelegate').value = isStudent ? '' : autoLetterNo;
 
   document.getElementById('schedRoom').value = item.scheduledRoom || 'Ruang Kepala Sekolah';
   document.getElementById('schedDate').value = item.scheduledDate || item.visitDate;
@@ -1047,6 +1078,7 @@ function openScheduleModal(ticketCode) {
   handleDelegateHostChange();
 
   document.getElementById('schedApprovalNotes').value = item.approvalMessage || DEFAULT_APPROVE_TEMPLATE;
+  document.getElementById('schedDelegateNotes').value = item.approvalMessage || (isStudent ? 'Disetujui untuk sesi bimbingan konseling di ruang BK.' : DEFAULT_APPROVE_TEMPLATE);
   document.getElementById('schedRejectionReason').value = item.rejectionReason || DEFAULT_REJECT_TEMPLATE;
 
   if (item.targetOfficial === 'Kepala SMAN 1 Kandangan') {
@@ -1148,8 +1180,9 @@ function executeApprove() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
 
+  const isStudent = (item.category === 'Siswa');
   item.approvalMessage = document.getElementById('schedApprovalNotes').value.trim() || DEFAULT_APPROVE_TEMPLATE;
-  item.officialLetterNo = document.getElementById('schedLetterNoApprove').value.trim() || generateOfficialLetterNumber();
+  item.officialLetterNo = isStudent ? null : (document.getElementById('schedLetterNoApprove').value.trim() || generateOfficialLetterNumber());
   item.hostOfficer = 'Kepala SMAN 1 Kandangan';
   item.status = 'Disetujui';
   item.scheduledRoom = document.getElementById('schedRoom').value;
@@ -1168,9 +1201,10 @@ function executeDelegate() {
   const item = appData.appointments.find(a => a.ticketCode === appData.selectedTicketForAction);
   if (!item) return;
 
+  const isStudent = (item.category === 'Siswa');
   const targetHost = document.getElementById('schedDelegateHost').value;
   item.hostOfficer = targetHost;
-  item.officialLetterNo = document.getElementById('schedLetterNoDelegate').value.trim() || generateOfficialLetterNumber();
+  item.officialLetterNo = isStudent ? null : (document.getElementById('schedLetterNoDelegate').value.trim() || generateOfficialLetterNumber());
   item.approvalMessage = document.getElementById('schedDelegateNotes').value.trim() || `Disetujui untuk audiensi bersama ${targetHost}.`;
   item.status = 'Disetujui';
   item.scheduledRoom = document.getElementById('schedDelegateRoom').value;
@@ -1230,7 +1264,7 @@ function deleteAppointment(ticketCode) {
 }
 
 // ==========================================================================
-// CADANGKAN & PULIHKAN DATA JSON (OFFLINE SAFETY NET)
+// CADANGKAN & PULIHKAN DATA JSON
 // ==========================================================================
 function backupDataToJSON() {
   if (appData.appointments.length === 0) {
@@ -1240,7 +1274,7 @@ function backupDataToJSON() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData.appointments, null, 2));
   const a = document.createElement('a');
   a.href = dataStr;
-  a.download = `Backup_BukuTamu_SMANSAKA_${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `Backup_SIMTADIK_SMANSAKA_${new Date().toISOString().split('T')[0]}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -1276,7 +1310,7 @@ function handleJSONFileRestore(event) {
 }
 
 // ==========================================================================
-// MODAL SURAT RESMI BERKOP DINAS (A4 PDF LAYOUT)
+// MODAL SURAT RESMI BERKOP DINAS (PERSIS FOTO 1 & 2)
 // ==========================================================================
 function openOfficialLetterModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode);
@@ -1286,18 +1320,16 @@ function openOfficialLetterModal(ticketCode) {
 
   document.getElementById('docLetterNo').innerText = item.officialLetterNo || generateOfficialLetterNumber();
   const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-  document.getElementById('docLetterDate').innerText = `Kediri, ${new Date().toLocaleDateString('id-ID', dateOptions)}`;
+  
+  // Sesuai Foto 2: "Kandangan, [Tanggal]"
+  document.getElementById('docLetterDate').innerText = `Kandangan, ${new Date().toLocaleDateString('id-ID', dateOptions)}`;
+  document.getElementById('signPlaceDate').innerText = `Kandangan, ${new Date().toLocaleDateString('id-ID', dateOptions)}`;
 
   document.getElementById('docGuestName').innerText = item.fullName;
   document.getElementById('docGuestAgency').innerText = item.agencyName ? `${item.agencyName} (${item.agencyAddress || '-'})` : 'Mitra SMAN 1 Kandangan';
   document.getElementById('docTicketCode').innerText = item.ticketCode;
 
-  let schedDay = '-';
-  if (item.scheduledDate) {
-    const d = new Date(item.scheduledDate);
-    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    schedDay = `${dayNames[d.getDay()]}, ${d.toLocaleDateString('id-ID', dateOptions)}`;
-  }
+  const schedDay = formatIndonesianDate(item.scheduledDate || item.visitDate);
   document.getElementById('docScheduleDateDay').innerText = schedDay;
   document.getElementById('docScheduleTime').innerText = `${item.scheduledStart || '09:00'} s.d. ${item.scheduledEnd || '10:00'} WIB`;
   document.getElementById('docScheduleRoom').innerText = item.scheduledRoom || 'Ruang Pimpinan SMAN 1 Kandangan';
@@ -1305,16 +1337,23 @@ function openOfficialLetterModal(ticketCode) {
   document.getElementById('docPurpose').innerText = item.purpose;
   document.getElementById('docHostNotes').innerText = `"${item.approvalMessage || DEFAULT_APPROVE_TEMPLATE}"`;
 
-  // Kolom Tanda Tangan Adaptif Tata Naskah Dinas
+  // Tanda Tangan & Data Kepala Sekolah (Persis Foto 2)
   const isDelegated = item.hostOfficer && item.hostOfficer !== 'Kepala SMAN 1 Kandangan';
+  const roleTitleEl = document.getElementById('signRoleTitle');
+  const officerNameEl = document.getElementById('signOfficerName');
+  const officerRankEl = document.getElementById('signOfficerRank');
+  const officerNipEl = document.getElementById('signOfficerNip');
+
   if (isDelegated) {
-    document.getElementById('signRoleTitle').innerHTML = `a.n. Kepala SMAN 1 Kandangan<br><strong style="font-size:10.5pt;">${escapeHtml(item.hostOfficer)}</strong>`;
-    document.getElementById('signOfficerName').innerText = 'Tim Pelayanan & Disposisi Terpadu';
-    document.getElementById('signOfficerNip').innerText = 'SMAN 1 Kandangan Kediri';
+    if (roleTitleEl) roleTitleEl.innerHTML = `a.n. Kepala Sekolah<br><strong style="font-size:10pt;">${escapeHtml(item.hostOfficer)}</strong>`;
+    if (officerNameEl) officerNameEl.innerHTML = '<strong>Tim Layanan Disposisi</strong>';
+    if (officerRankEl) officerRankEl.innerText = 'SMAN 1 Kandangan';
+    if (officerNipEl) officerNipEl.innerText = 'Kabupaten Kediri';
   } else {
-    document.getElementById('signRoleTitle').innerText = 'Kepala SMAN 1 Kandangan,';
-    document.getElementById('signOfficerName').innerText = 'Drs. H. M. Syarif, M.Pd.';
-    document.getElementById('signOfficerNip').innerText = 'NIP. 19710412 199802 1 003';
+    if (roleTitleEl) roleTitleEl.innerText = 'Kepala Sekolah,';
+    if (officerNameEl) officerNameEl.innerHTML = '<strong>ISTU HANDAYANI, M.Pd</strong>';
+    if (officerRankEl) officerRankEl.innerText = 'Pembina, IV/a';
+    if (officerNipEl) officerNipEl.innerText = 'NIP 19760801 200501 2 009';
   }
 
   // QR Code Dinamis
@@ -1593,7 +1632,7 @@ function exportDataToCSV() {
   const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const link = document.createElement('a');
   link.href = encodeURI(csvContent);
-  link.download = `Data_BukuTamu_SMANSAKA_${new Date().toISOString().split('T')[0]}.csv`;
+  link.download = `Data_SIMTADIK_SMANSAKA_${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
   showToast('Rekapitulasi CSV berhasil diunduh.', 'success');
 }
@@ -1618,3 +1657,46 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+// Window Binding Global
+window.toggleTheme = toggleTheme;
+window.switchView = switchView;
+window.handleAdminNavClick = handleAdminNavClick;
+window.handleCategoryChange = handleCategoryChange;
+window.goToStep = goToStep;
+window.startCamera = startCamera;
+window.takePhoto = takePhoto;
+window.retakePhoto = retakePhoto;
+window.handleFormSubmission = handleFormSubmission;
+window.closeTicketModal = closeTicketModal;
+window.copyModalTicketCode = copyModalTicketCode;
+window.trackTicketStatus = trackTicketStatus;
+window.switchAdminSubView = switchAdminSubView;
+window.renderAdminQueueTable = renderAdminQueueTable;
+window.openScheduleModal = openScheduleModal;
+window.closeScheduleModal = closeScheduleModal;
+window.handleDelegateHostChange = handleDelegateHostChange;
+window.switchActionTab = switchActionTab;
+window.runLiveCollisionCheck = runLiveCollisionCheck;
+window.executeApprove = executeApprove;
+window.executeDelegate = executeDelegate;
+window.executeReject = executeReject;
+window.executeCheckIn = executeCheckIn;
+window.executeComplete = executeComplete;
+window.deleteAppointment = deleteAppointment;
+window.backupDataToJSON = backupDataToJSON;
+window.triggerRestoreJSON = triggerRestoreJSON;
+window.handleJSONFileRestore = handleJSONFileRestore;
+window.openOfficialLetterModal = openOfficialLetterModal;
+window.closeOfficialLetterModal = closeOfficialLetterModal;
+window.printOfficialLetter = printOfficialLetter;
+window.changeCalendarWeek = changeCalendarWeek;
+window.resetCalendarToCurrentWeek = resetCalendarToCurrentWeek;
+window.openFullPhotoModal = openFullPhotoModal;
+window.closeFullPhotoModal = closeFullPhotoModal;
+window.openAdminLoginModal = openAdminLoginModal;
+window.closeAdminLoginModal = closeAdminLoginModal;
+window.handleAdminLogin = handleAdminLogin;
+window.logoutAdmin = logoutAdmin;
+window.exportDataToCSV = exportDataToCSV;
+window.resetAllData = resetAllData;

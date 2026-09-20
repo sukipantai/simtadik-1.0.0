@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=11.4">
 </head>
 <body>
 
@@ -23,11 +23,11 @@
     <div class="nav-container">
       <div class="brand-wrapper">
         <div class="logo-box">
-          <img src="logo.png" alt="Logo SMAN 1 Kandangan" id="school-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg/500px-Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg.png'">
+          <img src="logo.png" alt="Logo SMAN 1 Kandangan" id="school-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Coat_of_arms_of_East_Java.svg/400px-Coat_of_arms_of_East_Java.svg.png'">
         </div>
         <div class="brand-text">
           <span class="school-name">SMAN 1 KANDANGAN</span>
-          <h1 class="system-title">Buku Tamu & E-Dispensasi Terpadu</h1>
+          <h1 class="system-title">SIMTADIK Terpadu</h1>
         </div>
       </div>
 
@@ -38,7 +38,7 @@
         <button class="nav-tab-btn" id="tabTrackBtn" onclick="switchView('tracking-portal')">
           <i class="fa-solid fa-ticket"></i> <span>Lacak Status</span>
         </button>
-        <button class="nav-tab-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema Gelap/Terang">
+        <button class="nav-tab-btn nav-theme-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema Terang/Gelap">
           <i class="fa-solid fa-sun" id="themeToggleIcon"></i>
         </button>
         <button class="nav-tab-btn nav-admin-btn" id="tabAdminBtn" onclick="handleAdminNavClick()">
@@ -86,7 +86,7 @@
         <div class="glass-card form-wizard-card">
           <form id="guestAppointmentForm" onsubmit="handleFormSubmission(event)">
 
-            <!-- LANGKAH 1: DATA DIRI & TUJUAN -->
+            <!-- LANGKAH 1: KATEGORI, TUJUAN & DATA DIRI -->
             <div id="wizardStep1" class="wizard-step active-step">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-address-card"></i> Langkah 1: Kategori & Pihak yang Dituju</h3>
@@ -144,7 +144,7 @@
               <!-- Input Dinamis: Orang Tua -->
               <div id="dynamicParentFields" class="dynamic-section hidden">
                 <div class="form-group">
-                  <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili <span class="required">*</span></label>
+                  <label for="parentChildName" class="field-label">Nama Siswa yang Diwakili & Kelas <span class="required">*</span></label>
                   <input type="text" id="parentChildName" class="form-control" placeholder="Contoh: Muhammad Farhan (Kelas X-5)">
                 </div>
               </div>
@@ -152,7 +152,7 @@
               <!-- Input Dinamis: Instansi -->
               <div id="dynamicInstansiFields" class="dynamic-section hidden">
                 <div class="form-group">
-                  <label for="agencyName" class="field-label">Nama Instansi / Kantor Resmi <span class="required">*</span></label>
+                  <label for="agencyName" class="field-label">Nama Instansi / Lembaga Resmi <span class="required">*</span></label>
                   <input type="text" id="agencyName" class="form-control" placeholder="Contoh: Cabang Dinas Pendidikan Wilayah Kediri">
                 </div>
                 <div class="form-group">
@@ -164,7 +164,7 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="fullName" class="field-label">Nama Lengkap Pemohon <span class="required">*</span></label>
-                  <input type="text" id="fullName" class="form-control" placeholder="Sesuai tanda pengenal" required>
+                  <input type="text" id="fullName" class="form-control" placeholder="Nama sesuai tanda pengenal" required>
                 </div>
                 <div class="form-group">
                   <label for="whatsappNumber" class="field-label">Nomor WhatsApp Aktif <span class="required">*</span></label>
@@ -205,7 +205,7 @@
               </div>
 
               <div class="form-group">
-                <label for="visitPurpose" class="field-label">Maksud & Keperluan Audiensi <span class="required">*</span></label>
+                <label for="visitPurpose" class="field-label">Maksud & Keperluan Pokok <span class="required">*</span></label>
                 <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan maksud pokok audiensi secara jelas (minimal 10 karakter)..." required></textarea>
               </div>
 
@@ -219,7 +219,7 @@
               </div>
             </div>
 
-            <!-- LANGKAH 3: VERIFIKASI FOTO WEBCAM -->
+            <!-- LANGKAH 3: VERIFIKASI FOTO LIVE -->
             <div id="wizardStep3" class="wizard-step hidden">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-camera"></i> Langkah 3: Verifikasi Foto Wajah Langsung</h3>
@@ -266,7 +266,7 @@
                   <i class="fa-solid fa-arrow-left"></i> Kembali
                 </button>
                 <button type="submit" id="submitFormBtn" class="btn btn-emerald">
-                  <i class="fa-solid fa-paper-plane"></i> Kirim Permohonan
+                  <i class="fa-solid fa-paper-plane"></i> Kirim Permohonan Audiensi
                 </button>
               </div>
             </div>
@@ -283,7 +283,7 @@
           <div class="tracker-header">
             <div class="pill-badge"><i class="fa-solid fa-magnifying-glass"></i> Cek Status Mandiri</div>
             <h2>Pelacakan Tiket & E-Dispensasi</h2>
-            <p>Masukkan kode tiket untuk melihat jadwal dan mengakses E-Dispen atau Surat Undangan.</p>
+            <p>Masukkan kode tiket untuk melihat jadwal dan membuka Kartu E-Dispen atau Surat Undangan.</p>
           </div>
 
           <div class="tracker-input-box">
@@ -292,7 +292,7 @@
               <input type="text" id="trackTicketCodeInput" class="form-control track-input" placeholder="Contoh: SMANSAKA-XXXX-XXXXX" autocomplete="off">
             </div>
             <button type="button" class="btn btn-primary" onclick="trackTicketStatus()">
-              <i class="fa-solid fa-search"></i> Lacak
+              <i class="fa-solid fa-search"></i> Lacak Tiket
             </button>
           </div>
 
@@ -310,19 +310,18 @@
             <h2>Panel Disposisi & Administrasi Sekolah</h2>
           </div>
           <div class="admin-controls">
-            <!-- Hidden input untuk restore JSON -->
             <input type="file" id="jsonFileInput" accept=".json" style="display:none;" onchange="handleJSONFileRestore(event)">
             
-            <button class="btn btn-outline btn-sm" onclick="backupDataToJSON()" title="Cadangkan seluruh data antrean ke file JSON lokal">
+            <button class="btn btn-outline btn-sm" onclick="backupDataToJSON()" title="Simpan arsip ke file JSON lokal">
               <i class="fa-solid fa-download"></i> Cadangkan
             </button>
-            <button class="btn btn-outline btn-sm" onclick="triggerRestoreJSON()" title="Pulihkan data antrean dari file JSON">
+            <button class="btn btn-outline btn-sm" onclick="triggerRestoreJSON()" title="Pulihkan data dari file JSON cadangan">
               <i class="fa-solid fa-upload"></i> Pulihkan
             </button>
-            <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()" title="Unduh rekapitulasi data format CSV / Excel">
+            <button class="btn btn-outline btn-sm" onclick="exportDataToCSV()" title="Unduh rekapitulasi data format CSV">
               <i class="fa-solid fa-file-excel"></i> Ekspor CSV
             </button>
-            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke simulasi demo awal">
+            <button class="btn btn-outline btn-sm" onclick="resetAllData()" title="Kembalikan data ke setelan demo awal">
               <i class="fa-solid fa-rotate-left"></i> Reset Demo
             </button>
             <button class="btn btn-danger btn-sm" onclick="logoutAdmin()">
@@ -382,7 +381,7 @@
             <div class="table-toolbar">
               <div class="table-title-area">
                 <h3>Antrean Permohonan Masuk</h3>
-                <p>Kelola alokasi ruangan, disposisi pejabat, dan jadwal audiensi.</p>
+                <p>Kelola disposisi pimpinan, delegasi Guru BK/Waka, dan terbitkan izin resmi.</p>
               </div>
               <div class="table-filters">
                 <div class="input-with-icon" style="min-width: 220px;">
@@ -416,7 +415,7 @@
                 </tr>
               </thead>
               <tbody id="adminTableBody">
-                <!-- Diisi via script.js -->
+                <!-- Render via script.js -->
               </tbody>
             </table>
           </div>
@@ -438,7 +437,7 @@
             </div>
 
             <div class="calendar-grid-container" id="calendarGridWeek">
-              <!-- Diisi via script.js -->
+              <!-- Render via script.js -->
             </div>
           </div>
         </div>
@@ -458,7 +457,7 @@
             <div class="glass-card analytics-card">
               <div class="analytics-card-header">
                 <h3><i class="fa-solid fa-fire-flame-curved"></i> Heatmap Jam Sibuk Audiensi</h3>
-                <p>Kepadatan waktu pertemuan pada jam kerja operasional sekolah.</p>
+                <p>Kepadatan alokasi waktu audiensi pada jam kerja operasional sekolah.</p>
               </div>
               
               <div class="heatmap-legend">
@@ -586,9 +585,13 @@
 
       <!-- Tab 1: Kepala Sekolah Langsung -->
       <div id="tabContentApprove" class="action-tab-body">
-        <div class="form-group">
+        <!-- Input nomor surat hanya muncul untuk selain siswa -->
+        <div class="form-group" id="letterNoGroupApprove">
           <label class="field-label"><i class="fa-solid fa-hashtag"></i> Nomor Surat Dinas (Otomatis)</label>
           <input type="text" id="schedLetterNoApprove" class="form-control form-control-code">
+        </div>
+        <div id="studentNoticeApprove" class="student-dispen-notice hidden">
+          <i class="fa-solid fa-graduation-cap"></i> <strong>Jalur Siswa:</strong> Nomor surat dinas dinonaktifkan. Sistem otomatis menerbitkan <strong>Kartu E-Dispensasi Kelas Digital</strong>.
         </div>
 
         <div class="form-row">
@@ -618,8 +621,8 @@
         </div>
 
         <div class="form-group">
-          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Catatan Resmi Pimpinan</label>
-          <textarea id="schedApprovalNotes" class="form-control" rows="2"></textarea>
+          <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Catatan Lembar Disposisi Pimpinan</label>
+          <textarea id="schedApprovalNotes" class="form-control" rows="2" placeholder="Tuliskan arahan atau catatan untuk pemohon..."></textarea>
         </div>
 
         <div id="collisionAlertBox" class="collision-alert hidden">
@@ -654,9 +657,13 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <!-- Input nomor surat delegasi disembunyikan jika siswa -->
+        <div class="form-group" id="letterNoGroupDelegate">
           <label class="field-label"><i class="fa-solid fa-hashtag"></i> Nomor Surat Dinas / Disposisi</label>
           <input type="text" id="schedLetterNoDelegate" class="form-control form-control-code">
+        </div>
+        <div id="studentNoticeDelegate" class="student-dispen-notice hidden">
+          <i class="fa-solid fa-graduation-cap"></i> <strong>Jalur Siswa:</strong> Nomor surat dinas dinonaktifkan. Sistem otomatis menerbitkan <strong>Kartu E-Dispensasi Kelas Digital</strong>.
         </div>
 
         <div class="form-row">
@@ -689,8 +696,8 @@
         </div>
 
         <div class="form-group">
-          <label class="field-label"><i class="fa-solid fa-clipboard-list"></i> Catatan Lembar Disposisi</label>
-          <textarea id="schedDelegateNotes" class="form-control" rows="2"></textarea>
+          <label class="field-label"><i class="fa-solid fa-clipboard-list"></i> Catatan Lembar Disposisi Petugas</label>
+          <textarea id="schedDelegateNotes" class="form-control" rows="2" placeholder="Tuliskan arahan tindak lanjut untuk pemohon..."></textarea>
         </div>
 
         <div class="modal-footer-actions">
@@ -730,7 +737,7 @@
     </div>
   </div>
 
-  <!-- ================= MODAL: SURAT DINAS RESMI (KHUSUS KEDINASAN / A4 PDF) ================= -->
+  <!-- ================= MODAL: SURAT DINAS RESMI (A4 LAYOUT SESUAI FOTO) ================= -->
   <div id="officialLetterModal" class="modal-overlay hidden" onclick="closeOfficialLetterModal()">
     <div class="modal-dialog official-letter-dialog" onclick="event.stopPropagation()">
       <div class="letter-action-toolbar no-print">
@@ -748,19 +755,27 @@
       </div>
 
       <div class="official-sheet-a4" id="printableLetterArea">
+        <!-- Kop Surat 2 Logo Sesuai Foto 1 -->
         <div class="letter-kop">
-          <div class="kop-logo">
-            <img src="logo.png" alt="Logo SMAN 1 Kandangan" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg/500px-Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg.png'">
+          <div class="kop-logo-left">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Coat_of_arms_of_East_Java.svg/400px-Coat_of_arms_of_East_Java.svg.png" alt="Lambang Jawa Timur" onerror="this.src='logo.png'">
           </div>
           <div class="kop-text">
             <h4>PEMERINTAH PROVINSI JAWA TIMUR</h4>
             <h4>DINAS PENDIDIKAN</h4>
-            <h3>CABANG DINAS PENDIDIKAN WILAYAH KEDIRI</h3>
-            <h2>SEKOLAH MENENGAH ATAS NEGERI 1 KANDANGAN</h2>
-            <p>Jl. Jombang No. 1, Kasreman, Kandangan, Kec. Kandangan, Kab. Kediri, Jawa Timur 64294</p>
-            <p class="kop-contact">Laman: sman1kandangan.sch.id • Pos-el: info@sman1kandangan.sch.id</p>
+            <h2>SMA NEGERI 1 KANDANGAN KABUPATEN KEDIRI</h2>
+            <p class="kop-address">Jalan Hayam Wuruk No. 96 Telpon 0354-326759</p>
+            <p class="kop-contact">Website : www.sman1kandangan.sch.id email : sma1kandangankediri@gmail.com</p>
+            <div class="kop-city-zip">
+              <span>KEDIRI</span>
+              <span>Kode Pos 64294</span>
+            </div>
+          </div>
+          <div class="kop-logo-right">
+            <img src="logo.png" alt="Logo SMAN 1 Kandangan" onerror="this.style.opacity='0'">
           </div>
         </div>
+        <!-- Garis Ganda Kop Surat -->
         <div class="kop-separator-line"></div>
 
         <div class="letter-meta-row">
@@ -773,7 +788,7 @@
             </table>
           </div>
           <div class="meta-right">
-            <span id="docLetterDate">Kediri, 19 September 2026</span>
+            <span id="docLetterDate">Kandangan, 19 September 2026</span>
           </div>
         </div>
 
@@ -787,7 +802,7 @@
         <div class="letter-body-content">
           <p>Dengan hormat,</p>
           <p style="text-align: justify; text-indent: 2.5rem;">
-            Menindaklanjuti permohonan audiensi melalui Sistem Buku Tamu Digital SMAN 1 Kandangan dengan Kode Registrasi <strong id="docTicketCode">-</strong>, dengan ini pimpinan sekolah mengundang Bapak/Ibu untuk hadir pada pertemuan kedinasan yang dijadwalkan sebagai berikut:
+            Menindaklanjuti permohonan audiensi melalui Sistem Informasi Manajemen Tamu & Dispensasi Akademik (SIMTADIK) SMAN 1 Kandangan dengan Kode Registrasi <strong id="docTicketCode">-</strong>, dengan ini pimpinan sekolah mengundang Bapak/Ibu untuk hadir pada pertemuan kedinasan yang dijadwalkan sebagai berikut:
           </p>
 
           <table class="letter-table-schedule">
@@ -809,6 +824,7 @@
           <p style="margin-top: 0.75rem;">Atas perhatian dan kerja samanya, kami sampaikan terima kasih.</p>
         </div>
 
+        <!-- Tanda Tangan Sesuai Foto 2 (Kepala Sekolah Istu Handayani) -->
         <div class="letter-sign-section">
           <div class="sign-qr-box">
             <div id="letterQrContainer" style="display:flex; justify-content:center; margin-bottom:0.25rem;"></div>
@@ -816,17 +832,21 @@
           </div>
 
           <div class="sign-box">
-            <p id="signRoleTitle">Kepala SMAN 1 Kandangan,</p>
+            <p id="signPlaceDate">Kandangan, 10 September 2026</p>
+            <p id="signRoleTitle">Kepala Sekolah,</p>
             <div class="stamp-and-sign-area">
               <div class="stamp-circle-purple">
-                <span>PEMERINTAH JAWA TIMUR</span>
-                <strong>SMAN 1 KANDANGAN</strong>
-                <small>DINAS PENDIDIKAN</small>
+                <span class="stamp-txt-top">PEMERINTAH PROVINSI JAWA TIMUR</span>
+                <span class="stamp-txt-mid">SMA NEGERI 1 KANDANGAN<br>KEDIRI</span>
+                <span class="stamp-txt-bot">DINAS PENDIDIKAN</span>
               </div>
-              <div class="signature-cursive">M. Syarif</div>
+              <svg class="signature-svg" viewBox="0 0 240 100" width="180" height="75">
+                <path d="M 25 55 C 55 10, 210 15, 175 48 C 150 72, 35 52, 45 42 C 70 20, 220 58, 195 82 C 170 94, 90 52, 70 74 C 58 84, 140 72, 185 52" fill="none" stroke="#1d4ed8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M 18 52 L 215 56" fill="none" stroke="#1d4ed8" stroke-width="2.2" stroke-linecap="round"/>
+              </svg>
             </div>
-            <p class="sign-name" id="signOfficerName"><strong>Istu Handayani, M.Pd.</strong></p>
-            <p class="sign-nip" id="signOfficerNip">NIP. 197608012005012009</p>
+            <p class="sign-name" id="signOfficerName"><strong>ISTU HANDAYANI, M.Pd</strong></p>
+            <p class="sign-nip" id="signOfficerNip">NIP 19760801 200501 2 009</p>
           </div>
         </div>
 
@@ -836,7 +856,7 @@
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Skrip Utama -->
-  <script src="script.js"></script>
+  <!-- Skrip Utama Versi 11.4 -->
+  <script src="script.js?v=11.4"></script>
 </body>
 </html>

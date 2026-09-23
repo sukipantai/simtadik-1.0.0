@@ -1,6 +1,6 @@
 /**
  * SISTEM BUKU TAMU DIGITAL & E-DISPENSASI TERPADU (SIMTADIK)
- * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.6
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.7 (GUEST TIME PREFERENCE)
  */
 
 const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V11';
@@ -194,11 +194,18 @@ function validateStep1() {
 
 function validateStep2() {
   const visitDate = document.getElementById('visitDate').value;
+  const startTime = document.getElementById('preferredStartTime')?.value;
+  const endTime = document.getElementById('preferredEndTime')?.value;
   const purpose = document.getElementById('visitPurpose').value.trim();
+
   if (!visitDate) { showToast('Pilih rencana tanggal kunjungan.', 'error'); return false; }
   const selDate = new Date(visitDate + 'T00:00:00'), today = new Date(); today.setHours(0, 0, 0, 0);
   if (selDate < today) { showToast('Tanggal kunjungan tidak boleh di masa lampau.', 'error'); return false; }
   if (selDate.getDay() === 0) { showToast('Layanan libur hari Minggu. Pilih hari kerja.', 'error'); return false; }
+
+  if (!startTime || !endTime) { showToast('Tentukan rencana jam mulai dan jam selesai audiensi.', 'error'); return false; }
+  if (startTime >= endTime) { showToast('Jam mulai audiensi harus lebih awal daripada jam selesai.', 'error'); return false; }
+
   if (purpose.length < 10) { showToast('Keperluan terlalu singkat (min 10 karakter).', 'error'); return false; }
   return true;
 }
@@ -275,12 +282,17 @@ function handleFormSubmission(e) {
   e.preventDefault();
   if (!appData.capturedBase64) { showToast('Ambil foto wajah terlebih dahulu.', 'error'); return; }
   const ticketCode = generateTicketCode();
+  const preferredStart = document.getElementById('preferredStartTime')?.value || '08:30';
+  const preferredEnd = document.getElementById('preferredEndTime')?.value || '09:30';
+
   const newAppointment = {
     ticketCode, category: document.getElementById('guestCategory').value,
     targetOfficial: document.getElementById('targetOfficial').value,
     fullName: document.getElementById('fullName').value.trim(),
     whatsapp: document.getElementById('whatsappNumber').value.trim(),
     visitDate: document.getElementById('visitDate').value,
+    preferredStart: preferredStart,
+    preferredEnd: preferredEnd,
     urgency: document.getElementById('urgencyLevel').value,
     purpose: document.getElementById('visitPurpose').value.trim(),
     studentNisn: document.getElementById('studentNisn')?.value.trim() || null,
@@ -290,7 +302,8 @@ function handleFormSubmission(e) {
     agencyAddress: document.getElementById('agencyAddress')?.value.trim() || null,
     photoBase64: appData.capturedBase64, status: 'Menunggu Konfirmasi',
     hostOfficer: document.getElementById('targetOfficial').value, officialLetterNo: null,
-    scheduledRoom: null, scheduledDate: null, scheduledStart: null, scheduledEnd: null,
+    scheduledRoom: null, scheduledDate: null,
+    scheduledStart: preferredStart, scheduledEnd: preferredEnd,
     approvalMessage: '', rejectionReason: '', isRescheduled: false, checkInAt: null, createdAt: new Date().toISOString()
   };
 
@@ -298,7 +311,7 @@ function handleFormSubmission(e) {
   document.getElementById('modalTicketCode').innerText = ticketCode;
   document.getElementById('modalSummaryName').innerText = newAppointment.fullName;
   document.getElementById('modalSummaryOfficial').innerText = newAppointment.targetOfficial;
-  document.getElementById('modalSummaryDate').innerText = newAppointment.visitDate;
+  document.getElementById('modalSummaryDate').innerText = `${newAppointment.visitDate} (${preferredStart} - ${preferredEnd} WIB)`;
   document.getElementById('modalSummaryPhone').innerText = newAppointment.whatsapp;
   document.getElementById('ticketSuccessModal')?.classList.remove('hidden');
   document.getElementById('guestAppointmentForm').reset();
@@ -377,6 +390,10 @@ function renderStandardStatusCard(found) {
   } else if (found.status === 'Ditolak') {
     note = `<div style="margin-top:1rem; padding:0.8rem; background:rgba(239,68,68,0.08); border-left:3px solid var(--rose-danger); border-radius:6px;"><span style="font-size:0.75rem; color:#FCA5A5; font-weight:700; display:block;">ALASAN PENOLAKAN:</span><p style="font-size:0.86rem; color:#FCA5A5; font-style:italic; margin:0.25rem 0 0;">"${escapeHtml(found.rejectionReason || DEFAULT_REJECT_TEMPLATE)}"</p></div>`;
   }
+  const jamRencana = found.scheduledRoom 
+    ? `${found.scheduledRoom} (${found.scheduledStart} - ${found.scheduledEnd} WIB)`
+    : `Diusulkan: ${found.preferredStart || '08:30'} - ${found.preferredEnd || '09:30'} WIB (Menunggu Konfirmasi)`;
+
   return `
     <div class="glass-card" style="padding:1.4rem; margin-top:1rem;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;"><span style="font-weight:800; color:var(--cyan-glow); font-size:1.1rem;">${found.ticketCode}</span><span class="badge ${getBadgeClass(found.status)}">${found.status}</span></div>
@@ -390,7 +407,7 @@ function renderStandardStatusCard(found) {
           <p style="font-size:0.8rem; color:var(--text-dim); margin-top:0.2rem;"><i class="fa-solid fa-calendar"></i> Tanggal: ${formatIndonesianDate(found.scheduledDate || found.visitDate)}</p>
         </div>
       </div>
-      ${found.scheduledRoom ? `<p style="font-size:0.85rem; color:var(--emerald-green); margin-top:0.65rem; font-weight:700;"><i class="fa-solid fa-clock"></i> Jadwal: ${found.scheduledRoom} (${found.scheduledStart} -${found.scheduledEnd} WIB)</p>` : ''}
+      <p style="font-size:0.85rem; color:var(--emerald-green); margin-top:0.65rem; font-weight:700;"><i class="fa-solid fa-clock"></i> Waktu: ${jamRencana}</p>
       ${note}
     </div>
   `;
@@ -477,7 +494,11 @@ function renderAdminQueueTable() {
         <td><strong style="color:var(--cyan-glow); font-size:0.84rem;">${item.ticketCode}</strong></td>
         <td><strong style="overflow-wrap:anywhere;">${escapeHtml(item.fullName)}</strong><br><a href="${waUrl}" target="_blank" class="wa-link"><i class="fa-brands fa-whatsapp"></i> ${item.whatsapp}</a></td>
         <td><span style="font-size:0.82rem; font-weight:700;">${item.category}</span><br><small style="color:var(--text-muted);"><i class="fa-solid fa-arrow-right"></i> ${escapeHtml(item.targetOfficial)}</small></td>
-        <td><span style="font-size:0.82rem;">${item.visitDate}</span><br><span class="urgency-pill urgency-${item.urgency.toLowerCase()}">${item.urgency}</span></td>
+        <td>
+          <span style="font-size:0.82rem;">${item.visitDate}</span><br>
+          <small style="color:var(--cyan-glow); font-weight:600;"><i class="fa-regular fa-clock"></i> ${item.preferredStart || '08:30'} - ${item.preferredEnd || '09:30'}</small><br>
+          <span class="urgency-pill urgency-${item.urgency.toLowerCase()}">${item.urgency}</span>
+        </td>
         <td>${scheduleDisplay}</td>
         <td><span class="badge ${getBadgeClass(item.status)}">${item.status}</span>${note}</td>
         <td style="text-align: right;">${btns}</td>
@@ -507,7 +528,7 @@ function openScheduleModal(ticketCode) {
     : `Tiket: ${item.ticketCode}`;
 
   document.getElementById('schedModalName').innerText = item.fullName;
-  document.getElementById('schedModalCategoryMeta').innerText = `${item.category} • Tujuan: ${item.targetOfficial}`;
+  document.getElementById('schedModalCategoryMeta').innerHTML = `${item.category} • Tujuan: ${item.targetOfficial}<br><span style="color:var(--cyan-glow); font-size:0.75rem;"><i class="fa-regular fa-clock"></i> Usulan Pemohon: ${item.preferredStart || '08:30'} - ${item.preferredEnd || '09:30'} WIB</span>`;
   document.getElementById('schedModalPurposeInput').value = item.purpose;
 
   const modalPhoto = document.getElementById('schedModalPhoto');
@@ -522,9 +543,15 @@ function openScheduleModal(ticketCode) {
   document.getElementById('schedLetterNoDelegate').value = isStudent ? '' : autoLetterNo;
   document.getElementById('schedRoom').value = item.scheduledRoom || 'Ruang Kepala Sekolah';
   document.getElementById('schedDate').value = item.scheduledDate || item.visitDate;
-  document.getElementById('schedStartTime').value = item.scheduledStart || '09:00';
-  document.getElementById('schedEndTime').value = item.scheduledEnd || '10:00';
+  
+  // OTOMATIS GUNAKAN JAM PILIHAN TAMU
+  document.getElementById('schedStartTime').value = item.scheduledStart || item.preferredStart || '08:30';
+  document.getElementById('schedEndTime').value = item.scheduledEnd || item.preferredEnd || '09:30';
+  
   document.getElementById('schedDelegateDate').value = item.scheduledDate || item.visitDate;
+  document.getElementById('schedDelegateStartTime').value = item.scheduledStart || item.preferredStart || '08:30';
+  document.getElementById('schedDelegateEndTime').value = item.scheduledEnd || item.preferredEnd || '09:30';
+
   if (item.targetOfficial && item.targetOfficial !== 'Kepala SMAN 1 Kandangan') document.getElementById('schedDelegateHost').value = item.targetOfficial;
   handleDelegateHostChange();
 
@@ -609,8 +636,10 @@ function executeDelegate() {
   item.officialLetterNo = isStudent ? null : (document.getElementById('schedLetterNoDelegate').value.trim() || generateOfficialLetterNumber());
   item.approvalMessage = document.getElementById('schedDelegateNotes').value.trim() || `Disetujui bersama ${targetHost}.`;
   item.status = 'Disetujui'; item.scheduledRoom = document.getElementById('schedDelegateRoom').value;
-  item.scheduledDate = document.getElementById('schedDelegateDate').value; item.scheduledStart = document.getElementById('schedDelegateStartTime').value;
-  item.scheduledEnd = document.getElementById('schedDelegateEndTime').value; item.rejectionReason = ''; if (wasApproved) item.isRescheduled = true;
+  item.scheduledDate = document.getElementById('schedDelegateDate').value; 
+  item.scheduledStart = document.getElementById('schedDelegateStartTime').value;
+  item.scheduledEnd = document.getElementById('schedDelegateEndTime').value; 
+  item.rejectionReason = ''; if (wasApproved) item.isRescheduled = true;
 
   saveDatabase(); renderAdminDashboard(); closeScheduleModal();
   showToast(wasApproved ? `Jadwal delegasi [${item.ticketCode}] diatur ulang!` : `Audiensi didelegasikan!`, 'success');
@@ -841,7 +870,12 @@ function showToast(m, type = 'info') {
 
 function escapeHtml(str) {
   if (!str) return '';
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 window.toggleTheme = toggleTheme; window.switchView = switchView; window.handleAdminNavClick = handleAdminNavClick;

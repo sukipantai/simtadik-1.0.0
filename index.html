@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=11.6">
+  <link rel="stylesheet" href="style.css?v=11.7">
 </head>
 <body>
 
@@ -63,6 +63,7 @@
       <div class="wizard-container">
         <div class="glass-card form-wizard-card">
           <form id="guestAppointmentForm" onsubmit="handleFormSubmission(event)">
+            
             <!-- LANGKAH 1 -->
             <div id="wizardStep1" class="wizard-step active-step">
               <div class="step-inner-header">
@@ -155,7 +156,7 @@
             <div id="wizardStep2" class="wizard-step hidden">
               <div class="step-inner-header">
                 <h3><i class="fa-solid fa-calendar-day"></i> Langkah 2: Rencana Waktu & Keperluan</h3>
-                <p>Tentukan rencana tanggal kedatangan dan uraikan pokok pembicaraan.</p>
+                <p>Tentukan rencana tanggal, preferensi jam kedatangan, dan uraikan pokok pembicaraan.</p>
               </div>
 
               <div class="form-row">
@@ -176,9 +177,21 @@
                 </div>
               </div>
 
+              <!-- PREFERENSI JAM OLEH TAMU / SISWA -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="preferredStartTime" class="field-label">Rencana Jam Mulai (WIB) <span class="required">*</span></label>
+                  <input type="time" id="preferredStartTime" class="form-control" required value="08:30">
+                </div>
+                <div class="form-group">
+                  <label for="preferredEndTime" class="field-label">Rencana Jam Selesai (WIB) <span class="required">*</span></label>
+                  <input type="time" id="preferredEndTime" class="form-control" required value="09:30">
+                </div>
+              </div>
+
               <div class="form-group">
                 <label for="visitPurpose" class="field-label">Maksud & Keperluan Pokok <span class="required">*</span></label>
-                <textarea id="visitPurpose" class="form-control" rows="4" placeholder="Uraikan maksud audiensi secara jelas (minimal 10 karakter)..." required></textarea>
+                <textarea id="visitPurpose" class="form-control" rows="3" placeholder="Uraikan maksud audiensi secara jelas (minimal 10 karakter)..." required></textarea>
               </div>
 
               <div class="wizard-nav-actions between">
@@ -301,7 +314,7 @@
               </div>
             </div>
             <table class="custom-table" id="adminAppointmentsTable">
-              <thead><tr><th style="width: 14%;">Kode Tiket</th><th style="width: 18%;">Pemohon & Kontak</th><th style="width: 14%;">Kategori & Tujuan</th><th style="width: 12%;">Tgl Diminta</th><th style="width: 17%;">Alokasi & Ruangan</th><th style="width: 15%;">Status</th><th style="width: 10%; text-align: right;">Aksi</th></tr></thead>
+              <thead><tr><th style="width: 14%;">Kode Tiket</th><th style="width: 18%;">Pemohon & Kontak</th><th style="width: 14%;">Kategori & Tujuan</th><th style="width: 12%;">Tgl & Jam Usulan</th><th style="width: 17%;">Alokasi & Ruangan</th><th style="width: 15%;">Status</th><th style="width: 10%; text-align: right;">Aksi</th></tr></thead>
               <tbody id="adminTableBody"></tbody>
             </table>
           </div>
@@ -361,7 +374,7 @@
       <div class="ticket-summary-box">
         <div class="summary-item"><span>Pemohon:</span> <strong id="modalSummaryName">-</strong></div>
         <div class="summary-item"><span>Tujuan:</span> <strong id="modalSummaryOfficial">-</strong></div>
-        <div class="summary-item"><span>Rencana Tanggal:</span> <strong id="modalSummaryDate">-</strong></div>
+        <div class="summary-item"><span>Rencana Waktu:</span> <strong id="modalSummaryDate">-</strong></div>
         <div class="summary-item"><span>WhatsApp Terdaftar:</span> <strong id="modalSummaryPhone">-</strong></div>
       </div>
       <div class="modal-actions">
@@ -488,8 +501,8 @@
           <div class="form-group"><label class="field-label">Tanggal Pelaksanaan <span class="required">*</span></label><input type="date" id="schedDelegateDate" class="form-control"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="field-label">Jam Mulai (WIB) <span class="required">*</span></label><input type="time" id="schedDelegateStartTime" class="form-control" value="08:20"></div>
-          <div class="form-group"><label class="field-label">Jam Selesai (WIB) <span class="required">*</span></label><input type="time" id="schedDelegateEndTime" class="form-control" value="09:40"></div>
+          <div class="form-group"><label class="field-label">Jam Mulai (WIB) <span class="required">*</span></label><input type="time" id="schedDelegateStartTime" class="form-control" value="08:30"></div>
+          <div class="form-group"><label class="field-label">Jam Selesai (WIB) <span class="required">*</span></label><input type="time" id="schedDelegateEndTime" class="form-control" value="09:30"></div>
         </div>
         <div class="form-group">
           <label class="field-label"><i class="fa-solid fa-clipboard-list"></i> Catatan Lembar Disposisi Petugas</label>
@@ -635,6 +648,6 @@
   </div>
 
   <div id="toastContainer" class="toast-container"></div>
-  <script src="script.js?v=11.6"></script>
+  <script src="script.js?v=11.7"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /**
  * SISTEM BUKU TAMU DIGITAL & E-DISPENSASI TERPADU (SIMTADIK)
- * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.8 (FULL INTEGRATED)
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.9 (FIX: DELEGASI DITOLAK KADALUARSA)
  */
 
 const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V11';
@@ -374,16 +374,16 @@ function trackTicketStatus() {
             <i class="fa-solid fa-circle-check"></i> Setujui & Temui ${escapeHtml(found.hostOfficer)}
           </button>
           <button type="button" class="btn btn-outline btn-block" style="color:var(--rose-danger); border-color:var(--rose-danger);" onclick="showRejectDelegationInput()">
-            <i class="fa-solid fa-circle-xmark"></i> Tolak Tawaran & Ajukan Alasan
+            <i class="fa-solid fa-circle-xmark"></i> Tolak Tawaran & Batalkan Audiensi
           </button>
         </div>
 
         <div id="delegationRejectArea" class="hidden" style="margin-top:1rem; padding-top:0.85rem; border-top:1px dashed var(--border-subtle);">
-          <label class="field-label" style="color:#FCA5A5;">Uraikan Alasan Penolakan / Permintaan Jadwal Ulang:</label>
-          <textarea id="guestDeclineReasonInput" class="form-control" rows="3" placeholder="Contoh: Kami memerlukan persetujuan langsung dari Ibu Kepala Sekolah, mohon dijadwalkan ulang pada hari lain..."></textarea>
+          <label class="field-label" style="color:#FCA5A5;">Uraikan Alasan Pembatalan / Penolakan Delegasi:</label>
+          <textarea id="guestDeclineReasonInput" class="form-control" rows="3" placeholder="Contoh: Kami memerlukan persetujuan langsung dari Ibu Kepala Sekolah, mohon dibatalkan atau dijadwalkan ulang pada hari lain..."></textarea>
           <div style="display:flex; gap:0.5rem; margin-top:0.65rem;">
-            <button type="button" class="btn btn-danger btn-sm" onclick="submitRejectDelegation('${found.ticketCode}')">Kirim Penolakan</button>
-            <button type="button" class="btn btn-outline btn-sm" onclick="cancelRejectDelegation()">Batal</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="submitRejectDelegation('${found.ticketCode}')">Kirim & Batalkan Pertemuan</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="cancelRejectDelegation()">Kembali</button>
           </div>
         </div>
       </div>
@@ -392,7 +392,35 @@ function trackTicketStatus() {
     return;
   }
 
-  // 2. KATEGORI SISWA: TAMPILKAN KARTU E-DISPENSASI
+  // 2. KONDISI TIKET KADALUARSA / DELEGASI DITOLAK
+  if (found.status === 'Delegasi Ditolak') {
+    resultBox.innerHTML = `
+      <div class="glass-card" style="padding:1.4rem; margin-top:1rem; border:1px solid var(--rose-danger);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <span style="font-weight:800; color:var(--rose-danger);">${found.ticketCode}</span>
+          <span class="badge badge-rejected"><i class="fa-solid fa-ban"></i> Batal & Kadaluarsa</span>
+        </div>
+        <div style="background:rgba(239, 68, 68, 0.08); border-left:4px solid var(--rose-danger); padding:0.85rem; border-radius:8px;">
+          <strong style="color:#FCA5A5; font-size:0.88rem; display:block;">
+            <i class="fa-solid fa-circle-xmark"></i> Audiensi Dibatalkan oleh Pemohon
+          </strong>
+          <p style="font-size:0.84rem; color:#fff; margin-top:0.35rem; line-height:1.45;">
+            Anda telah menolak tawaran pengalihan audiensi. Sesuai prosedur birokrasi, tiket registrasi ini dinyatakan <strong>Batal & Kadaluarsa</strong>.
+          </p>
+          <p style="font-size:0.8rem; color:#FCA5A5; margin-top:0.4rem; font-style:italic;">
+            Alasan penolakan Anda: "${escapeHtml(found.guestDeclineReason || '-')}"
+          </p>
+        </div>
+        <p style="font-size:0.78rem; color:var(--text-dim); margin-top:0.85rem; font-style:italic;">
+          *Apabila masih berkepentingan bertemu pimpinan, silakan ajukan permohonan baru pada hari/tanggal kerja berikutnya.
+        </p>
+      </div>
+    `;
+    resultBox.classList.remove('hidden');
+    return;
+  }
+
+  // 3. KATEGORI SISWA: TAMPILKAN KARTU E-DISPENSASI
   if (found.category === 'Siswa') {
     if (found.status === 'Disetujui' || found.status === 'Checked-In') {
       const dispen = hitungDispensasiPelajaran(found.scheduledStart, found.scheduledEnd);
@@ -438,8 +466,6 @@ function renderStandardStatusCard(found) {
   let note = '';
   if (found.status === 'Disetujui' || found.status === 'Checked-In') {
     note = `<div style="margin-top:1rem; padding:0.8rem; background:rgba(56,189,248,0.08); border-left:3px solid var(--cyan-glow); border-radius:6px;"><span style="font-size:0.75rem; color:var(--cyan-glow); font-weight:700; display:block;">CATATAN RESMI:</span><p style="font-size:0.86rem; color:#fff; font-style:italic; margin:0.25rem 0 0;">"${escapeHtml(found.approvalMessage || DEFAULT_APPROVE_TEMPLATE)}"</p></div>`;
-  } else if (found.status === 'Delegasi Ditolak') {
-    note = `<div style="margin-top:1rem; padding:0.8rem; background:rgba(239,68,68,0.08); border-left:3px solid var(--rose-danger); border-radius:6px;"><span style="font-size:0.75rem; color:#FCA5A5; font-weight:700; display:block;">PENOLAKAN DELEGASI OLEH PEMOHON:</span><p style="font-size:0.86rem; color:#FCA5A5; font-style:italic; margin:0.25rem 0 0;">"${escapeHtml(found.guestDeclineReason || 'Pemohon menolak tawaran delegasi.')}"</p></div>`;
   } else if (found.status === 'Ditolak') {
     note = `<div style="margin-top:1rem; padding:0.8rem; background:rgba(239,68,68,0.08); border-left:3px solid var(--rose-danger); border-radius:6px;"><span style="font-size:0.75rem; color:#FCA5A5; font-weight:700; display:block;">ALASAN PENOLAKAN:</span><p style="font-size:0.86rem; color:#FCA5A5; font-style:italic; margin:0.25rem 0 0;">"${escapeHtml(found.rejectionReason || DEFAULT_REJECT_TEMPLATE)}"</p></div>`;
   }
@@ -504,7 +530,13 @@ function renderAdminQueueTable() {
   const q = document.getElementById('adminSearchInput')?.value.toLowerCase().trim() || '';
 
   let list = appData.appointments;
-  if (filter !== 'ALL') list = list.filter(item => item.status === filter);
+  if (filter !== 'ALL') {
+    if (filter === 'Ditolak') {
+      list = list.filter(item => item.status === 'Ditolak' || item.status === 'Delegasi Ditolak');
+    } else {
+      list = list.filter(item => item.status === filter);
+    }
+  }
   if (q) list = list.filter(i => i.fullName.toLowerCase().includes(q) || i.ticketCode.toLowerCase().includes(q) || (i.agencyName && i.agencyName.toLowerCase().includes(q)));
 
   if (list.length === 0) {
@@ -516,24 +548,10 @@ function renderAdminQueueTable() {
     const cleanPhone = formatToWhatsApp(item.whatsapp);
     let waMsg = "";
     
-    // FORMAT WHATSAPP: 1. Delegasi, 2. Reschedule, 3. Konfirmasi Standar
     if (item.status === 'Tawaran Delegasi') {
-      waMsg = `*PEMBERITAHUAN PENDELEGASIAN AUDIENSI RESMI*
-Yth. Bapak/Ibu ${item.fullName},
-
-Kami dari Sekretariat Tata Usaha SMAN 1 Kandangan menyampaikan permohonan maaf yang sebesar-besarnya. Sehubungan adanya agenda kedinasan mendesak yang tidak dapat ditinggalkan, pejabat yang Anda tuju (${item.targetOfficial}) berhalangan hadir pada waktu yang direncanakan.
-
-Sebagai tindak lanjut, audiensi Anda dialihkan kepada:
-👤 *Pejabat Penerima:* ${item.hostOfficer}
-📅 *Waktu:* ${item.scheduledDate} (${item.scheduledStart} - ${item.scheduledEnd} WIB)
-📍 *Ruangan:* ${item.scheduledRoom}
-
-Mohon kesediaan Bapak/Ibu untuk mengonfirmasi persetujuan (Menerima atau Menolak Tawaran Delegasi) melalui tautan resmi berikut:
-${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}
-
-Atas pengertian dan kerja sama Bapak/Ibu, kami sampaikan terima kasih.`;
+      waMsg = `*PEMBERITAHUAN PENDELEGASIAN AUDIENSI RESMI*\nYth. Bapak/Ibu ${item.fullName},\n\nKami dari Sekretariat Tata Usaha SMAN 1 Kandangan menyampaikan permohonan maaf. Pejabat yang Anda tuju (${item.targetOfficial}) berhalangan hadir pada waktu yang direncanakan.\n\nAudiensi Anda dialihkan kepada:\n👤 *Pejabat Penerima:* ${item.hostOfficer}\n📅 *Waktu:* ${item.scheduledDate} (${item.scheduledStart} - ${item.scheduledEnd} WIB)\n📍 *Ruangan:* ${item.scheduledRoom}\n\nMohon konfirmasi persetujuan melalui tautan resmi:\n${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}\n\nTerima kasih.`;
     } else if (item.isRescheduled) {
-      waMsg = `*PEMBERITAHUAN PENJADWALAN ULANG (RESCHEDULE)*\nYth. Bapak/Ibu ${item.fullName},\n\nKami dari Sekretariat Pimpinan SMAN 1 Kandangan memohon maaf yang sebesar-besarnya. Sehubungan agenda dinas mendadak yang tidak dapat ditinggalkan, audiensi [Tiket: ${item.ticketCode}] telah diatur ulang menjadi:\n\n📅 *Tanggal:* ${item.scheduledDate}\n⏰ *Waktu:* ${item.scheduledStart} - ${item.scheduledEnd} WIB\n📍 *Tempat:* ${item.scheduledRoom}\n📝 *Catatan:* "${item.approvalMessage}"\n\nCek berkas resmi: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}\n\nTerima kasih atas kerja samanya.`;
+      waMsg = `*PEMBERITAHUAN PENJADWALAN ULANG (RESCHEDULE)*\nYth. Bapak/Ibu ${item.fullName},\n\nKami dari Sekretariat Pimpinan SMAN 1 Kandangan memohon maaf. Audiensi [Tiket: ${item.ticketCode}] diatur ulang menjadi:\n\n📅 *Tanggal:* ${item.scheduledDate}\n⏰ *Waktu:* ${item.scheduledStart} - ${item.scheduledEnd} WIB\n📍 *Tempat:* ${item.scheduledRoom}\n📝 *Catatan:* "${item.approvalMessage}"\n\nCek berkas: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
     } else {
       waMsg = `Halo Bapak/Ibu ${item.fullName}, permohonan audiensi Anda di SMAN 1 Kandangan [Tiket: ${item.ticketCode}] status: ${item.status}. Cek status: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
     }
@@ -543,9 +561,10 @@ Atas pengertian dan kerja sama Bapak/Ibu, kami sampaikan terima kasih.`;
       ? `<span class="table-host-tag">${escapeHtml(item.hostOfficer || item.targetOfficial)}</span><br><strong style="font-size:0.82rem;">${item.scheduledRoom}</strong><br><small style="color:var(--cyan-glow);">${item.scheduledDate} (${item.scheduledStart} - ${item.scheduledEnd} WIB)</small>` 
       : '<span style="color:var(--text-dim);">-</span>';
 
+    // LABEL & CATATAN: KADALUARSA JIKA DELEGASI DITOLAK
     let note = '';
     if (item.status === 'Delegasi Ditolak') {
-      note = `<div class="table-note-pill table-note-reject"><i class="fa-solid fa-hand"></i> <strong>Tamu Menolak:</strong> "${escapeHtml(item.guestDeclineReason || 'Ingin reschedule pimpinan')}"</div>`;
+      note = `<div class="table-note-pill table-note-reject"><i class="fa-solid fa-ban"></i> <strong>BATAL / KADALUARSA:</strong> Tamu menolak delegasi. Alasan: "${escapeHtml(item.guestDeclineReason || '-')}"</div>`;
     } else if (item.status === 'Tawaran Delegasi') {
       note = `<div class="table-note-pill"><i class="fa-solid fa-clock-rotate-left"></i> Menunggu konfirmasi delegasi ke ${escapeHtml(item.hostOfficer)}</div>`;
     } else if (item.status === 'Disetujui' || item.status === 'Checked-In') {
@@ -554,13 +573,14 @@ Atas pengertian dan kerja sama Bapak/Ibu, kami sampaikan terima kasih.`;
       note = `<div class="table-note-pill table-note-reject"><i class="fa-solid fa-circle-exclamation"></i> "${escapeHtml(item.rejectionReason || DEFAULT_REJECT_TEMPLATE)}"</div>`;
     }
 
+    // PENGUNCIAN TOMBOL: JIKA DELEGASI DITOLAK, TIDAK BOLEH BISA DIEDIT LAGI (STATUS TERMINAL/BATAL)
     let btns = '';
-    if (item.status === 'Menunggu Konfirmasi' || item.status === 'Delegasi Ditolak') {
+    if (item.status === 'Menunggu Konfirmasi') {
       btns = `<button class="btn btn-primary btn-sm" onclick="openScheduleModal('${item.ticketCode}')" title="Disposisi Pimpinan"><i class="fa-solid fa-calendar-check"></i></button>`;
     } else if (item.status === 'Tawaran Delegasi') {
       btns = `
         <button class="btn btn-outline btn-sm" onclick="openScheduleModal('${item.ticketCode}')" title="Atur Ulang / Batal Delegasi" style="color:var(--amber-warning); border-color:var(--amber-warning);"><i class="fa-solid fa-pen-to-square"></i></button>
-        <a href="${waUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#22c55e;" title="Kirim Surat Penawaran Delegasi via WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+        <a href="${waUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#22c55e;" title="Kirim Notifikasi WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
       `;
     } else if (item.status === 'Disetujui') {
       btns = `
@@ -572,8 +592,9 @@ Atas pengertian dan kerja sama Bapak/Ibu, kami sampaikan terima kasih.`;
     } else if (item.status === 'Checked-In') {
       btns = `<button class="btn btn-outline btn-sm" onclick="executeComplete('${item.ticketCode}')" title="Selesai"><i class="fa-solid fa-flag-checkered"></i></button>`;
     }
+    // CATATAN: Untuk 'Delegasi Ditolak' atau 'Ditolak', btns dibiarkan kosong sehingga admin TIDAK bisa mengeditnya lagi.
 
-    btns += `<button class="btn btn-danger btn-sm" onclick="deleteAppointment('${item.ticketCode}')" title="Hapus" style="margin-left:0.25rem;"><i class="fa-solid fa-trash-can"></i></button>`;
+    btns += `<button class="btn btn-danger btn-sm" onclick="deleteAppointment('${item.ticketCode}')" title="Hapus Arsip" style="margin-left:0.25rem;"><i class="fa-solid fa-trash-can"></i></button>`;
 
     return `
       <tr>
@@ -608,6 +629,13 @@ function getBadgeClass(status) {
 
 function openScheduleModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode); if (!item) return;
+
+  // Proteksi keamanan: Tiket yang sudah batal/kadaluarsa tidak boleh dibuka modal jadwalnya
+  if (item.status === 'Delegasi Ditolak' || item.status === 'Ditolak' || item.status === 'Selesai') {
+    showToast('Tiket ini sudah berstatus batal/selesai dan tidak dapat diubah lagi.', 'error');
+    return;
+  }
+
   appData.selectedTicketForAction = ticketCode;
   const isReschedule = (item.status === 'Disetujui' || item.status === 'Checked-In');
 
@@ -764,11 +792,12 @@ function submitRejectDelegation(ticketCode) {
   if (!item) return;
   if (!reason || reason.length < 5) { showToast('Uraikan alasan penolakan minimal 5 karakter.', 'error'); return; }
 
+  // Kunci tiket menjadi status terminal: Delegasi Ditolak / Batal / Kadaluarsa
   item.status = 'Delegasi Ditolak';
   item.guestDeclineReason = reason;
   item.rejectionReason = `Tamu menolak audiensi delegasi. Alasan: ${reason}`;
   saveDatabase(); renderAdminDashboard();
-  showToast('Penolakan tawaran delegasi telah dikirim ke pihak Tata Usaha.', 'info');
+  showToast('Penolakan telah terkirim. Tiket audiensi resmi dibatalkan (kadaluarsa).', 'info');
   trackTicketStatus();
 }
 
@@ -790,7 +819,7 @@ function executeComplete(code) {
 
 function deleteAppointment(code) {
   const item = appData.appointments.find(a => a.ticketCode === code); if (!item) return;
-  if (confirm(`Hapus antrean tiket [${code}] atas nama ${item.fullName}?`)) {
+  if (confirm(`Hapus arsip antrean tiket [${code}] atas nama ${item.fullName}?`)) {
     appData.appointments = appData.appointments.filter(a => a.ticketCode !== code);
     saveDatabase(); renderAdminDashboard(); showToast(`Tiket [${code}] dihapus.`, 'info');
   }
@@ -923,7 +952,7 @@ function renderAnalyticsAndHeatmap() {
     <div class="status-pill-card"><span class="status-pill-val" style="color:var(--amber-warning);">${p}</span><span class="status-pill-lbl">Menunggu Disposisi</span></div>
     <div class="status-pill-card"><span class="status-pill-val" style="color:var(--emerald-green);">${ap}</span><span class="status-pill-lbl">Disetujui</span></div>
     <div class="status-pill-card"><span class="status-pill-val" style="color:var(--cyan-glow);">${ci}</span><span class="status-pill-lbl">Kehadiran Lobi</span></div>
-    <div class="status-pill-card"><span class="status-pill-val" style="color:var(--rose-danger);">${rj}</span><span class="status-pill-lbl">Ditolak</span></div>
+    <div class="status-pill-card"><span class="status-pill-val" style="color:var(--rose-danger);">${rj}</span><span class="status-pill-lbl">Ditolak / Batal</span></div>
   `;
   renderHeatmapMatrix();
 }

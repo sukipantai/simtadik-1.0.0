@@ -1,6 +1,6 @@
 /**
  * SISTEM BUKU TAMU DIGITAL & E-DISPENSASI TERPADU (SIMTADIK)
- * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 11.9 (FIX: DELEGASI DITOLAK KADALUARSA)
+ * SMAN 1 KANDANGAN KEDIRI - ENGINE VERSION 12.0 (AUTO-EXPIRE & 3-STRIKE BAN SYSTEM)
  */
 
 const STORAGE_KEY = 'SMAN1_KANDANGAN_APPOINTMENTS_V11';
@@ -67,7 +67,7 @@ function generateOfficialLetterNumber(index) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initTheme(); loadDatabase(); initializeVisitDateInput(); updateAuthUIState();
+  initTheme(); loadDatabase(); checkAndExpireAppointments(); initializeVisitDateInput(); updateAuthUIState();
   const ticketParam = new URLSearchParams(window.location.search).get('ticket');
   if (ticketParam) {
     switchView('tracking-portal');
@@ -96,6 +96,46 @@ function initializeVisitDateInput() {
   if (visitInput) { visitInput.min = today; visitInput.value = today; }
 }
 
+// ==========================================================================
+// AUTO-EXPIRE (H+1 NO-SHOW) & SISTEM SANKSI BLOKIR (3-STRIKE BAN)
+// ==========================================================================
+function checkAndExpireAppointments() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let changed = false;
+
+  appData.appointments.forEach(item => {
+    // Berlaku untuk yang belum pernah check-in
+    if (item.status === 'Disetujui' || item.status === 'Menunggu Konfirmasi' || item.status === 'Tawaran Delegasi') {
+      const targetDateStr = item.scheduledDate || item.visitDate;
+      if (targetDateStr) {
+        const appointmentDate = new Date(targetDateStr + 'T00:00:00');
+        // Jika tanggal janji temu sudah berlalu sebelum hari ini (H+1 penuh)
+        if (appointmentDate < today && !item.checkInAt) {
+          item.status = 'Kadaluarsa';
+          item.expiredAt = new Date().toISOString();
+          item.rejectionReason = "Tiket hangus/kadaluarsa otomatis karena pemohon tidak hadir (No-Show) melakukan check-in pada hari yang ditentukan.";
+          changed = true;
+        }
+      }
+    }
+  });
+
+  if (changed) {
+    saveDatabase();
+  }
+}
+
+function getGuestNoShowCount(whatsapp) {
+  if (!whatsapp) return 0;
+  const clean = formatToWhatsApp(whatsapp);
+  return appData.appointments.filter(a => formatToWhatsApp(a.whatsapp) === clean && a.status === 'Kadaluarsa').length;
+}
+
+function isGuestBanned(whatsapp) {
+  return getGuestNoShowCount(whatsapp) >= 3;
+}
+
 function switchView(viewId) {
   ['guest-portal', 'tracking-portal', 'admin-portal'].forEach(v => document.getElementById(`${v}-view`)?.classList.add('hidden'));
   document.getElementById('tabGuestBtn')?.classList.remove('active');
@@ -108,10 +148,12 @@ function switchView(viewId) {
     document.getElementById('tabGuestBtn')?.classList.add('active');
     if (appData.currentWizardStep === 3 && !appData.capturedBase64) startCamera();
   } else if (viewId === 'tracking-portal') {
+    checkAndExpireAppointments();
     document.getElementById('tracking-portal-view')?.classList.remove('hidden');
     document.getElementById('tabTrackBtn')?.classList.add('active');
     stopCamera();
   } else if (viewId === 'admin-portal') {
+    checkAndExpireAppointments();
     document.getElementById('admin-portal-view')?.classList.remove('hidden');
     document.getElementById('tabAdminBtn')?.classList.add('active');
     stopCamera(); renderAdminDashboard();
@@ -173,6 +215,13 @@ function validateStep1() {
   const wa = document.getElementById('whatsappNumber').value.trim();
 
   if (!cat || !target) { showToast('Lengkapi kategori dan pejabat tujuan.', 'error'); return false; }
+  
+  // VALIDASI BLOKIR SANKSI (3 KALI NO-SHOW)
+  if (isGuestBanned(wa)) {
+    showToast('Nomor WhatsApp Anda DIBLOKIR oleh sistem karena 3x tidak hadir (No-Show). Hubungi pos resepsionis sekolah.', 'error');
+    return false;
+  }
+
   if (cat === 'Siswa') {
     const nisn = document.getElementById('studentNisn').value.trim();
     if (!nisn || !/^\d{10}$/.test(nisn)) { showToast('Cantumkan 10 digit NISN yang valid.', 'error'); return false; }
@@ -278,6 +327,14 @@ function hitungDispensasiPelajaran(startStr, endStr) {
 
 function handleFormSubmission(e) {
   e.preventDefault();
+  const wa = document.getElementById('whatsappNumber').value.trim();
+
+  // Proteksi Blokir
+  if (isGuestBanned(wa)) {
+    showToast('Pendaftaran ditolak. Nomor Anda telah diblokir permanen karena 3x No-Show.', 'error');
+    return;
+  }
+
   if (!appData.capturedBase64) { showToast('Ambil foto wajah terlebih dahulu.', 'error'); return; }
   const ticketCode = generateTicketCode();
   const preferredStart = document.getElementById('preferredStartTime')?.value || '08:30';
@@ -287,7 +344,7 @@ function handleFormSubmission(e) {
     ticketCode, category: document.getElementById('guestCategory').value,
     targetOfficial: document.getElementById('targetOfficial').value,
     fullName: document.getElementById('fullName').value.trim(),
-    whatsapp: document.getElementById('whatsappNumber').value.trim(),
+    whatsapp: wa,
     visitDate: document.getElementById('visitDate').value,
     preferredStart: preferredStart,
     preferredEnd: preferredEnd,
@@ -330,6 +387,7 @@ function formatToWhatsApp(phone) {
 }
 
 function trackTicketStatus() {
+  checkAndExpireAppointments();
   const code = document.getElementById('trackTicketCodeInput').value.trim().toUpperCase();
   const resultBox = document.getElementById('trackerResultBox');
   if (appData.liveClockTimer) { clearInterval(appData.liveClockTimer); appData.liveClockTimer = null; }
@@ -341,7 +399,38 @@ function trackTicketStatus() {
     resultBox.classList.remove('hidden'); return;
   }
 
-  // 1. KONDISI KHUSUS: TAWARAN DELEGASI (Tamu berhak memilih menerima/menolak)
+  // KONDISI KADALUARSA (H+1 NO-SHOW)
+  if (found.status === 'Kadaluarsa') {
+    const strikes = getGuestNoShowCount(found.whatsapp);
+    const banned = strikes >= 3;
+    resultBox.innerHTML = `
+      <div class="glass-card" style="padding:1.4rem; margin-top:1rem; border:1px solid var(--rose-danger);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <span style="font-weight:800; color:var(--rose-danger);">${found.ticketCode}</span>
+          <span class="badge badge-rejected"><i class="fa-solid fa-hourglass-end"></i> HANGUS / KADALUARSA</span>
+        </div>
+        <div style="background:rgba(239, 68, 68, 0.08); border-left:4px solid var(--rose-danger); padding:0.85rem; border-radius:8px;">
+          <strong style="color:#FCA5A5; font-size:0.88rem; display:block;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Masa Berlaku Tiket Telah Berakhir
+          </strong>
+          <p style="font-size:0.84rem; color:#fff; margin-top:0.35rem; line-height:1.45;">
+            Tiket audiensi Anda untuk tanggal <strong>${formatIndonesianDate(found.scheduledDate || found.visitDate)}</strong> telah <strong>Hangus & Kadaluarsa</strong> karena Anda tidak hadir melakukan presensi (check-in) di lobi sekolah.
+          </p>
+          <div style="margin-top:0.6rem; padding:0.4rem 0.6rem; background:rgba(0,0,0,0.3); border-radius:6px; font-size:0.78rem;">
+            Catatan Pelanggaran No-Show: <strong style="color:${banned ? '#ef4444' : 'var(--amber-warning)'};">${strikes}/3 Kali</strong>
+            ${banned ? '<br><span style="color:#ef4444; font-weight:800;">PERINGATAN: Nomor WhatsApp Anda telah DIBLOKIR permanen dari sistem SIMTADIK.</span>' : '<br><span style="color:var(--text-muted);">*Jika mangkir mencapai 3 kali, identitas Anda akan diblokir otomatis.</span>'}
+          </div>
+        </div>
+        <p style="font-size:0.78rem; color:var(--text-dim); margin-top:0.85rem; font-style:italic;">
+          *Apabila masih berkepentingan, silakan melakukan pengisian formulir pendaftaran baru di lobi sekolah.
+        </p>
+      </div>
+    `;
+    resultBox.classList.remove('hidden');
+    return;
+  }
+
+  // KONDISI TAWARAN DELEGASI
   if (found.status === 'Tawaran Delegasi') {
     resultBox.innerHTML = `
       <div class="glass-card" style="padding:1.4rem; margin-top:1rem; border:1px solid var(--amber-warning);">
@@ -349,7 +438,6 @@ function trackTicketStatus() {
           <span style="font-weight:800; color:var(--cyan-glow);">${found.ticketCode}</span>
           <span class="badge badge-pending">Pemberitahuan Delegasi</span>
         </div>
-
         <div style="background:rgba(245, 158, 11, 0.1); border-left:4px solid var(--amber-warning); padding:0.85rem; border-radius:8px; margin-bottom:1rem;">
           <strong style="color:var(--amber-warning); font-size:0.88rem; display:block;">
             <i class="fa-solid fa-triangle-exclamation"></i> Pimpinan Berhalangan Hadir
@@ -364,11 +452,9 @@ function trackTicketStatus() {
             Ruangan: <strong>${escapeHtml(found.scheduledRoom)}</strong> | Waktu: <strong>${found.scheduledDate} (${found.scheduledStart} - ${found.scheduledEnd} WIB)</strong>
           </small>
         </div>
-
         <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:1rem;">
           Apakah Anda bersedia melanjutkan audiensi dengan pejabat penerima pengganti di atas?
         </p>
-
         <div style="display:flex; flex-direction:column; gap:0.5rem;" id="delegationActionButtonsBox">
           <button type="button" class="btn btn-emerald btn-block" onclick="acceptDelegation('${found.ticketCode}')">
             <i class="fa-solid fa-circle-check"></i> Setujui & Temui ${escapeHtml(found.hostOfficer)}
@@ -377,12 +463,11 @@ function trackTicketStatus() {
             <i class="fa-solid fa-circle-xmark"></i> Tolak Tawaran & Batalkan Audiensi
           </button>
         </div>
-
         <div id="delegationRejectArea" class="hidden" style="margin-top:1rem; padding-top:0.85rem; border-top:1px dashed var(--border-subtle);">
           <label class="field-label" style="color:#FCA5A5;">Uraikan Alasan Pembatalan / Penolakan Delegasi:</label>
-          <textarea id="guestDeclineReasonInput" class="form-control" rows="3" placeholder="Contoh: Kami memerlukan persetujuan langsung dari Ibu Kepala Sekolah, mohon dibatalkan atau dijadwalkan ulang pada hari lain..."></textarea>
+          <textarea id="guestDeclineReasonInput" class="form-control" rows="3" placeholder="Contoh: Kami memerlukan tanda tangan langsung Ibu Kepala Sekolah, mohon dijadwalkan ulang..."></textarea>
           <div style="display:flex; gap:0.5rem; margin-top:0.65rem;">
-            <button type="button" class="btn btn-danger btn-sm" onclick="submitRejectDelegation('${found.ticketCode}')">Kirim & Batalkan Pertemuan</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="submitRejectDelegation('${found.ticketCode}')">Kirim & Batalkan</button>
             <button type="button" class="btn btn-outline btn-sm" onclick="cancelRejectDelegation()">Kembali</button>
           </div>
         </div>
@@ -392,7 +477,7 @@ function trackTicketStatus() {
     return;
   }
 
-  // 2. KONDISI TIKET KADALUARSA / DELEGASI DITOLAK
+  // KONDISI DELEGASI DITOLAK
   if (found.status === 'Delegasi Ditolak') {
     resultBox.innerHTML = `
       <div class="glass-card" style="padding:1.4rem; margin-top:1rem; border:1px solid var(--rose-danger);">
@@ -411,16 +496,13 @@ function trackTicketStatus() {
             Alasan penolakan Anda: "${escapeHtml(found.guestDeclineReason || '-')}"
           </p>
         </div>
-        <p style="font-size:0.78rem; color:var(--text-dim); margin-top:0.85rem; font-style:italic;">
-          *Apabila masih berkepentingan bertemu pimpinan, silakan ajukan permohonan baru pada hari/tanggal kerja berikutnya.
-        </p>
       </div>
     `;
     resultBox.classList.remove('hidden');
     return;
   }
 
-  // 3. KATEGORI SISWA: TAMPILKAN KARTU E-DISPENSASI
+  // KATEGORI SISWA: E-DISPEN
   if (found.category === 'Siswa') {
     if (found.status === 'Disetujui' || found.status === 'Checked-In') {
       const dispen = hitungDispensasiPelajaran(found.scheduledStart, found.scheduledEnd);
@@ -512,6 +594,7 @@ function switchAdminSubView(subview) {
 }
 
 function renderAdminDashboard() {
+  checkAndExpireAppointments();
   renderMetrics();
   switchAdminSubView(appData.activeAdminSubView || 'table');
 }
@@ -532,7 +615,7 @@ function renderAdminQueueTable() {
   let list = appData.appointments;
   if (filter !== 'ALL') {
     if (filter === 'Ditolak') {
-      list = list.filter(item => item.status === 'Ditolak' || item.status === 'Delegasi Ditolak');
+      list = list.filter(item => item.status === 'Ditolak' || item.status === 'Delegasi Ditolak' || item.status === 'Kadaluarsa');
     } else {
       list = list.filter(item => item.status === filter);
     }
@@ -546,9 +629,23 @@ function renderAdminQueueTable() {
 
   tbody.innerHTML = list.map(item => {
     const cleanPhone = formatToWhatsApp(item.whatsapp);
+    const strikes = getGuestNoShowCount(item.whatsapp);
+    const isBanned = strikes >= 3;
     let waMsg = "";
     
-    if (item.status === 'Tawaran Delegasi') {
+    // FORMAT WHATSAPP BERDASARKAN STATUS
+    if (item.status === 'Kadaluarsa') {
+      waMsg = `*PEMBERITAHUAN TIKET AUDIENSI KADALUARSA (NO-SHOW)*
+Yth. Bapak/Ibu ${item.fullName},
+
+Kami menginformasikan bahwa tiket audiensi Anda di SMAN 1 Kandangan [Tiket: ${item.ticketCode}] telah *HANGUS / KADALUARSA* karena Anda tidak hadir melakukan presensi (check-in) pada jadwal yang telah ditentukan.
+
+⚠️ *Peringatan Ketertiban Tamu:*
+Mohon untuk tidak mengulangi kelalaian serupa demi kelancaran agenda pimpinan sekolah. Catatan ketidakhadiran Anda saat ini: *${strikes}/3 Kali*.
+${isBanned ? '❌ *PERHATIAN:* Akumulasi kelalaian Anda telah mencapai batas maksimal (3x). Nomor dan identitas Anda telah DIBLOKIR otomatis oleh sistem SIMTADIK.' : 'Sesuai regulasi sekolah, apabila terjadi mangkir (No-Show) sebanyak 3 kali, sistem akan memblokir nomor/identitas Anda secara permanen.'}
+
+Apabila masih berkepentingan, silakan mengajukan permohonan baru pada hari kerja berikutnya. Terima kasih.`;
+    } else if (item.status === 'Tawaran Delegasi') {
       waMsg = `*PEMBERITAHUAN PENDELEGASIAN AUDIENSI RESMI*\nYth. Bapak/Ibu ${item.fullName},\n\nKami dari Sekretariat Tata Usaha SMAN 1 Kandangan menyampaikan permohonan maaf. Pejabat yang Anda tuju (${item.targetOfficial}) berhalangan hadir pada waktu yang direncanakan.\n\nAudiensi Anda dialihkan kepada:\n👤 *Pejabat Penerima:* ${item.hostOfficer}\n📅 *Waktu:* ${item.scheduledDate} (${item.scheduledStart} - ${item.scheduledEnd} WIB)\n📍 *Ruangan:* ${item.scheduledRoom}\n\nMohon konfirmasi persetujuan melalui tautan resmi:\n${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}\n\nTerima kasih.`;
     } else if (item.isRescheduled) {
       waMsg = `*PEMBERITAHUAN PENJADWALAN ULANG (RESCHEDULE)*\nYth. Bapak/Ibu ${item.fullName},\n\nKami dari Sekretariat Pimpinan SMAN 1 Kandangan memohon maaf. Audiensi [Tiket: ${item.ticketCode}] diatur ulang menjadi:\n\n📅 *Tanggal:* ${item.scheduledDate}\n⏰ *Waktu:* ${item.scheduledStart} - ${item.scheduledEnd} WIB\n📍 *Tempat:* ${item.scheduledRoom}\n📝 *Catatan:* "${item.approvalMessage}"\n\nCek berkas: ${window.location.origin}${window.location.pathname}?ticket=${item.ticketCode}`;
@@ -561,10 +658,12 @@ function renderAdminQueueTable() {
       ? `<span class="table-host-tag">${escapeHtml(item.hostOfficer || item.targetOfficial)}</span><br><strong style="font-size:0.82rem;">${item.scheduledRoom}</strong><br><small style="color:var(--cyan-glow);">${item.scheduledDate} (${item.scheduledStart} - ${item.scheduledEnd} WIB)</small>` 
       : '<span style="color:var(--text-dim);">-</span>';
 
-    // LABEL & CATATAN: KADALUARSA JIKA DELEGASI DITOLAK
+    // LABEL & CATATAN
     let note = '';
-    if (item.status === 'Delegasi Ditolak') {
-      note = `<div class="table-note-pill table-note-reject"><i class="fa-solid fa-ban"></i> <strong>BATAL / KADALUARSA:</strong> Tamu menolak delegasi. Alasan: "${escapeHtml(item.guestDeclineReason || '-')}"</div>`;
+    if (item.status === 'Kadaluarsa') {
+      note = `<div class="table-note-pill table-note-reject"><i class="fa-solid fa-hourglass-end"></i> <strong>KADALUARSA (NO-SHOW)</strong><br>Pelanggaran: <strong style="color:${isBanned ? '#ef4444' : 'var(--amber-warning)'};">${strikes}/3</strong> ${isBanned ? '<span style="color:#ef4444; font-weight:800;">[DIBLOKIR]</span>' : ''}</div>`;
+    } else if (item.status === 'Delegasi Ditolak') {
+      note = `<div class="table-note-pill table-note-reject"><i class="fa-solid fa-ban"></i> <strong>BATAL:</strong> Tamu menolak delegasi. Alasan: "${escapeHtml(item.guestDeclineReason || '-')}"</div>`;
     } else if (item.status === 'Tawaran Delegasi') {
       note = `<div class="table-note-pill"><i class="fa-solid fa-clock-rotate-left"></i> Menunggu konfirmasi delegasi ke ${escapeHtml(item.hostOfficer)}</div>`;
     } else if (item.status === 'Disetujui' || item.status === 'Checked-In') {
@@ -573,9 +672,14 @@ function renderAdminQueueTable() {
       note = `<div class="table-note-pill table-note-reject"><i class="fa-solid fa-circle-exclamation"></i> "${escapeHtml(item.rejectionReason || DEFAULT_REJECT_TEMPLATE)}"</div>`;
     }
 
-    // PENGUNCIAN TOMBOL: JIKA DELEGASI DITOLAK, TIDAK BOLEH BISA DIEDIT LAGI (STATUS TERMINAL/BATAL)
+    // PENGATURAN TOMBOL AKSI
     let btns = '';
-    if (item.status === 'Menunggu Konfirmasi') {
+    if (item.status === 'Kadaluarsa') {
+      // Untuk tiket kadaluarsa: Hanya ada tombol kirim teguran WhatsApp dan Hapus
+      btns = `
+        <a href="${waUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#22c55e; border-color:#22c55e;" title="Kirim Surat Teguran Kadaluarsa via WhatsApp"><i class="fa-brands fa-whatsapp"></i> Tegur</a>
+      `;
+    } else if (item.status === 'Menunggu Konfirmasi') {
       btns = `<button class="btn btn-primary btn-sm" onclick="openScheduleModal('${item.ticketCode}')" title="Disposisi Pimpinan"><i class="fa-solid fa-calendar-check"></i></button>`;
     } else if (item.status === 'Tawaran Delegasi') {
       btns = `
@@ -592,7 +696,6 @@ function renderAdminQueueTable() {
     } else if (item.status === 'Checked-In') {
       btns = `<button class="btn btn-outline btn-sm" onclick="executeComplete('${item.ticketCode}')" title="Selesai"><i class="fa-solid fa-flag-checkered"></i></button>`;
     }
-    // CATATAN: Untuk 'Delegasi Ditolak' atau 'Ditolak', btns dibiarkan kosong sehingga admin TIDAK bisa mengeditnya lagi.
 
     btns += `<button class="btn btn-danger btn-sm" onclick="deleteAppointment('${item.ticketCode}')" title="Hapus Arsip" style="margin-left:0.25rem;"><i class="fa-solid fa-trash-can"></i></button>`;
 
@@ -621,6 +724,7 @@ function getBadgeClass(status) {
     case 'Disetujui': return 'badge-approved';
     case 'Ditolak': return 'badge-rejected';
     case 'Delegasi Ditolak': return 'badge-rejected';
+    case 'Kadaluarsa': return 'badge-rejected';
     case 'Checked-In': return 'badge-checkin';
     case 'Selesai': return 'badge-completed';
     default: return 'badge-pending';
@@ -630,9 +734,8 @@ function getBadgeClass(status) {
 function openScheduleModal(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode); if (!item) return;
 
-  // Proteksi keamanan: Tiket yang sudah batal/kadaluarsa tidak boleh dibuka modal jadwalnya
-  if (item.status === 'Delegasi Ditolak' || item.status === 'Ditolak' || item.status === 'Selesai') {
-    showToast('Tiket ini sudah berstatus batal/selesai dan tidak dapat diubah lagi.', 'error');
+  if (item.status === 'Delegasi Ditolak' || item.status === 'Ditolak' || item.status === 'Selesai' || item.status === 'Kadaluarsa') {
+    showToast('Tiket ini sudah kadaluarsa/batal dan tidak dapat diubah.', 'error');
     return;
   }
 
@@ -740,7 +843,7 @@ function executeApprove() {
   item.rejectionReason = ''; if (wasApproved) item.isRescheduled = true;
 
   saveDatabase(); renderAdminDashboard(); closeScheduleModal();
-  showToast(wasApproved ? `Jadwal [${item.ticketCode}] berhasil diatur ulang (Rescheduled)!` : `Janji temu disetujui!`, 'success');
+  showToast(wasApproved ? `Jadwal [${item.ticketCode}] diatur ulang!` : `Janji temu disetujui!`, 'success');
 }
 
 function executeDelegate() {
@@ -752,7 +855,6 @@ function executeDelegate() {
   item.officialLetterNo = isStudent ? null : (document.getElementById('schedLetterNoDelegate').value.trim() || generateOfficialLetterNumber());
   item.approvalMessage = document.getElementById('schedDelegateNotes').value.trim() || `Disposisi dialihkan kepada ${targetHost}.`;
   
-  // Status berubah menjadi tawaran delegasi agar tamu bisa memilih setuju/tolak
   item.status = 'Tawaran Delegasi';
   item.isDelegated = true;
   item.scheduledRoom = document.getElementById('schedDelegateRoom').value;
@@ -766,7 +868,6 @@ function executeDelegate() {
   showToast(`Audiensi didelegasikan ke ${targetHost}. Menunggu persetujuan tamu!`, 'info');
 }
 
-// LOGIKA KENDALI TAMU: MENERIMA / MENOLAK DELEGASI
 function acceptDelegation(ticketCode) {
   const item = appData.appointments.find(a => a.ticketCode === ticketCode); if (!item) return;
   item.status = 'Disetujui';
@@ -792,7 +893,6 @@ function submitRejectDelegation(ticketCode) {
   if (!item) return;
   if (!reason || reason.length < 5) { showToast('Uraikan alasan penolakan minimal 5 karakter.', 'error'); return; }
 
-  // Kunci tiket menjadi status terminal: Delegasi Ditolak / Batal / Kadaluarsa
   item.status = 'Delegasi Ditolak';
   item.guestDeclineReason = reason;
   item.rejectionReason = `Tamu menolak audiensi delegasi. Alasan: ${reason}`;
@@ -946,13 +1046,13 @@ function renderAnalyticsAndHeatmap() {
   const p = appData.appointments.filter(a => a.status === 'Menunggu Konfirmasi' || a.status === 'Tawaran Delegasi').length;
   const ap = appData.appointments.filter(a => a.status === 'Disetujui').length;
   const ci = appData.appointments.filter(a => a.status === 'Checked-In' || a.status === 'Selesai').length;
-  const rj = appData.appointments.filter(a => a.status === 'Ditolak' || a.status === 'Delegasi Ditolak').length;
+  const rj = appData.appointments.filter(a => a.status === 'Ditolak' || a.status === 'Delegasi Ditolak' || a.status === 'Kadaluarsa').length;
 
   document.getElementById('statusSummaryPills').innerHTML = `
     <div class="status-pill-card"><span class="status-pill-val" style="color:var(--amber-warning);">${p}</span><span class="status-pill-lbl">Menunggu Disposisi</span></div>
     <div class="status-pill-card"><span class="status-pill-val" style="color:var(--emerald-green);">${ap}</span><span class="status-pill-lbl">Disetujui</span></div>
     <div class="status-pill-card"><span class="status-pill-val" style="color:var(--cyan-glow);">${ci}</span><span class="status-pill-lbl">Kehadiran Lobi</span></div>
-    <div class="status-pill-card"><span class="status-pill-val" style="color:var(--rose-danger);">${rj}</span><span class="status-pill-lbl">Ditolak / Batal</span></div>
+    <div class="status-pill-card"><span class="status-pill-val" style="color:var(--rose-danger);">${rj}</span><span class="status-pill-lbl">Ditolak / Hangus</span></div>
   `;
   renderHeatmapMatrix();
 }
